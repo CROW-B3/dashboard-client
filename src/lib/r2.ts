@@ -1,6 +1,5 @@
 import type { PutObjectCommandOutput } from "@aws-sdk/client-s3";
 import type { Buffer } from "node:buffer";
-import process from "node:process";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 import { logger } from "@/lib/logger";
