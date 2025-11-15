@@ -1,5 +1,6 @@
 import type { PutObjectCommandOutput } from "@aws-sdk/client-s3";
 import type { Buffer } from "node:buffer";
+import { env } from "node:process";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 import { logger } from "@/lib/logger";
@@ -14,15 +15,15 @@ interface R2Config {
 
 function getR2Config(): R2Config {
   // eslint-disable-next-line dot-notation
-  const accountId = process.env["CLOUDFLARE_ACCOUNT_ID"];
+  const accountId = env["CLOUDFLARE_ACCOUNT_ID"];
   // eslint-disable-next-line dot-notation
-  const accessKeyId = process.env["CLOUDFLARE_R2_ACCESS_KEY"];
+  const accessKeyId = env["CLOUDFLARE_R2_ACCESS_KEY"];
   // eslint-disable-next-line dot-notation
-  const secretAccessKey = process.env["CLOUDFLARE_R2_SECRET_ACCESS_KEY"];
+  const secretAccessKey = env["CLOUDFLARE_R2_SECRET_ACCESS_KEY"];
   // eslint-disable-next-line dot-notation
-  const bucketName = process.env["CLOUDFLARE_R2_STORAGE_BUCKET"];
+  const bucketName = env["CLOUDFLARE_R2_STORAGE_BUCKET"];
   // eslint-disable-next-line dot-notation
-  const publicUrl = process.env["NEXT_PUBLIC_R2_PUBLIC_URL"];
+  const publicUrl = env["NEXT_PUBLIC_R2_PUBLIC_URL"];
 
   if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
     throw new Error("Missing required R2 configuration");
