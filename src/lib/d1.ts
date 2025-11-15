@@ -1,4 +1,3 @@
-import process from "node:process";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { upstashCache } from "drizzle-orm/cache/upstash";
 import { drizzle } from "drizzle-orm/d1";
@@ -18,8 +17,8 @@ export const getDb = cache(() => {
                                 // eslint-disable-next-line dot-notation
                                 token: process.env["UPSTASH_TOKEN"]!,
                                 global: true,
-                                config: { ex: 60 }
-                        })
+                                config: { ex: 60 },
+                        }),
                 });
         } catch (error) {
                 logger.error({ err: error }, "Cloudflare context not available");
