@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "opennext-cloudflare-template",
+  "name": "dashboard-client",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-03-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -15,13 +15,13 @@
     {
       "binding": "DB_MAIN",
       "database_name": "main",
-      "database_id": "YOUR_DATABASE_ID_HERE",
+      "database_id": "a86c4384-c852-4a6b-b015-ab8eb6fd355f",
     },
   ],
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",
-      "bucket_name": "my-storage-bucket",
+      "bucket_name": "dashboard-client-assets-dev",
     },
   ],
   "kv_namespaces": [
@@ -32,4 +32,21 @@
     },
   ],
   "placement": { "mode": "smart" },
+  "env": {
+    "production": {
+      "d1_databases": [
+        {
+          "binding": "DB_MAIN",
+          "database_name": "main",
+          "database_id": "383679b3-5100-4754-b3b0-9d630ad983f9",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "R2_BUCKET",
+          "bucket_name": "dashboard-client-assets-prod",
+        },
+      ],
+    },
+  },
 }
