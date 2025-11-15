@@ -1,3 +1,4 @@
+import { env } from "node:process";
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -14,9 +15,9 @@ import { defineConfig, devices } from "@playwright/test";
 const config = {
   testDir: "./tests",
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  forbidOnly: !!env.CI,
+  retries: env.CI ? 2 : 0,
+  workers: env.CI ? 1 : undefined,
   reporter: "html" as const,
   use: {
     trace: "on-first-retry" as const,
