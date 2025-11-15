@@ -1,3 +1,4 @@
+import { env as processEnv } from "node:process";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { upstashCache } from "drizzle-orm/cache/upstash";
 import { drizzle } from "drizzle-orm/d1";
@@ -13,9 +14,9 @@ export const getDb = cache(() => {
                         logger: true,
                         cache: upstashCache({
                                 // eslint-disable-next-line dot-notation
-                                url: process.env["UPSTASH_URL"]!,
+                                url: processEnv["UPSTASH_URL"]!,
                                 // eslint-disable-next-line dot-notation
-                                token: process.env["UPSTASH_TOKEN"]!,
+                                token: processEnv["UPSTASH_TOKEN"]!,
                                 global: true,
                                 config: { ex: 60 },
                         }),
