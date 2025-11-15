@@ -11,6 +11,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.703.0
         version: 3.931.0
+      '@crow-b3/ui-kit':
+        specifier: ^0.0.3
+        version: 0.0.3
       '@opennextjs/cloudflare':
         specifier: ^1.11.0
         version: 1.12.0(wrangler@4.47.0)
@@ -663,6 +666,9 @@ packages:
   '@commitlint/types@20.0.0':
     resolution: {integrity: sha512-bVUNBqG6aznYcYjTjnc3+Cat/iBgbgpflxbIBTnsHTX0YVpnmINPEkSRWymT2Q8aSH3Y7aKnEbunilkYe8TybA==}
     engines: {node: '>=v18'}
+
+  '@crow-b3/ui-kit@0.0.3':
+    resolution: {integrity: sha512-H0OOUMpAHxfGQQtHPSp/aMRwU/g6Ktd9zzmmdGHazFhFi85FMNHpSVWWRaC3jDT5qzXEvf61gIjkUf6ZdVI5zw==, tarball: https://npm.pkg.github.com/download/@crow-b3/ui-kit/0.0.3/3f86ad64709d5d5b3b738f2dfe839c97b0c9fc05}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -6431,6 +6437,8 @@ snapshots:
     dependencies:
       '@types/conventional-commits-parser': 5.0.2
       chalk: 5.6.2
+
+  '@crow-b3/ui-kit@0.0.3': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
