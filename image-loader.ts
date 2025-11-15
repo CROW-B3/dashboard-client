@@ -1,5 +1,4 @@
 import type { ImageLoaderProps } from "next/image";
-import process from "node:process";
 
 const normalizeSrc = (src: string) => {
         return src.startsWith("/") ? src.slice(1) : src;
