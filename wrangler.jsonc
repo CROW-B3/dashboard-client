@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "dashboard-client",
+  "name": "crow-dashboard-client",
+  "account_id": "8f0203259905d8923687286c84921e6c",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-03-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -14,37 +15,42 @@
   "d1_databases": [
     {
       "binding": "DB_MAIN",
-      "database_name": "main",
-      "database_id": "a86c4384-c852-4a6b-b015-ab8eb6fd355f",
+      "database_name": "crow-dashboard-client-db",
+      "database_id": "9ef93cd8-ed1b-4a94-90ef-5e231e2337b1",
     },
   ],
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",
-      "bucket_name": "dashboard-client-assets-dev",
+      "bucket_name": "crow-dashboard-client-assets",
     },
   ],
   "kv_namespaces": [
     {
       "binding": "NEXT_INC_CACHE_KV",
-      "id": "4a56541b414e480681a887e3547f888f",
-      "remote": true,
+      "id": "5de59b6655254c048ac1bccde2190c4d",
     },
   ],
   "placement": { "mode": "smart" },
   "env": {
-    "production": {
+    "dev": {
       "d1_databases": [
         {
           "binding": "DB_MAIN",
-          "database_name": "main",
-          "database_id": "383679b3-5100-4754-b3b0-9d630ad983f9",
+          "database_name": "crow-dashboard-client-db-dev",
+          "database_id": "875cfb9a-11a1-4891-b569-aadf3afb24f4",
         },
       ],
       "r2_buckets": [
         {
           "binding": "R2_BUCKET",
-          "bucket_name": "dashboard-client-assets-prod",
+          "bucket_name": "crow-dashboard-client-assets-dev",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "NEXT_INC_CACHE_KV",
+          "id": "7863efdaa9c347e2bbd5bb303b88635a",
         },
       ],
     },
