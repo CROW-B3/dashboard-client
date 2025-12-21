@@ -1,6 +1,0 @@
-[install]
-# Use the lockfile for faster installs
-prefer-offline = false
-
-[install.scopes]
-crow-b3 = { token = "${NPM_TOKEN}", url = "https://npm.pkg.github.com" }
