@@ -1,3 +1,4 @@
+import { env } from "node:process";
 import * as dotenv from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
@@ -8,9 +9,12 @@ export default defineConfig({
         dialect: "sqlite",
         driver: "d1-http",
         dbCredentials: {
-                accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
-                databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
-                token: process.env.CLOUDFLARE_D1_TOKEN!,
+                // eslint-disable-next-line dot-notation
+                accountId: env["CLOUDFLARE_ACCOUNT_ID"]!,
+                // eslint-disable-next-line dot-notation
+                databaseId: env["CLOUDFLARE_DATABASE_ID"]!,
+                // eslint-disable-next-line dot-notation
+                token: env["CLOUDFLARE_D1_TOKEN"]!,
         },
         out: "./drizzle/migrations",
 });
