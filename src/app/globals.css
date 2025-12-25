@@ -3,6 +3,28 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer utilities {
+	.glass-panel {
+		background: rgba(255, 255, 255, 0.02);
+		backdrop-filter: blur(12px);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+	}
+
+	.glass-panel-heavy {
+		background: rgba(10, 5, 20, 0.4);
+		backdrop-filter: blur(16px);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+	}
+
+	.text-glow {
+		text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+	}
+
+	.text-glow-violet {
+		text-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+	}
+}
+
 @theme inline {
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
@@ -117,6 +139,7 @@
     @apply border-border outline-ring/50;
 	}
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: #030005 !important;
 	}
 }

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
@@ -7,10 +8,24 @@ const nextConfig: NextConfig = {
         generateEtags: true,
         cacheMaxMemorySize: 0,
         reactStrictMode: true,
+        turbopack: {
+                resolveAlias: {
+                        "@b3-crow/ui-kit": "../ui-kit/dist/index.js",
+                        "@b3-crow/ui-kit/styles.css": "../ui-kit/dist/styles.css",
+                },
+        },
         experimental: {
                 serverMinification: true, // Enable minification to reduce bundle size
                 cssChunking: true,
                 inlineCss: true,
+        },
+        webpack: (config, { isServer }) => {
+                config.resolve.alias = {
+                        ...config.resolve.alias,
+                        "@b3-crow/ui-kit": path.resolve(__dirname, "../ui-kit/dist/index.js"),
+                        "@b3-crow/ui-kit/styles.css": path.resolve(__dirname, "../ui-kit/dist/styles.css"),
+                };
+                return config;
         },
         images: {
                 loader: "custom",
