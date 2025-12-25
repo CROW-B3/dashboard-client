@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /d/SDGP/dashboard-client add -A)",
+      "Bash(git -C /d/SDGP/dashboard-client commit --no-verify -m \"feat: implement dashboard overview page\n\n- Add dashboard layout with sidebar navigation\n- Create overview page with stats and charts\n- Add reusable components for dashboard UI\n- Configure next.config for external packages\")"
+    ]
+  }
+}
