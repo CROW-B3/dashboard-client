@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import {
   DashboardBackground,
   Sidebar,
 } from '@b3-crow/ui-kit';
+import { useRouter } from 'next/navigation';
 import { LenisProvider } from '@/components/providers';
 
 export default function DashboardLayout({
