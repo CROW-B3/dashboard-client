@@ -2,16 +2,11 @@
 
 import type { Pattern, PatternsSectionProps } from './types';
 
-import { ArrowRight, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
+import { GlassPanel } from '@b3-crow/ui-kit';
+import { ListItem } from './ListItem';
+import { SectionHeader } from './SectionHeader';
 
 export type { Pattern, PatternsSectionProps };
-
-const severityStyles = {
-  high: { bg: 'rgba(139, 92, 246, 0.20)', text: '#C4B5FD', border: 'rgba(139, 92, 246, 0.20)' },
-  medium: { bg: 'rgba(139, 92, 246, 0.10)', text: '#A78BFA', border: 'rgba(139, 92, 246, 0.10)' },
-  low: { bg: 'rgba(107, 114, 128, 0.10)', text: '#9CA3AF', border: 'rgba(107, 114, 128, 0.10)' },
-};
 
 const defaultPatterns: Pattern[] = [
   {
@@ -34,71 +29,53 @@ const defaultPatterns: Pattern[] = [
   },
 ];
 
+const severityStyles: Record<string, React.CSSProperties> = {
+  high: { background: 'rgba(139, 92, 246, 0.2)', color: '#C4B5FD' },
+  medium: { background: 'rgba(139, 92, 246, 0.15)', color: '#A78BFA' },
+  low: { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' },
+};
+
 export function PatternsSection({
   patterns = defaultPatterns,
   onPatternClick,
 }: PatternsSectionProps) {
   return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{
-        background: 'rgba(255, 255, 255, 0.01)',
-        outline: '1px solid rgba(255, 255, 255, 0.06)',
-        outlineOffset: '-1px',
-      }}
-    >
-      {/* Header */}
-      <div
-        className="px-6 py-4 flex items-center justify-between"
-        style={{
-          background: 'rgba(255, 255, 255, 0.01)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-        }}
-      >
-        {/* Title: white, 14px, 600, line-height 20 */}
-        <h3 style={{ color: 'white', fontSize: 14, fontWeight: 600, lineHeight: '20px' }}>Top Patterns</h3>
-        <Link
-          href="/patterns"
-          className="flex items-center gap-1 hover:opacity-80 transition-opacity"
-        >
-          {/* Link: #A78BFA, 12px, 400, line-height 16 */}
-          <span style={{ color: '#A78BFA', fontSize: 12, fontWeight: 400, lineHeight: '16px' }}>View all patterns</span>
-          <ArrowRight size={14} color="#A78BFA" strokeWidth={2} />
-        </Link>
-      </div>
-
-      {/* Pattern list */}
+    <GlassPanel variant="heavy" className="overflow-hidden">
+      <SectionHeader
+        title="Top Patterns"
+        viewAllHref="/patterns"
+        viewAllText="View all patterns"
+      />
       <div className="p-4 space-y-1">
-        {patterns.map((pattern) => {
-          const severity = severityStyles[pattern.severity];
-          return (
-            <button
-              key={pattern.id}
-              type="button"
-              onClick={() => onPatternClick?.(pattern)}
-              aria-label={`View pattern: ${pattern.title}`}
-              className="w-full px-3 py-3 rounded-lg hover:bg-white/[0.02] transition-all text-left group"
-            >
-              <div className="flex items-center gap-3 mb-1">
-                {/* Item title: #E5E7EB, 14px, 500, line-height 20 */}
-                <h4 style={{ color: '#E5E7EB', fontSize: 14, fontWeight: 500, lineHeight: '20px' }}>{pattern.title}</h4>
-                <span
-                  className="px-1.5 py-0.5 rounded-lg"
-                  style={{ background: severity.bg, outline: `1px solid ${severity.border}`, outlineOffset: '-1px' }}
-                >
-                  {/* Severity: 9px, 700, uppercase, line-height 13.5, letter-spacing 0.45 */}
-                  <span style={{ fontSize: 9, fontWeight: 700, lineHeight: '13.5px', letterSpacing: 0.45, textTransform: 'uppercase', color: severity.text }}>{pattern.severity}</span>
-                </span>
-                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ChevronRight size={14} color="#4B5563" strokeWidth={2} />
-                </div>
-              </div>
-              {/* Description: #6B7280, 12px, 400, line-height 16 */}
-              <p style={{ color: '#6B7280', fontSize: 12, fontWeight: 400, lineHeight: '16px' }}>{pattern.description}</p>
-            </button>
-          );
-        })}
+        {patterns.map((pattern) => (
+          <ListItem
+            key={pattern.id}
+            onClick={() => onPatternClick?.(pattern)}
+            ariaLabel={`View pattern: ${pattern.title}`}
+            showChevron
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <h4 className="text-sm font-medium text-gray-200">{pattern.title}</h4>
+              <span
+                style={{
+                  ...severityStyles[pattern.severity],
+                  fontSize: 10,
+                  fontWeight: 600,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                {pattern.severity}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500">{pattern.description}</p>
+          </ListItem>
+        ))}
       </div>
-    </div>
+    </GlassPanel>
   );
 }

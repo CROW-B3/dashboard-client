@@ -26,8 +26,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <link rel="icon" href="/favicon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
+        <link rel="icon" href="/favicon.webp" type="image/webp" />
+        <link rel="apple-touch-icon" href="/favicon.webp" />
       </head>
       <body
         className={`${sora.variable} ${geistMono.variable} font-sans antialiased bg-[#030005] text-gray-100 selection:bg-violet-500/30 selection:text-violet-200`}

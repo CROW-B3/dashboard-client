@@ -9,10 +9,9 @@ import {
   PatternsSection,
 } from '@/components/overview';
 
-export default function OverviewPage() {
+export default function DashboardPage() {
   return (
     <>
-      {/* Header: 64px height */}
       <Header
         orgName="Global Retail Ops"
         dateRange="Last 7 days"
@@ -20,10 +19,8 @@ export default function OverviewPage() {
         showNotification={true}
       />
 
-      {/* Content: padding 120px left/right, 32px top */}
       <div className="relative z-10 px-[120px] py-8">
         <div className="max-w-[1400px]">
-          {/* Page Header */}
           <div className="relative mb-8">
             <h1 className="mb-1 text-2xl font-bold leading-8 text-white">
               Overview
@@ -36,7 +33,6 @@ export default function OverviewPage() {
             </p>
           </div>
 
-          {/* Metrics Cards: 4 cards in one row, gap 16px */}
           <div className="flex gap-4 mb-8">
             <MetricsCard
               title="Total Interactions"
@@ -72,13 +68,11 @@ export default function OverviewPage() {
             />
           </div>
 
-          {/* Two Column Section: Patterns + Interactions, each 688px, gap 24px */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <PatternsSection />
             <LatestInteractions />
           </div>
 
-          {/* Data Source Status Cards: 3 cards, 456px each, gap 16px */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <DataSourceStatus
               icon="web"
@@ -103,7 +97,6 @@ export default function OverviewPage() {
             />
           </div>
 
-          {/* Ask CROW CTA: 1400px width, 164px height */}
           <div className="mb-8">
             <AskCrowCTA />
           </div>
