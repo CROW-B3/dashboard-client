@@ -1,8 +1,15 @@
 'use client';
 
-import { DashboardBackground, Sidebar } from '@b3-crow/ui-kit';
-import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { Sidebar } from '@b3-crow/ui-kit';
+import { useRouter, usePathname } from 'next/navigation';
+
 import { LenisProvider } from '@/components/providers';
+
+const DashboardBackground = dynamic(
+  () => import('@b3-crow/ui-kit').then((mod) => mod.DashboardBackground),
+  { ssr: false }
+);
 
 export default function DashboardLayout({
   children,
@@ -10,6 +17,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     router.push('/');
@@ -20,7 +28,7 @@ export default function DashboardLayout({
       <DashboardBackground />
       <div className="relative z-10 flex w-full h-full">
         <Sidebar
-          activeHref="/"
+          activeHref={pathname}
           logoSrc="/favicon.webp"
           userName="Demo User"
           userEmail="demo@crow.ai"
