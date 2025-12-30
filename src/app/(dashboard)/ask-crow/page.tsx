@@ -5,6 +5,7 @@ import { Check, Copy, FileText, ImageIcon, Link2, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChatHistory } from '@/contexts/ChatHistoryContext';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
 interface Message {
   id: string;
@@ -14,6 +15,7 @@ interface Message {
 
 export default function AskCrowPage() {
   const { createNewSession, addMessageToSession, activeSessionId } = useChatHistory();
+  const { toggle } = useMobileSidebar();
   const [chatStarted, setChatStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -119,6 +121,8 @@ export default function AskCrowPage() {
         userInitials="SJ"
         showNotification={true}
         minimal={true}
+        onMenuClick={toggle}
+        logoSrc="/favicon.webp"
       />
 
       <main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 relative overflow-hidden">

@@ -7,8 +7,11 @@ import {
   LatestInteractions,
   PatternsSection,
 } from '@/components/overview';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
 export default function DashboardPage() {
+  const { toggle } = useMobileSidebar();
+
   return (
     <>
       <Header
@@ -16,6 +19,8 @@ export default function DashboardPage() {
         dateRange="Last 7 days"
         userInitials="SJ"
         showNotification={true}
+        onMenuClick={toggle}
+        logoSrc="/favicon.webp"
       />
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">

@@ -10,6 +10,7 @@ import {
   InteractionsFilterBar,
   InteractionsTable,
 } from '@/components/interactions';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
 const mockInteractions: InteractionData[] = [
   {
@@ -186,6 +187,7 @@ const mockDetails: Record<string, Partial<InteractionDetail>> = {
 };
 
 export default function InteractionsPage() {
+  const { toggle } = useMobileSidebar();
   const [selectedInteraction, setSelectedInteraction] = useState<InteractionDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -212,6 +214,8 @@ export default function InteractionsPage() {
         userInitials="SJ"
         showNotification={true}
         minimal={true}
+        onMenuClick={toggle}
+        logoSrc="/favicon.webp"
       />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-[120px] py-6 sm:py-8">
