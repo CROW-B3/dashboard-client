@@ -2,7 +2,6 @@
 
 import type { FilterOption } from '@b3-crow/ui-kit';
 import { cn, FilterDropdown } from '@b3-crow/ui-kit';
-import { useState } from 'react';
 
 export type SourceFilter = 'all' | 'web' | 'cctv' | 'social';
 
@@ -72,13 +71,6 @@ export function PatternsFilterBar({
   onExport,
   className,
 }: PatternsFilterBarProps) {
-  const [currentSource, setCurrentSource] = useState<SourceFilter>(activeSource);
-
-  const handleSourceClick = (source: SourceFilter) => {
-    setCurrentSource(source);
-    onSourceChange?.(source);
-  };
-
   return (
     <div
       className={cn(
@@ -114,15 +106,15 @@ export function PatternsFilterBar({
           <button
             key={filter.value}
             type="button"
-            onClick={() => handleSourceClick(filter.value)}
+            onClick={() => onSourceChange?.(filter.value)}
             className={cn(
               'h-[28px] px-3 flex items-center justify-center rounded-md text-xs font-medium transition-colors',
-              currentSource === filter.value
+              activeSource === filter.value
                 ? 'text-white'
                 : 'text-gray-400 hover:text-gray-300'
             )}
             style={
-              currentSource === filter.value
+              activeSource === filter.value
                 ? {
                     background: 'rgba(255, 255, 255, 0.08)',
                     boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
