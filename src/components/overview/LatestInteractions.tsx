@@ -51,7 +51,7 @@ export function LatestInteractions({
     <GlassPanel variant="heavy" className="overflow-hidden">
       <SectionHeader
         title="Latest Interactions"
-        viewAllHref="/interactions"
+        viewAllHref="/analysis/interactions"
         viewAllText="View all interactions"
         LinkComponent={Link}
       />

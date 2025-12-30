@@ -46,7 +46,7 @@ export function PatternsSection({
     <GlassPanel variant="heavy" className="overflow-hidden">
       <SectionHeader
         title="Top Patterns"
-        viewAllHref="/patterns"
+        viewAllHref="/analysis/patterns"
         viewAllText="View all patterns"
         LinkComponent={Link}
       />

@@ -108,10 +108,9 @@ export default function AskCrowPage() {
     }
   };
 
-  const handleAttachOption = (type: string) => {
+  const handleAttachOption = (_type: string) => {
     setShowAttachMenu(false);
     // TODO: Handle attachment based on type
-    console.log('Attach:', type);
   };
 
   return (
