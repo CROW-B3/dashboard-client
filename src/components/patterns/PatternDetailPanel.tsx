@@ -1,11 +1,10 @@
 'use client';
 
-import type { PatternDetail, MetricItem, RelatedInteraction, TimelineItem } from './types';
+import type { MetricItem, PatternDetail, RelatedInteraction, TimelineItem } from './types';
 
-import { cn, SidePanel, SourceIcon, Tag } from '@b3-crow/ui-kit';
+import { cn, SidePanel, SourceIcon } from '@b3-crow/ui-kit';
 import {
   Activity,
-  AlertCircle,
   Bell,
   Clock,
   ExternalLink,
@@ -83,7 +82,7 @@ export function PatternDetailPanel({
     >
       <div className="p-6 space-y-6">
         <HeaderSection pattern={pattern} severityStyle={severityStyle} />
-        <ConfidenceSection pattern={pattern} confidenceStyle={confidenceStyle} />
+        <ConfidenceSection confidenceStyle={confidenceStyle} />
         {pattern.description && <DescriptionSection description={pattern.description} />}
         {pattern.recommendations && pattern.recommendations.length > 0 && (
           <RecommendationsSection recommendations={pattern.recommendations} />
@@ -145,11 +144,10 @@ function HeaderSection({ pattern, severityStyle }: HeaderSectionProps) {
 }
 
 interface ConfidenceSectionProps {
-  pattern: PatternDetail;
   confidenceStyle: typeof confidenceConfig.high;
 }
 
-function ConfidenceSection({ pattern, confidenceStyle }: ConfidenceSectionProps) {
+function ConfidenceSection({ confidenceStyle }: ConfidenceSectionProps) {
   return (
     <div
       className="p-4 rounded-xl"
@@ -191,9 +189,9 @@ function RecommendationsSection({ recommendations }: { recommendations: string[]
   return (
     <Section title="Recommendations" icon={<Lightbulb size={14} />}>
       <ul className="space-y-2">
-        {recommendations.map((rec, idx) => (
+        {recommendations.map((rec) => (
           <li
-            key={idx}
+            key={rec}
             className="flex items-start gap-2 text-sm"
             style={{ color: '#D1D5DB' }}
           >
@@ -277,9 +275,9 @@ function MetricsSection({ metrics }: { metrics: MetricItem[] }) {
   return (
     <Section title="Impact Metrics" icon={<TrendingUp size={14} />}>
       <div className="grid grid-cols-2 gap-3">
-        {metrics.map((metric, idx) => (
+        {metrics.map((metric) => (
           <div
-            key={idx}
+            key={metric.label}
             className="p-3 rounded-lg"
             style={{
               background: 'rgba(255, 255, 255, 0.02)',
