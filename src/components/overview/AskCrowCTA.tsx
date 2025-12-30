@@ -32,7 +32,7 @@ export function AskCrowCTA({
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
         <ContentSection
           suggestedPrompts={suggestedPrompts}
-          onPromptClick={onPromptClick}
+          {...(onPromptClick && { onPromptClick })}
         />
 
         <OpenAskCrowButton />
@@ -65,7 +65,7 @@ function ContentSection({
       <div className="flex items-center gap-2 flex-wrap">
         <SuggestedPrompts
           prompts={suggestedPrompts}
-          onPromptClick={onPromptClick}
+          {...(onPromptClick && { onPromptClick })}
         />
         <span className="text-[10px] text-gray-600 hidden sm:inline ml-2">
           Opens the Ask CROW workspace.
