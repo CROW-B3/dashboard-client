@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: npm install -g bun && bun install
     - name: Install Playwright Browsers
-      run: bun exec playwright install --with-deps
+      run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: bun exec playwright test
     - uses: actions/upload-artifact@v4
