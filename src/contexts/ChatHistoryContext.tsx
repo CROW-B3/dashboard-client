@@ -44,13 +44,69 @@ function extractTitleFromPrompt(prompt: string): string {
 // Using static date to avoid hydration mismatch
 const STATIC_DATE = new Date('2024-01-01T00:00:00.000Z');
 const demoSessions: ChatSession[] = [
-  { id: 'demo-1', title: 'Recursive Pattern Analysis', createdAt: STATIC_DATE, messages: [] },
-  { id: 'demo-2', title: 'Latent Vector Alignment', createdAt: STATIC_DATE, messages: [] },
-  { id: 'demo-3', title: 'Context Window Expansion', createdAt: STATIC_DATE, messages: [] },
-  { id: 'demo-4', title: 'Prompt Inference Cycle', createdAt: STATIC_DATE, messages: [] },
-  { id: 'demo-5', title: 'Semantic Layer Mapping', createdAt: STATIC_DATE, messages: [] },
-  { id: 'demo-6', title: 'Cognitive Load Test', createdAt: STATIC_DATE, messages: [] },
-  { id: 'demo-7', title: 'Memory Checkpoint', createdAt: STATIC_DATE, messages: [] },
+  {
+    id: 'demo-1',
+    title: 'Recursive Pattern Analysis',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Analyze the recursive patterns in this dataset' },
+      { role: 'assistant', content: 'CROW has identified several recursive patterns. The primary pattern shows a 3-level recursion depth with exponential branching at each level. This indicates a hierarchical structure in your data.' }
+    ]
+  },
+  {
+    id: 'demo-2',
+    title: 'Latent Vector Alignment',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'How do we align latent vectors?' },
+      { role: 'assistant', content: 'Latent vector alignment can be achieved through several methods: orthogonal Procrustes analysis, canonical correlation analysis, or learned alignment layers. For your use case, I recommend the orthogonal Procrustes approach for its computational efficiency.' }
+    ]
+  },
+  {
+    id: 'demo-3',
+    title: 'Context Window Expansion',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'What about expanding context windows?' },
+      { role: 'assistant', content: 'Context window expansion involves several techniques: attention caching, sparse attention patterns, and sliding window mechanisms. The choice depends on your latency requirements and memory constraints.' }
+    ]
+  },
+  {
+    id: 'demo-4',
+    title: 'Prompt Inference Cycle',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Explain the prompt inference cycle' },
+      { role: 'assistant', content: 'The prompt inference cycle consists of: input tokenization, embedding generation, multi-head attention computation, feed-forward network processing, and output token generation. Each cycle refines the model\'s understanding of context.' }
+    ]
+  },
+  {
+    id: 'demo-5',
+    title: 'Semantic Layer Mapping',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'How do we map semantic layers?' },
+      { role: 'assistant', content: 'Semantic layer mapping involves creating representations of relationships between concepts. We use graph-based structures and embedding spaces to capture these relationships, enabling better semantic understanding.' }
+    ]
+  },
+  {
+    id: 'demo-6',
+    title: 'Cognitive Load Test',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Run a cognitive load test' },
+      { role: 'assistant', content: 'Cognitive load test results show optimal performance at current token counts. The system maintains 94% accuracy with 52ms average latency across all test cases. No bottlenecks detected.' }
+    ]
+  },
+  {
+    id: 'demo-7',
+    title: 'Memory Checkpoint',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Create a memory checkpoint' },
+      { role: 'assistant', content: 'Memory checkpoint created successfully. Current state: 2.3GB allocated, 1.8GB in use. All critical parameters saved. You can resume from this point anytime.' }
+    ]
+  },
 ];
 
 export function ChatHistoryProvider({ children }: { children: ReactNode }) {

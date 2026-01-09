@@ -43,10 +43,10 @@ export function TeamFilterBar({
   };
 
   return (
-    <div className={cn('flex items-center gap-3', className)}>
+    <div className={cn('flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto', className)}>
       {/* Search Input */}
       <div
-        className="w-[384px] h-[38px] flex items-center rounded-lg overflow-hidden"
+        className="w-full md:w-[384px] h-[38px] flex items-center rounded-lg overflow-hidden"
         style={{
           background: 'rgba(255, 255, 255, 0.03)',
           outline: '1px rgba(255, 255, 255, 0.10) solid',
@@ -65,36 +65,39 @@ export function TeamFilterBar({
         />
       </div>
 
-      {/* Role Dropdown */}
-      <div
-        className="h-[38px] flex items-center rounded-lg"
-        style={{
-          background: 'rgba(255, 255, 255, 0.03)',
-          outline: '1px rgba(255, 255, 255, 0.10) solid',
-          outlineOffset: '-1px',
-        }}
-      >
-        <FilterDropdown
-          label="Role: All"
-          options={roleOptions}
-          {...(onRoleChange && { onChange: onRoleChange })}
-        />
-      </div>
+      {/* Filters Container */}
+      <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+        {/* Role Dropdown */}
+        <div
+          className="h-[38px] flex items-center rounded-lg"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            outline: '1px rgba(255, 255, 255, 0.10) solid',
+            outlineOffset: '-1px',
+          }}
+        >
+          <FilterDropdown
+            label="Role: All"
+            options={roleOptions}
+            {...(onRoleChange && { onChange: onRoleChange })}
+          />
+        </div>
 
-      {/* Status Dropdown */}
-      <div
-        className="h-[38px] flex items-center rounded-lg"
-        style={{
-          background: 'rgba(255, 255, 255, 0.03)',
-          outline: '1px rgba(255, 255, 255, 0.10) solid',
-          outlineOffset: '-1px',
-        }}
-      >
-        <FilterDropdown
-          label="Status: All"
-          options={statusOptions}
-          {...(onStatusChange && { onChange: onStatusChange })}
-        />
+        {/* Status Dropdown */}
+        <div
+          className="h-[38px] flex items-center rounded-lg"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            outline: '1px rgba(255, 255, 255, 0.10) solid',
+            outlineOffset: '-1px',
+          }}
+        >
+          <FilterDropdown
+            label="Status: All"
+            options={statusOptions}
+            {...(onStatusChange && { onChange: onStatusChange })}
+          />
+        </div>
       </div>
     </div>
   );

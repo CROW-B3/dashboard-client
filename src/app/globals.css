@@ -106,25 +106,74 @@
   }
 }
 
-/* Custom scrollbar */
-@layer utilities {
-  .scrollbar-custom::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
+/* Custom scrollbar - Subtle Dark Theme */
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-  .scrollbar-custom::-webkit-scrollbar-track {
-    background: transparent;
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  .scrollbar-custom::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-  }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
 
-  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Firefox - solid colors only */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+html {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+body {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Component-specific scrollbar styling for internal scrolling containers */
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+[class*="scroll"]::-webkit-scrollbar,
+.side-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track,
+[class*="scroll"]::-webkit-scrollbar-track,
+.side-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+[class*="scroll"]::-webkit-scrollbar-thumb,
+.side-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+[class*="scroll"]::-webkit-scrollbar-thumb:hover,
+.side-panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Selection styling */

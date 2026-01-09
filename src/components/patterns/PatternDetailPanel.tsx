@@ -1,8 +1,15 @@
 'use client';
 
-import type { MetricItem, PatternDetail, RelatedInteraction, TimelineItem } from './types';
+import type { MetricItem } from '@b3-crow/ui-kit';
+import type { PatternDetail, RelatedInteraction, TimelineItem } from './types';
 
-import { cn, SidePanel, SourceIcon } from '@b3-crow/ui-kit';
+import {
+  cn,
+  CONFIDENCE_CONFIG,
+  SEVERITY_CONFIG,
+  SidePanel,
+  SourceIcon,
+} from '@b3-crow/ui-kit';
 import {
   Activity,
   Bell,
@@ -20,48 +27,6 @@ export interface PatternDetailPanelProps {
   onClose: () => void;
 }
 
-const severityConfig = {
-  high: {
-    color: '#F87171',
-    bg: 'rgba(239, 68, 68, 0.10)',
-    border: 'rgba(239, 68, 68, 0.20)',
-    label: 'High Severity',
-  },
-  medium: {
-    color: '#FACC15',
-    bg: 'rgba(234, 179, 8, 0.10)',
-    border: 'rgba(234, 179, 8, 0.20)',
-    label: 'Medium Severity',
-  },
-  low: {
-    color: '#60A5FA',
-    bg: 'rgba(59, 130, 246, 0.10)',
-    border: 'rgba(59, 130, 246, 0.20)',
-    label: 'Low Severity',
-  },
-};
-
-const confidenceConfig = {
-  high: {
-    color: '#C4B5FD',
-    bg: 'rgba(139, 92, 246, 0.10)',
-    border: 'rgba(139, 92, 246, 0.20)',
-    label: 'High Confidence',
-  },
-  medium: {
-    color: '#D1D5DB',
-    bg: 'rgba(255, 255, 255, 0.05)',
-    border: 'rgba(255, 255, 255, 0.10)',
-    label: 'Medium Confidence',
-  },
-  low: {
-    color: '#9CA3AF',
-    bg: 'rgba(255, 255, 255, 0.05)',
-    border: 'rgba(255, 255, 255, 0.10)',
-    label: 'Low Confidence',
-  },
-};
-
 export function PatternDetailPanel({
   pattern,
   isOpen,
@@ -69,8 +34,8 @@ export function PatternDetailPanel({
 }: PatternDetailPanelProps) {
   if (!pattern) return null;
 
-  const severityStyle = severityConfig[pattern.severity];
-  const confidenceStyle = confidenceConfig[pattern.confidence];
+  const severityStyle = SEVERITY_CONFIG[pattern.severity];
+  const confidenceStyle = CONFIDENCE_CONFIG[pattern.confidence];
 
   return (
     <SidePanel
@@ -104,7 +69,7 @@ export function PatternDetailPanel({
 
 interface HeaderSectionProps {
   pattern: PatternDetail;
-  severityStyle: typeof severityConfig.high;
+  severityStyle: typeof SEVERITY_CONFIG.high;
 }
 
 function HeaderSection({ pattern, severityStyle }: HeaderSectionProps) {
@@ -144,7 +109,7 @@ function HeaderSection({ pattern, severityStyle }: HeaderSectionProps) {
 }
 
 interface ConfidenceSectionProps {
-  confidenceStyle: typeof confidenceConfig.high;
+  confidenceStyle: typeof CONFIDENCE_CONFIG.high;
 }
 
 function ConfidenceSection({ confidenceStyle }: ConfidenceSectionProps) {
