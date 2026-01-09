@@ -1,7 +1,15 @@
 'use client';
 
 import type { FilterOption } from '@b3-crow/ui-kit';
-import { cn, FilterDropdown } from '@b3-crow/ui-kit';
+
+import {
+  cn,
+  DEFAULT_SEVERITY_OPTIONS,
+  DEFAULT_SORT_OPTIONS,
+  DEFAULT_STORE_OPTIONS,
+  DEFAULT_TIME_OPTIONS,
+  FilterDropdown,
+} from '@b3-crow/ui-kit';
 
 export type SourceFilter = 'all' | 'web' | 'cctv' | 'social';
 
@@ -20,36 +28,6 @@ export interface PatternsFilterBarProps {
   className?: string;
 }
 
-const defaultSeverityOptions: FilterOption[] = [
-  { label: 'Severity: All', value: 'all' },
-  { label: 'High', value: 'high' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Low', value: 'low' },
-];
-
-const defaultStoreOptions: FilterOption[] = [
-  { label: 'Store: All', value: 'all' },
-  { label: 'NY-04', value: 'ny-04' },
-  { label: 'LA-01', value: 'la-01' },
-  { label: 'CH-02', value: 'ch-02' },
-  { label: 'Global Web', value: 'global-web' },
-];
-
-const defaultTimeOptions: FilterOption[] = [
-  { label: 'Time: 7d', value: '7d' },
-  { label: 'Today', value: 'today' },
-  { label: 'Yesterday', value: 'yesterday' },
-  { label: 'Last 24h', value: '24h' },
-  { label: 'Last 30d', value: '30d' },
-];
-
-const defaultSortOptions: FilterOption[] = [
-  { label: 'Sort: Most recent', value: 'recent' },
-  { label: 'Severity (High to Low)', value: 'severity-desc' },
-  { label: 'Severity (Low to High)', value: 'severity-asc' },
-  { label: 'Confidence', value: 'confidence' },
-];
-
 const sourceFilters: { label: string; value: SourceFilter }[] = [
   { label: 'Web', value: 'web' },
   { label: 'CCTV', value: 'cctv' },
@@ -58,10 +36,10 @@ const sourceFilters: { label: string; value: SourceFilter }[] = [
 ];
 
 export function PatternsFilterBar({
-  severityOptions = defaultSeverityOptions,
-  storeOptions = defaultStoreOptions,
-  timeOptions = defaultTimeOptions,
-  sortOptions = defaultSortOptions,
+  severityOptions = DEFAULT_SEVERITY_OPTIONS,
+  storeOptions = DEFAULT_STORE_OPTIONS,
+  timeOptions = DEFAULT_TIME_OPTIONS,
+  sortOptions = DEFAULT_SORT_OPTIONS,
   activeSource = 'all',
   onSeverityChange,
   onSourceChange,

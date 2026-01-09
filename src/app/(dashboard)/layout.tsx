@@ -9,8 +9,7 @@ import { ChatHistoryProvider, useChatHistory } from '@/contexts/ChatHistoryConte
 import { MobileSidebarProvider, useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
 const DashboardBackground = dynamic(
-  () => import('@b3-crow/ui-kit').then((mod) => mod.DashboardBackground),
-  { ssr: false }
+  () => import('@b3-crow/ui-kit').then((mod) => mod.DashboardBackground)
 );
 
 function DashboardContent({ children }: { children: React.ReactNode }) {

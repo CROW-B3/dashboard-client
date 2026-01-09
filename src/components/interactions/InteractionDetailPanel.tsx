@@ -1,9 +1,8 @@
 'use client';
 
-import type { SourceType } from '@b3-crow/ui-kit';
-import type { ConfidenceLevel } from './InteractionsTable';
+import type { ConfidenceLevel, MetricItem, SourceType } from '@b3-crow/ui-kit';
 
-import { cn, SidePanel, SourceIcon, Tag } from '@b3-crow/ui-kit';
+import { cn, CONFIDENCE_CONFIG, SidePanel, SourceIcon, Tag } from '@b3-crow/ui-kit';
 import { Activity, AlertCircle, Clock, ExternalLink, FileText, MapPin, TrendingUp } from 'lucide-react';
 
 export interface InteractionDetail {
@@ -35,39 +34,11 @@ export interface SourceDataItem {
   value: string;
 }
 
-export interface MetricItem {
-  label: string;
-  value: string;
-  change?: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
-}
-
 export interface InteractionDetailPanelProps {
   interaction: InteractionDetail | null;
   isOpen: boolean;
   onClose: () => void;
 }
-
-const confidenceConfig: Record<ConfidenceLevel, { color: string; bg: string; border: string; label: string }> = {
-  high: {
-    color: '#4ADE80',
-    bg: 'rgba(34, 197, 94, 0.10)',
-    border: 'rgba(34, 197, 94, 0.20)',
-    label: 'High Confidence',
-  },
-  medium: {
-    color: '#FACC15',
-    bg: 'rgba(234, 179, 8, 0.10)',
-    border: 'rgba(234, 179, 8, 0.20)',
-    label: 'Medium Confidence',
-  },
-  low: {
-    color: '#9CA3AF',
-    bg: 'rgba(107, 114, 128, 0.20)',
-    border: 'rgba(107, 114, 128, 0.30)',
-    label: 'Low Confidence',
-  },
-};
 
 export function InteractionDetailPanel({
   interaction,
@@ -76,7 +47,7 @@ export function InteractionDetailPanel({
 }: InteractionDetailPanelProps) {
   if (!interaction) return null;
 
-  const confidenceStyle = confidenceConfig[interaction.confidenceLevel];
+  const confidenceStyle = CONFIDENCE_CONFIG[interaction.confidenceLevel];
 
   return (
     <SidePanel
@@ -133,7 +104,7 @@ function HeaderSection({ interaction }: { interaction: InteractionDetail }) {
 
 interface ConfidenceSectionProps {
   interaction: InteractionDetail;
-  confidenceStyle: typeof confidenceConfig.high;
+  confidenceStyle: typeof CONFIDENCE_CONFIG.high;
 }
 
 function ConfidenceSection({ interaction, confidenceStyle }: ConfidenceSectionProps) {

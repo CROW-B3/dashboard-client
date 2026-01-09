@@ -1,9 +1,8 @@
 'use client';
 
-import type { SourceType } from '@b3-crow/ui-kit';
-import { cn, SourceIcon, Tag } from '@b3-crow/ui-kit';
+import type { ConfidenceLevel, SourceType } from '@b3-crow/ui-kit';
 
-export type ConfidenceLevel = 'high' | 'medium' | 'low';
+import { cn, CONFIDENCE_CONFIG, SourceIcon, Tag } from '@b3-crow/ui-kit';
 
 export interface InteractionData {
   id: string;
@@ -23,52 +22,108 @@ export interface InteractionsTableProps {
   className?: string;
 }
 
-const confidenceConfig: Record<ConfidenceLevel, { color: string; bg: string; border: string }> = {
-  high: {
-    color: '#4ADE80',
-    bg: 'rgba(34, 197, 94, 0.10)',
-    border: 'rgba(34, 197, 94, 0.20)',
-  },
-  medium: {
-    color: '#FACC15',
-    bg: 'rgba(234, 179, 8, 0.10)',
-    border: 'rgba(234, 179, 8, 0.20)',
-  },
-  low: {
-    color: '#9CA3AF',
-    bg: 'rgba(107, 114, 128, 0.20)',
-    border: 'rgba(107, 114, 128, 0.30)',
-  },
-};
-
 export function InteractionsTable({
   interactions,
   onRowClick,
   className,
 }: InteractionsTableProps) {
   return (
-    <div
-      className={cn('relative z-10 w-full rounded-xl overflow-hidden', className)}
-      style={{
-        background: 'rgba(10, 5, 20, 0.40)',
-        boxShadow: '0px 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        outline: '1px rgba(255, 255, 255, 0.08) solid',
-        outlineOffset: '-1px',
-        backdropFilter: 'blur(8px)',
-      }}
-    >
-      <TableHeader />
-      <div>
-        {interactions.map((interaction, index) => (
-          <InteractionRow
+    <>
+      {/* Desktop Table View */}
+      <div
+        className={cn('hidden md:block relative z-10 w-full rounded-xl overflow-hidden', className)}
+        style={{
+          background: 'rgba(10, 5, 20, 0.40)',
+          boxShadow: '0px 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          outline: '1px rgba(255, 255, 255, 0.08) solid',
+          outlineOffset: '-1px',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <TableHeader />
+        <div>
+          {interactions.map((interaction, index) => (
+            <InteractionRow
+              key={interaction.id}
+              interaction={interaction}
+              onClick={() => onRowClick?.(interaction)}
+              showBorder={index > 0}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {interactions.map((interaction) => (
+          <button
             key={interaction.id}
-            interaction={interaction}
+            type="button"
             onClick={() => onRowClick?.(interaction)}
-            showBorder={index > 0}
-          />
+            className="w-full p-4 rounded-lg text-left transition-colors hover:bg-white/[0.05]"
+            style={{
+              background: 'rgba(10, 5, 20, 0.40)',
+              outline: '1px rgba(255, 255, 255, 0.08) solid',
+              outlineOffset: '-1px',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            {/* Header with Source and Confidence */}
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex-1 min-w-0">
+                <SourceIcon source={interaction.source} />
+              </div>
+              <span
+                className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
+                style={{
+                  color: CONFIDENCE_CONFIG[interaction.confidenceLevel].color,
+                  background: CONFIDENCE_CONFIG[interaction.confidenceLevel].bg,
+                  outline: `1px ${CONFIDENCE_CONFIG[interaction.confidenceLevel].border} solid`,
+                  outlineOffset: '-1px',
+                }}
+              >
+                {interaction.confidence.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Title and Subtitle */}
+            <div className="mb-3">
+              <p
+                className="text-sm font-medium mb-1 break-words"
+                style={{ color: '#E5E7EB', lineHeight: '20px' }}
+              >
+                {interaction.title}
+              </p>
+              <p
+                className="text-xs break-words"
+                style={{ color: '#6B7280', lineHeight: '16px' }}
+              >
+                {interaction.subtitle}
+              </p>
+            </div>
+
+            {/* Metadata */}
+            <div className="space-y-2 mb-3 text-xs">
+              <div style={{ color: '#9CA3AF' }}>
+                <span className="text-gray-500">Store:</span> {interaction.storeSite}
+              </div>
+              <div style={{ color: '#9CA3AF' }}>
+                <span className="text-gray-500">Time:</span> {interaction.timestamp}
+              </div>
+            </div>
+
+            {/* Tags */}
+            {interaction.tags.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {interaction.tags.slice(0, 2).map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+              </div>
+            )}
+          </button>
         ))}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -110,7 +165,7 @@ interface InteractionRowProps {
 }
 
 function InteractionRow({ interaction, onClick, showBorder }: InteractionRowProps) {
-  const confidenceStyle = confidenceConfig[interaction.confidenceLevel];
+  const confidenceStyle = CONFIDENCE_CONFIG[interaction.confidenceLevel];
   const confidenceLabel = interaction.confidenceLevel === 'high' ? 'High' : interaction.confidenceLevel === 'medium' ? 'Med' : 'Low';
 
   return (

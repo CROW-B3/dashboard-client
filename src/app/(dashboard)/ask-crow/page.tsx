@@ -14,7 +14,7 @@ interface Message {
 }
 
 export default function AskCrowPage() {
-  const { createNewSession, addMessageToSession, activeSessionId } = useChatHistory();
+  const { createNewSession, addMessageToSession, activeSessionId, sessions } = useChatHistory();
   const { toggle } = useMobileSidebar();
   const [chatStarted, setChatStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,6 +24,25 @@ export default function AskCrowPage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load messages when a chat is clicked from sidebar
+  useEffect(() => {
+    if (!activeSessionId) return;
+
+    const activeSession = sessions.find(s => s.id === activeSessionId);
+    if (!activeSession) return;
+
+    if (activeSession.messages.length > 0) {
+      // Convert session messages to Message format
+      const loadedMessages: Message[] = activeSession.messages.map((msg, index) => ({
+        id: `msg-${activeSessionId}-${index}`,
+        role: msg.role,
+        content: msg.content,
+      }));
+      setMessages(loadedMessages);
+      setChatStarted(true);
+    }
+  }, [activeSessionId, sessions]);
 
   // Close attach menu when clicking outside
   useEffect(() => {
@@ -37,9 +56,9 @@ export default function AskCrowPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showAttachMenu]);
 
-  // Scroll to bottom when new messages arrive
+  // Scroll to bottom when new messages arrive (Lenis handles smooth scrolling)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView();
   }, [messages]);
 
   const handleCopy = useCallback(async (id: string, text: string) => {
