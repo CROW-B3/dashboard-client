@@ -12,6 +12,9 @@
   "observability": {
     "enabled": true,
   },
+  "vars": {
+    "ENVIRONMENT": "prod",
+  },
   "d1_databases": [
     {
       "binding": "DB_MAIN",
@@ -32,8 +35,17 @@
     },
   ],
   "placement": { "mode": "smart" },
+  "routes": [
+    { "pattern": "app.crowai.dev", "custom_domain": true }
+  ],
   "env": {
     "dev": {
+      "vars": {
+        "ENVIRONMENT": "dev",
+      },
+      "routes": [
+        { "pattern": "dev.app.crowai.dev", "custom_domain": true }
+      ],
       "d1_databases": [
         {
           "binding": "DB_MAIN",
@@ -53,6 +65,11 @@
           "id": "7863efdaa9c347e2bbd5bb303b88635a",
         },
       ],
+    },
+    "local": {
+      "vars": {
+        "ENVIRONMENT": "local",
+      },
     },
   },
 }
