@@ -1,7 +1,7 @@
 'use client';
 
-import { MobileSidebar, Sidebar, LenisProvider } from '@b3-crow/ui-kit';
 import type { NavItem } from '@b3-crow/ui-kit';
+import { LenisProvider, MobileSidebar, Sidebar } from '@b3-crow/ui-kit';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChatHistoryProvider, useChatHistory } from '@/contexts/ChatHistoryContext';

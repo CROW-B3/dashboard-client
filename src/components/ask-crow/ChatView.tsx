@@ -30,7 +30,7 @@ function MessagesContainer({
   isGenerating: boolean;
   copiedMessageId: string | null;
   onCopyMessage: (messageId: string, content: string) => void;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
     <div className="flex-1 overflow-y-auto py-6 space-y-6">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, use, useEffect, useState } from 'react';
 
 interface SidebarCollapseContextType {
   isCollapsed: boolean;
@@ -19,7 +19,7 @@ function getInitialCollapsedState(): boolean {
   }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'true' ? true : false;
+    return stored === 'true';
   } catch {
     return false;
   }
@@ -29,8 +29,9 @@ export function SidebarCollapseProvider({ children }: { children: React.ReactNod
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsCollapsed(getInitialCollapsedState());
+useEffect(() => {
+    const initialState = getInitialCollapsedState();
+    setIsCollapsed(initialState);
     setIsMounted(true);
   }, []);
 
@@ -47,15 +48,15 @@ export function SidebarCollapseProvider({ children }: { children: React.ReactNod
   const collapse = () => setIsCollapsed(true);
   const expand = () => setIsCollapsed(false);
 
-  return (
-    <SidebarCollapseContext.Provider value={{ isCollapsed, toggle, collapse, expand }}>
+return (
+    <SidebarCollapseContext value={{ isCollapsed, toggle, collapse, expand }}>
       {children}
-    </SidebarCollapseContext.Provider>
+    </SidebarCollapseContext>
   );
 }
 
 export function useSidebarCollapse(): SidebarCollapseContextType {
-  const context = useContext(SidebarCollapseContext);
+  const context = use(SidebarCollapseContext);
   if (context === undefined) {
     throw new Error('useSidebarCollapse must be used within SidebarCollapseProvider');
   }

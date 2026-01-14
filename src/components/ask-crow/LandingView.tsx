@@ -80,12 +80,12 @@ function SuggestedPromptsSection({ onPromptClick }: { onPromptClick: (prompt: st
 }
 
 function SearchBar({
-  onSubmit,
+  onQuerySubmit,
   showAttachMenu,
   onAttachMenuToggle,
   onAttachOption,
   attachMenuRef,
-}: Omit<LandingViewProps, 'isVisible'> & { onSubmit: (query: string) => void }) {
+}: Omit<LandingViewProps, 'isVisible'>) {
   return (
     <div className="w-full max-w-[672px] relative [&_button[aria-label='Submit']_svg]:rotate-[-90deg] [&_.absolute.left-4]:hidden">
       <div
@@ -96,10 +96,10 @@ function SearchBar({
         <AttachmentButton onClick={onAttachMenuToggle} />
         <AttachmentMenu isOpen={showAttachMenu} onOptionSelect={onAttachOption} onClose={onAttachMenuToggle} />
       </div>
-      <SearchInput
+<SearchInput
         className="w-full"
         placeholder={TEXT.SEARCH_PLACEHOLDER_LANDING}
-        onSubmit={onSubmit}
+        onSubmit={onQuerySubmit}
         showMicButton={false}
         helperText={TEXT.SEARCH_HELPER_TEXT}
       />
@@ -124,8 +124,8 @@ export function LandingView({
         <Title />
         <Subtitle />
         <SuggestedPromptsSection onPromptClick={onQuerySubmit} />
-        <SearchBar
-          onSubmit={onQuerySubmit}
+<SearchBar
+          onQuerySubmit={onQuerySubmit}
           showAttachMenu={showAttachMenu}
           onAttachMenuToggle={onAttachMenuToggle}
           onAttachOption={onAttachOption}

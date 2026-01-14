@@ -1,2 +1,2 @@
-export { LandingView } from './LandingView';
 export { ChatView } from './ChatView';
+export { LandingView } from './LandingView';
