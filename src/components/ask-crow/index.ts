@@ -1,2 +1,2 @@
-export * from './SuggestedPrompts';
-export * from './types';
+export { LandingView } from './LandingView';
+export { ChatView } from './ChatView';

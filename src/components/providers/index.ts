@@ -1,1 +1,0 @@
-export { LenisProvider } from './LenisProvider';

@@ -6,7 +6,7 @@
       "name": "dashboard-client",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.703.0",
-        "@b3-crow/ui-kit": "0.0.31-pr30.2",
+        "@b3-crow/ui-kit": "pr-preview",
         "@opennextjs/cloudflare": "^1.11.0",
         "@typescript-eslint/eslint-plugin": "^8.46.4",
         "@typescript-eslint/parser": "^8.46.4",
@@ -185,7 +185,7 @@
 
     "@aws/lambda-invoke-store": ["@aws/lambda-invoke-store@0.2.2", "", {}, "sha512-C0NBLsIqzDIae8HFw9YIrIBsbc0xTiOtt7fAukGPnqQ/+zZNaq+4jhuccltK0QuWHBnNm/a6kLIRA6GFiM10eg=="],
 
-    "@b3-crow/ui-kit": ["@b3-crow/ui-kit@0.0.31-pr30.2", "", { "dependencies": { "@radix-ui/react-slot": "^1.2.4", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "cobe": "^0.6.5", "framer-motion": "^12.23.26", "lucide-react": "^0.562.0", "react-icons": "^5.5.0", "tailwind-merge": "^3.4.0" }, "peerDependencies": { "react": "^19.2.0", "react-dom": "^19.2.0" } }, "sha512-JSNRcLf9FcWB1rLy94FoM2SPj86mSPaXJIxHfTqsK1KS3W6ZwAkpQq6TIOA3HlNKRhzrYV5HFV8MR8mLtqwC1Q=="],
+    "@b3-crow/ui-kit": ["@b3-crow/ui-kit@0.0.34-pr30.4", "", { "dependencies": { "@radix-ui/react-slot": "^1.2.4", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "cobe": "^0.6.5", "framer-motion": "^12.23.26", "lucide-react": "^0.542.0", "react-icons": "^5.5.0", "tailwind-merge": "^3.4.0" }, "peerDependencies": { "react": "^19.2.0", "react-dom": "^19.2.0" } }, "sha512-pfQd1I1Ifyrtt0/BdGagbmEXDz4YDD+wSHJEHvuDI/IiLJ28JW4nd1P0kmNrU8VksDmK4rKhobMncdsy+9Qmew=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.27.1", "", { "dependencies": { "@babel/helper-validator-identifier": "7.28.5", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg=="],
 
@@ -2200,6 +2200,8 @@
     "@aws-sdk/middleware-signing/@smithy/types": ["@smithy/types@2.12.0", "", { "dependencies": { "tslib": "2.8.1" } }, "sha512-QwYgloJ0sVNBeBuBs65cIkTbfzV/Q6ZNPCJ99EICFEdJYG50nGIY/uYXp+TbsdJReIuPr0a0kXmCvren3MbRRw=="],
 
     "@aws-sdk/middleware-signing/@smithy/util-middleware": ["@smithy/util-middleware@2.2.0", "", { "dependencies": { "@smithy/types": "2.12.0", "tslib": "2.8.1" } }, "sha512-L1qpleXf9QD6LwLCJ5jddGkgWyuSvWBkJwWAZ6kFkdifdso+sk3L3O1HdmPvCdnCK3IS4qWyPxev01QMnfHSBw=="],
+
+    "@b3-crow/ui-kit/lucide-react": ["lucide-react@0.542.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-w3hD8/SQB7+lzU2r4VdFyzzOzKnUjTZIF/MQJGSSvni7Llewni4vuViRppfRAa2guOsY5k4jZyxw/i9DQHv+dw=="],
 
     "@commitlint/config-validator/ajv": ["ajv@8.17.1", "", { "dependencies": { "fast-deep-equal": "3.1.3", "fast-uri": "3.1.0", "json-schema-traverse": "1.0.0", "require-from-string": "2.0.2" } }, "sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g=="],
 

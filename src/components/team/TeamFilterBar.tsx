@@ -14,22 +14,26 @@ export interface TeamFilterBarProps {
   className?: string;
 }
 
-const defaultRoleOptions: FilterOption[] = [
-  { label: 'Role: All', value: 'all' },
-  { label: 'Admin', value: 'admin' },
-  { label: 'Editor', value: 'editor' },
-  { label: 'Viewer', value: 'viewer' },
-];
+function getDefaultTeamRoleOptions(): FilterOption[] {
+  return [
+    { label: 'Role: All', value: 'all' },
+    { label: 'Admin', value: 'admin' },
+    { label: 'Editor', value: 'editor' },
+    { label: 'Viewer', value: 'viewer' },
+  ];
+}
 
-const defaultStatusOptions: FilterOption[] = [
-  { label: 'Status: All', value: 'all' },
-  { label: 'Active', value: 'active' },
-  { label: 'Invited', value: 'invited' },
-];
+function getDefaultTeamStatusOptions(): FilterOption[] {
+  return [
+    { label: 'Status: All', value: 'all' },
+    { label: 'Active', value: 'active' },
+    { label: 'Invited', value: 'invited' },
+  ];
+}
 
 export function TeamFilterBar({
-  roleOptions = defaultRoleOptions,
-  statusOptions = defaultStatusOptions,
+  roleOptions = getDefaultTeamRoleOptions(),
+  statusOptions = getDefaultTeamStatusOptions(),
   onRoleChange,
   onStatusChange,
   onSearch,
@@ -44,7 +48,6 @@ export function TeamFilterBar({
 
   return (
     <div className={cn('flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto', className)}>
-      {/* Search Input */}
       <div
         className="w-full md:w-[384px] h-[38px] flex items-center rounded-lg overflow-hidden"
         style={{
@@ -65,9 +68,7 @@ export function TeamFilterBar({
         />
       </div>
 
-      {/* Filters Container */}
       <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-        {/* Role Dropdown */}
         <div
           className="h-[38px] flex items-center rounded-lg"
           style={{
@@ -83,7 +84,6 @@ export function TeamFilterBar({
           />
         </div>
 
-        {/* Status Dropdown */}
         <div
           className="h-[38px] flex items-center rounded-lg"
           style={{

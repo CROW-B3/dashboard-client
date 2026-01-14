@@ -11,35 +11,40 @@ import Link from 'next/link';
 
 export type { Pattern, PatternsSectionProps };
 
-const defaultPatterns: Pattern[] = [
-  {
-    id: '1',
-    title: 'Checkout Drop-off Spike',
-    description: 'Unusual abandonment rate detected at step 3 payment gateway.',
-    severity: 'high',
-  },
-  {
-    id: '2',
-    title: 'Store A24 Traffic Anomalies',
-    description: 'Foot traffic mismatch with POS transactions during peak hours.',
-    severity: 'medium',
-  },
-  {
-    id: '3',
-    title: 'Positive Sentiment Surge',
-    description: 'Brand mentions increasing following the weekend campaign.',
-    severity: 'low',
-  },
-];
+function getDefaultPatterns(): Pattern[] {
+  return [
+    {
+      id: '1',
+      title: 'Checkout Drop-off Spike',
+      description: 'Unusual abandonment rate detected at step 3 payment gateway.',
+      severity: 'high',
+    },
+    {
+      id: '2',
+      title: 'Store A24 Traffic Anomalies',
+      description: 'Foot traffic mismatch with POS transactions during peak hours.',
+      severity: 'medium',
+    },
+    {
+      id: '3',
+      title: 'Positive Sentiment Surge',
+      description: 'Brand mentions increasing following the weekend campaign.',
+      severity: 'low',
+    },
+  ];
+}
 
-const severityStyles: Record<string, React.CSSProperties> = {
-  high: { background: 'rgba(139, 92, 246, 0.2)', color: '#C4B5FD' },
-  medium: { background: 'rgba(139, 92, 246, 0.15)', color: '#A78BFA' },
-  low: { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' },
-};
+function getSeverityBadgeStyles(severity: string): React.CSSProperties {
+  const styleMapping: Record<string, React.CSSProperties> = {
+    high: { background: 'rgba(139, 92, 246, 0.2)', color: '#C4B5FD' },
+    medium: { background: 'rgba(139, 92, 246, 0.15)', color: '#A78BFA' },
+    low: { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' },
+  };
+  return styleMapping[severity] || styleMapping.low;
+}
 
 export function PatternsSection({
-  patterns = defaultPatterns,
+  patterns = getDefaultPatterns(),
   onPatternClick,
 }: PatternsSectionProps) {
   return (
@@ -96,7 +101,7 @@ function SeverityBadge({ severity }: SeverityBadgeProps) {
   return (
     <span
       className="text-[8px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded uppercase tracking-wide leading-none flex-shrink-0"
-      style={severityStyles[severity]}
+      style={getSeverityBadgeStyles(severity)}
     >
       {severity}
     </span>

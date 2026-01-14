@@ -10,14 +10,45 @@ export interface TeamTableProps {
   className?: string;
 }
 
-const avatarColors = {
-  purple: { bg: 'rgba(76, 29, 149, 0.40)', text: '#FFFFFF' },
-  indigo: { bg: 'rgba(49, 46, 129, 0.40)', text: '#C7D2FE' },
-  blue: { bg: 'rgba(30, 58, 138, 0.40)', text: '#BFDBFE' },
-  default: { bg: 'rgba(76, 29, 149, 0.40)', text: '#FFFFFF' },
-} as const;
+type AvatarColorKey = 'purple' | 'indigo' | 'blue' | 'default';
 
-type AvatarColorKey = keyof typeof avatarColors;
+function getAvatarColorStyle(colorKey: string): { bg: string; text: string } {
+  const colorMapping: Record<string, { bg: string; text: string }> = {
+    purple: { bg: 'rgba(76, 29, 149, 0.40)', text: '#FFFFFF' },
+    indigo: { bg: 'rgba(49, 46, 129, 0.40)', text: '#C7D2FE' },
+    blue: { bg: 'rgba(30, 58, 138, 0.40)', text: '#BFDBFE' },
+    default: { bg: 'rgba(76, 29, 149, 0.40)', text: '#FFFFFF' },
+  };
+  return colorMapping[colorKey] || colorMapping.default;
+}
+
+function renderInvitedMemberAvatar(): JSX.Element {
+  return (
+    <div
+      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+      style={{ outline: '1px #4B5563 solid', outlineOffset: '-1px' }}
+    >
+      <User size={16} color="#6B7280" />
+    </div>
+  );
+}
+
+function renderActiveMemberAvatar(colorKey: string, initials: string): JSX.Element {
+  const avatarStyle = getAvatarColorStyle(colorKey);
+  return (
+    <div
+      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+      style={{
+        background: avatarStyle.bg,
+        boxShadow: '0px 0px 0px 1px rgba(255, 255, 255, 0.10)',
+      }}
+    >
+      <span className="text-xs font-semibold" style={{ color: avatarStyle.text }}>
+        {initials}
+      </span>
+    </div>
+  );
+}
 
 export function TeamTable({
   members,
@@ -26,7 +57,6 @@ export function TeamTable({
 }: TeamTableProps) {
   return (
     <>
-      {/* Desktop Table View */}
       <div
         className={cn('hidden md:block relative z-10 w-full rounded-xl overflow-hidden', className)}
         style={{
@@ -50,7 +80,6 @@ export function TeamTable({
         </div>
       </div>
 
-      {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {members.map((member) => (
           <button
@@ -65,7 +94,6 @@ export function TeamTable({
               backdropFilter: 'blur(8px)',
             }}
           >
-            {/* Header with member info and status */}
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <TeamMemberAvatar member={member} />
@@ -89,7 +117,6 @@ export function TeamTable({
               </div>
             </div>
 
-            {/* Last Active */}
             {member.lastActive && (
               <div className="text-xs" style={{ color: '#6B7280' }}>
                 <span className="text-gray-500">Last active: </span>
@@ -104,30 +131,11 @@ export function TeamTable({
 }
 
 function TeamMemberAvatar({ member }: { member: TeamMember }) {
-  const isInvited = member.status === 'invited';
-  const colorKey = (member.avatarColor || 'default') as AvatarColorKey;
-  const avatarStyle = avatarColors[colorKey] || avatarColors.default;
-
-  return isInvited ? (
-    <div
-      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-      style={{ outline: '1px #4B5563 solid', outlineOffset: '-1px' }}
-    >
-      <User size={16} color="#6B7280" />
-    </div>
-  ) : (
-    <div
-      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-      style={{
-        background: avatarStyle.bg,
-        boxShadow: '0px 0px 0px 1px rgba(255, 255, 255, 0.10)',
-      }}
-    >
-      <span className="text-xs font-semibold" style={{ color: avatarStyle.text }}>
-        {member.initials}
-      </span>
-    </div>
-  );
+  if (member.status === 'invited') {
+    return renderInvitedMemberAvatar();
+  }
+  const colorKey = member.avatarColor || 'default';
+  return renderActiveMemberAvatar(colorKey, member.initials);
 }
 
 function TableHeader() {
@@ -163,8 +171,10 @@ interface MemberRowProps {
 
 function MemberRow({ member, onClick, showBorder }: MemberRowProps) {
   const isInvited = member.status === 'invited';
-  const colorKey = (member.avatarColor || 'default') as AvatarColorKey;
-  const avatarStyle = avatarColors[colorKey] || avatarColors.default;
+  const colorKey = member.avatarColor || 'default';
+  const memberAvatarElement = isInvited
+    ? renderInvitedMemberAvatar()
+    : renderActiveMemberAvatar(colorKey, member.initials);
 
   return (
     <button
@@ -172,34 +182,14 @@ function MemberRow({ member, onClick, showBorder }: MemberRowProps) {
       onClick={onClick}
       className={cn(
         'w-full h-[57px] flex items-center px-6 text-left transition-colors hover:bg-white/[0.02]',
-        showBorder && 'border-t'
+        showBorder && 'border-t',
       )}
       style={{
         borderColor: showBorder ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
       }}
     >
-      {/* Member */}
       <div className="flex-1 min-w-0 flex items-center gap-3">
-        {isInvited ? (
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-            style={{ outline: '1px #4B5563 solid', outlineOffset: '-1px' }}
-          >
-            <User size={16} color="#6B7280" />
-          </div>
-        ) : (
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-            style={{
-              background: avatarStyle.bg,
-              boxShadow: '0px 0px 0px 1px rgba(255, 255, 255, 0.10)',
-            }}
-          >
-            <span className="text-xs font-semibold" style={{ color: avatarStyle.text }}>
-              {member.initials}
-            </span>
-          </div>
-        )}
+        {memberAvatarElement}
         <span
           className={cn('text-sm font-medium truncate', isInvited && 'italic')}
           style={{ color: isInvited ? '#9CA3AF' : '#FFFFFF' }}
@@ -208,7 +198,6 @@ function MemberRow({ member, onClick, showBorder }: MemberRowProps) {
         </span>
       </div>
 
-      {/* Email */}
       <div className="flex-1 min-w-0">
         <span
           className={cn('text-sm truncate', isInvited && 'italic')}
@@ -218,12 +207,10 @@ function MemberRow({ member, onClick, showBorder }: MemberRowProps) {
         </span>
       </div>
 
-      {/* Status */}
       <div className="flex-1 min-w-0">
         <StatusBadge status={member.status} />
       </div>
 
-      {/* Last Active */}
       <div className="flex-1 min-w-0">
         <span className="text-sm" style={{ color: member.lastActive ? '#9CA3AF' : '#4B5563' }}>
           {member.lastActive || '—'}

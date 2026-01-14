@@ -40,8 +40,6 @@ function extractTitleFromPrompt(prompt: string): string {
   return title.length > 30 ? `${title.slice(0, 27)}...` : title || 'New Chat';
 }
 
-// Demo chats to show initially (from Figma design)
-// Using static date to avoid hydration mismatch
 const STATIC_DATE = new Date('2024-01-01T00:00:00.000Z');
 const demoSessions: ChatSession[] = [
   {
@@ -144,7 +142,6 @@ export function ChatHistoryProvider({ children }: { children: ReactNode }) {
       const filtered = prev.filter((session) => session.id !== id);
       return filtered;
     });
-    // If the deleted session was active, clear the active session
     setActiveSessionId((prevActiveId) =>
       prevActiveId === id ? null : prevActiveId
     );
@@ -162,7 +159,6 @@ export function ChatHistoryProvider({ children }: { children: ReactNode }) {
             messages: [...session.messages, newMessage],
           };
 
-          // Update title from first user message if it's still "New Chat"
           if (
             role === 'user' &&
             session.messages.length === 0 &&

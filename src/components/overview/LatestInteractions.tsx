@@ -12,39 +12,42 @@ import Link from 'next/link';
 
 export type { Interaction, LatestInteractionsProps };
 
-const iconComponents = {
-  store: Store,
-  globe: Globe,
-  video: Video,
-};
+function getInteractionIconComponent(
+  iconType: string,
+): React.ComponentType<{ size: number; className: string; strokeWidth: number }> {
+  const iconMapping = { store: Store, globe: Globe, video: Video };
+  return iconMapping[iconType as keyof typeof iconMapping];
+}
 
-const defaultInteractions: Interaction[] = [
-  {
-    id: '1',
-    title: 'Inventory Discrepancy',
-    icon: 'store',
-    location: 'Store NY-04',
-    time: '14 mins ago',
-    isHighlighted: true,
-  },
-  {
-    id: '2',
-    title: 'Social Negative Spike',
-    icon: 'globe',
-    location: 'Global / Twitter',
-    time: '42 mins ago',
-  },
-  {
-    id: '3',
-    title: 'Queue Wait Time > 15m',
-    icon: 'video',
-    location: 'Store LDN-02',
-    time: '1 hr ago',
-  },
-];
+function getDefaultLatestInteractions(): Interaction[] {
+  return [
+    {
+      id: '1',
+      title: 'Inventory Discrepancy',
+      icon: 'store',
+      location: 'Store NY-04',
+      time: '14 mins ago',
+      isHighlighted: true,
+    },
+    {
+      id: '2',
+      title: 'Social Negative Spike',
+      icon: 'globe',
+      location: 'Global / Twitter',
+      time: '42 mins ago',
+    },
+    {
+      id: '3',
+      title: 'Queue Wait Time > 15m',
+      icon: 'video',
+      location: 'Store LDN-02',
+      time: '1 hr ago',
+    },
+  ];
+}
 
 export function LatestInteractions({
-  interactions = defaultInteractions,
+  interactions = getDefaultLatestInteractions(),
   onInteractionClick,
 }: LatestInteractionsProps) {
   return (
@@ -74,7 +77,7 @@ interface InteractionItemProps {
 }
 
 function InteractionItem({ interaction, onClick }: InteractionItemProps) {
-  const IconComponent = iconComponents[interaction.icon];
+  const IconComponent = getInteractionIconComponent(interaction.icon);
 
   return (
     <ListItem

@@ -2,21 +2,22 @@
 
 import type { AskCrowCTAProps } from './types';
 
-import { GlassPanel } from '@b3-crow/ui-kit';
+import { GlassPanel, SuggestionChip } from '@b3-crow/ui-kit';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { SuggestedPrompts } from '@/components/ask-crow';
 
 export type { AskCrowCTAProps };
 
-const defaultPrompts = [
-  'Why did conversion drop?',
-  'Summarize friction signals',
-  'Show top anomalies',
-];
+function getDefaultAskCrowPrompts(): string[] {
+  return [
+    'Why did conversion drop?',
+    'Summarize friction signals',
+    'Show top anomalies',
+  ];
+}
 
 export function AskCrowCTA({
-  suggestedPrompts = defaultPrompts,
+  suggestedPrompts = getDefaultAskCrowPrompts(),
   onPromptClick,
 }: AskCrowCTAProps) {
   return (
@@ -63,9 +64,9 @@ function ContentSection({
       </p>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <SuggestedPrompts
-          prompts={suggestedPrompts}
-          {...(onPromptClick && { onPromptClick })}
+        <SuggestionChip
+          suggestions={suggestedPrompts}
+          {...(onPromptClick && { onSuggestionClick: onPromptClick })}
         />
         <span className="text-[10px] text-gray-600 hidden sm:inline ml-2">
           Opens the Ask CROW workspace.

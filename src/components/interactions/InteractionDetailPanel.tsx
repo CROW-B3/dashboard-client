@@ -191,20 +191,27 @@ function EvidenceSection({ evidence }: { evidence: EvidenceItem[] }) {
   );
 }
 
+function getEvidenceIconStyles(type: EvidenceItem['type']): {
+  bgClass: string;
+  textClass: string;
+  label: string;
+} {
+  const styleMapping: Record<EvidenceItem['type'], { bgClass: string; textClass: string; label: string }> = {
+    screenshot: { bgClass: 'bg-blue-500/20', textClass: 'text-blue-400', label: 'IMG' },
+    video: { bgClass: 'bg-red-500/20', textClass: 'text-red-400', label: 'VID' },
+    log: { bgClass: 'bg-green-500/20', textClass: 'text-green-400', label: 'LOG' },
+    document: { bgClass: 'bg-purple-500/20', textClass: 'text-purple-400', label: 'DOC' },
+  };
+  return styleMapping[type];
+}
+
 function EvidenceIcon({ type }: { type: EvidenceItem['type'] }) {
-  const iconClasses = 'w-4 h-4';
-  switch (type) {
-    case 'screenshot':
-      return <div className={cn(iconClasses, 'rounded bg-blue-500/20 flex items-center justify-center')}><span className="text-[8px] text-blue-400">IMG</span></div>;
-    case 'video':
-      return <div className={cn(iconClasses, 'rounded bg-red-500/20 flex items-center justify-center')}><span className="text-[8px] text-red-400">VID</span></div>;
-    case 'log':
-      return <div className={cn(iconClasses, 'rounded bg-green-500/20 flex items-center justify-center')}><span className="text-[8px] text-green-400">LOG</span></div>;
-    case 'document':
-      return <div className={cn(iconClasses, 'rounded bg-purple-500/20 flex items-center justify-center')}><span className="text-[8px] text-purple-400">DOC</span></div>;
-    default:
-      return null;
-  }
+  const styles = getEvidenceIconStyles(type);
+  return (
+    <div className={cn('w-4 h-4 rounded flex items-center justify-center', styles.bgClass)}>
+      <span className={cn('text-[8px]', styles.textClass)}>{styles.label}</span>
+    </div>
+  );
 }
 
 function SourceDataSection({ sourceData }: { sourceData: SourceDataItem[] }) {

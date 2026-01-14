@@ -22,6 +22,28 @@ export interface InteractionsTableProps {
   className?: string;
 }
 
+interface TableColumn {
+  label: string;
+  width: string;
+  left?: string;
+}
+
+function getInteractionsTableColumns(): TableColumn[] {
+  return [
+    { label: 'Source', width: 'w-[92px]', left: 'left-6' },
+    { label: 'Interaction Summary', width: 'flex-1' },
+    { label: 'Store / Site', width: 'w-[140px]' },
+    { label: 'Timestamp', width: 'w-[100px]' },
+    { label: 'Confidence', width: 'w-[100px]' },
+    { label: 'Tags', width: 'w-[150px]' },
+  ];
+}
+
+function getConfidenceLevelLabel(confidenceLevel: ConfidenceLevel): string {
+  const labelMapping: Record<ConfidenceLevel, string> = { high: 'High', medium: 'Med', low: 'Low' };
+  return labelMapping[confidenceLevel];
+}
+
 export function InteractionsTable({
   interactions,
   onRowClick,
@@ -29,7 +51,6 @@ export function InteractionsTable({
 }: InteractionsTableProps) {
   return (
     <>
-      {/* Desktop Table View */}
       <div
         className={cn('hidden md:block relative z-10 w-full rounded-xl overflow-hidden', className)}
         style={{
@@ -53,7 +74,6 @@ export function InteractionsTable({
         </div>
       </div>
 
-      {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {interactions.map((interaction) => (
           <button
@@ -68,7 +88,6 @@ export function InteractionsTable({
               backdropFilter: 'blur(8px)',
             }}
           >
-            {/* Header with Source and Confidence */}
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex-1 min-w-0">
                 <SourceIcon source={interaction.source} />
@@ -86,7 +105,6 @@ export function InteractionsTable({
               </span>
             </div>
 
-            {/* Title and Subtitle */}
             <div className="mb-3">
               <p
                 className="text-sm font-medium mb-1 break-words"
@@ -102,7 +120,6 @@ export function InteractionsTable({
               </p>
             </div>
 
-            {/* Metadata */}
             <div className="space-y-2 mb-3 text-xs">
               <div style={{ color: '#9CA3AF' }}>
                 <span className="text-gray-500">Store:</span> {interaction.storeSite}
@@ -112,7 +129,6 @@ export function InteractionsTable({
               </div>
             </div>
 
-            {/* Tags */}
             {interaction.tags.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 {interaction.tags.slice(0, 2).map((tag) => (
@@ -128,14 +144,7 @@ export function InteractionsTable({
 }
 
 function TableHeader() {
-  const columns = [
-    { label: 'Source', width: 'w-[92px]', left: 'left-6' },
-    { label: 'Interaction Summary', width: 'flex-1' },
-    { label: 'Store / Site', width: 'w-[140px]' },
-    { label: 'Timestamp', width: 'w-[100px]' },
-    { label: 'Confidence', width: 'w-[100px]' },
-    { label: 'Tags', width: 'w-[150px]' },
-  ];
+  const columns = getInteractionsTableColumns();
 
   return (
     <div
@@ -166,7 +175,7 @@ interface InteractionRowProps {
 
 function InteractionRow({ interaction, onClick, showBorder }: InteractionRowProps) {
   const confidenceStyle = CONFIDENCE_CONFIG[interaction.confidenceLevel];
-  const confidenceLabel = interaction.confidenceLevel === 'high' ? 'High' : interaction.confidenceLevel === 'medium' ? 'Med' : 'Low';
+  const confidenceLabel = getConfidenceLevelLabel(interaction.confidenceLevel);
 
   return (
     <button

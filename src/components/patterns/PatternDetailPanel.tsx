@@ -75,7 +75,6 @@ interface HeaderSectionProps {
 function HeaderSection({ pattern, severityStyle }: HeaderSectionProps) {
   return (
     <div className="space-y-3">
-      {/* Severity Badge */}
       <div className="flex items-center justify-between">
         <span
           className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide"
@@ -92,7 +91,6 @@ function HeaderSection({ pattern, severityStyle }: HeaderSectionProps) {
         )}
       </div>
 
-      {/* Metadata */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-1.5 text-sm" style={{ color: '#9CA3AF' }}>
           <MapPin size={14} />

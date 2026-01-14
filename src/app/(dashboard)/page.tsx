@@ -9,65 +9,7 @@ import {
 } from '@/components/overview';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
-export default function DashboardPage() {
-  const { toggle } = useMobileSidebar();
-
-  return (
-    <>
-      <Header
-        orgName="Global Retail Ops"
-        dateRange="Last 7 days"
-        userInitials="SJ"
-        showNotification={true}
-        onMenuClick={toggle}
-        logoSrc="/favicon.webp"
-      />
-
-      <div className="relative z-10 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
-        <div className="max-w-[1400px] mx-auto">
-          <PageHeader />
-
-          <MetricsSection />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <PatternsSection />
-            <LatestInteractions />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <DataSourceStatus
-              icon="web"
-              name="Web"
-              isActive={true}
-              statusText="Connected • Ingesting"
-              lastUpdate="2ms ago"
-            />
-            <DataSourceStatus
-              icon="cctv"
-              name="CCTV"
-              isActive={true}
-              statusText="Connected • 42 Cameras"
-              lastUpdate="Live"
-            />
-            <DataSourceStatus
-              icon="social"
-              name="Social"
-              isActive={false}
-              statusText="Connected • Tracking"
-              lastUpdate="12s ago"
-            />
-          </div>
-
-          <div className="mb-6 sm:mb-8">
-            <AskCrowCTA />
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function PageHeader() {
+function createPageHeaderElement() {
   return (
     <div className="relative mb-6 sm:mb-8">
       <h1 className="mb-1 text-xl sm:text-2xl font-bold leading-7 sm:leading-8 text-white">
@@ -83,7 +25,7 @@ function PageHeader() {
   );
 }
 
-function MetricsSection() {
+function createMetricsGridSection() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
       <MetricsCard
@@ -119,5 +61,65 @@ function MetricsSection() {
         chartColor="gray"
       />
     </div>
+  );
+}
+
+function createDataSourceStatusGridSection() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <DataSourceStatus
+        icon="web"
+        name="Web"
+        isActive={true}
+        statusText="Connected • Ingesting"
+        lastUpdate="2ms ago"
+      />
+      <DataSourceStatus
+        icon="cctv"
+        name="CCTV"
+        isActive={true}
+        statusText="Connected • 42 Cameras"
+        lastUpdate="Live"
+      />
+      <DataSourceStatus
+        icon="social"
+        name="Social"
+        isActive={false}
+        statusText="Connected • Tracking"
+        lastUpdate="12s ago"
+      />
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const { toggle } = useMobileSidebar();
+
+  return (
+    <>
+      <Header
+        orgName="Global Retail Ops"
+        dateRange="Last 7 days"
+        userInitials="SJ"
+        showNotification={true}
+        onMenuClick={toggle}
+        logoSrc="/favicon.webp"
+      />
+
+      <div className="relative z-10 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto">
+          {createPageHeaderElement()}
+          {createMetricsGridSection()}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <PatternsSection />
+            <LatestInteractions />
+          </div>
+          {createDataSourceStatusGridSection()}
+          <div className="mb-6 sm:mb-8">
+            <AskCrowCTA />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

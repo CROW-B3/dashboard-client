@@ -28,12 +28,19 @@ export interface PatternsFilterBarProps {
   className?: string;
 }
 
-const sourceFilters: { label: string; value: SourceFilter }[] = [
-  { label: 'Web', value: 'web' },
-  { label: 'CCTV', value: 'cctv' },
-  { label: 'Social', value: 'social' },
-  { label: 'All', value: 'all' },
-];
+interface SourceFilterOption {
+  label: string;
+  value: SourceFilter;
+}
+
+function getPatternSourceFilters(): SourceFilterOption[] {
+  return [
+    { label: 'Web', value: 'web' },
+    { label: 'CCTV', value: 'cctv' },
+    { label: 'Social', value: 'social' },
+    { label: 'All', value: 'all' },
+  ];
+}
 
 export function PatternsFilterBar({
   severityOptions = DEFAULT_SEVERITY_OPTIONS,
@@ -62,7 +69,6 @@ export function PatternsFilterBar({
         backdropFilter: 'blur(6px)',
       }}
     >
-      {/* Severity Dropdown with border */}
       <div className="pr-3 border-r border-white/5 shrink-0">
         <FilterDropdown
           label="Severity: All"
@@ -71,7 +77,6 @@ export function PatternsFilterBar({
         />
       </div>
 
-      {/* Source Toggle Tabs */}
       <div
         className="h-[34px] flex items-center gap-0 px-[3px] rounded-lg shrink-0"
         style={{
@@ -80,7 +85,7 @@ export function PatternsFilterBar({
           outlineOffset: '-1px',
         }}
       >
-        {sourceFilters.map((filter) => (
+        {getPatternSourceFilters().map((filter) => (
           <button
             key={filter.value}
             type="button"
@@ -105,7 +110,6 @@ export function PatternsFilterBar({
         ))}
       </div>
 
-      {/* Store Dropdown */}
       <div className="shrink-0 hidden sm:block">
         <FilterDropdown
           label="Store: All"
@@ -114,7 +118,6 @@ export function PatternsFilterBar({
         />
       </div>
 
-      {/* Time Dropdown */}
       <div className="shrink-0 hidden sm:block">
         <FilterDropdown
           label="Time: 7d"
@@ -125,7 +128,6 @@ export function PatternsFilterBar({
 
       <div className="flex-1 min-w-2" />
 
-      {/* Right side: Sort + Export */}
       <div className="flex items-center gap-2 pl-2 border-l border-white/5 shrink-0">
         <div className="hidden lg:block">
           <FilterDropdown

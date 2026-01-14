@@ -30,14 +30,16 @@ export interface InteractionsFilterBarProps {
   className?: string;
 }
 
-const defaultActiveTags: string[] = ['Active'];
+function getDefaultInteractionActiveTags(): string[] {
+  return ['Active'];
+}
 
 export function InteractionsFilterBar({
   dateRangeOptions = DEFAULT_DATE_RANGE_OPTIONS,
   sourceOptions = DEFAULT_SOURCE_OPTIONS,
   siteOptions = DEFAULT_SITE_OPTIONS,
   severityOptions = DEFAULT_SEVERITY_OPTIONS,
-  activeTags = defaultActiveTags,
+  activeTags = getDefaultInteractionActiveTags(),
   onDateRangeChange,
   onSourceChange,
   onSiteChange,

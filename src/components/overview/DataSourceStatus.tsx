@@ -8,11 +8,39 @@ import { cn } from '@/lib/utils';
 
 export type { DataSourceStatusProps };
 
-const iconComponents = {
-  web: Globe,
-  cctv: Video,
-  social: Hash,
-};
+function getDataSourceIconComponent(
+  iconType: string,
+): React.ComponentType<{ size: number; className: string; strokeWidth: number }> {
+  const iconMapping = { web: Globe, cctv: Video, social: Hash };
+  return iconMapping[iconType as keyof typeof iconMapping];
+}
+
+interface IconBadgeProps {
+  Icon: React.ComponentType<{ size: number; className: string; strokeWidth: number }>;
+}
+
+function IconBadge({ Icon }: IconBadgeProps) {
+  return (
+    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-800/50 border border-white/5">
+      <Icon size={14} className="text-gray-400 sm:w-4 sm:h-4" strokeWidth={2} />
+    </div>
+  );
+}
+
+interface StatusDotProps {
+  isActive: boolean;
+}
+
+function StatusDot({ isActive }: StatusDotProps) {
+  return (
+    <div
+      className={cn(
+        'w-1.5 h-1.5 rounded-full flex-shrink-0',
+        isActive ? 'bg-violet-500' : 'bg-gray-500',
+      )}
+    />
+  );
+}
 
 export function DataSourceStatus({
   icon,
@@ -21,7 +49,7 @@ export function DataSourceStatus({
   statusText,
   lastUpdate,
 }: DataSourceStatusProps) {
-  const IconComponent = iconComponents[icon];
+  const IconComponent = getDataSourceIconComponent(icon);
 
   return (
     <GlassPanel
@@ -46,32 +74,5 @@ export function DataSourceStatus({
         {lastUpdate}
       </span>
     </GlassPanel>
-  );
-}
-
-interface IconBadgeProps {
-  Icon: React.ComponentType<{ size: number; className: string; strokeWidth: number }>;
-}
-
-function IconBadge({ Icon }: IconBadgeProps) {
-  return (
-    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-800/50 border border-white/5">
-      <Icon size={14} className="text-gray-400 sm:w-4 sm:h-4" strokeWidth={2} />
-    </div>
-  );
-}
-
-interface StatusDotProps {
-  isActive: boolean;
-}
-
-function StatusDot({ isActive }: StatusDotProps) {
-  return (
-    <div
-      className={cn(
-        'w-1.5 h-1.5 rounded-full flex-shrink-0',
-        isActive ? 'bg-violet-500' : 'bg-gray-500'
-      )}
-    />
   );
 }
