@@ -1,9 +1,9 @@
 'use client';
 
+import type { AttachmentMenuProps } from './types';
 import { FileText, ImageIcon, Link2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { ATTACH_MENU_OPTIONS, COLORS } from './constants';
-import type { AttachmentMenuProps } from './types';
 
 const ICON_COMPONENTS = {
   FileText,

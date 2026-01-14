@@ -40,7 +40,7 @@ function getSeverityBadgeStyles(severity: string): React.CSSProperties {
     medium: { background: 'rgba(139, 92, 246, 0.15)', color: '#A78BFA' },
     low: { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' },
   };
-  return styleMapping[severity] || styleMapping.low;
+  return styleMapping[severity] || (styleMapping as any).low || { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' };
 }
 
 export function PatternsSection({

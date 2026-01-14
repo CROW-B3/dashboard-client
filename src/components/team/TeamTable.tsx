@@ -10,7 +10,7 @@ export interface TeamTableProps {
   className?: string;
 }
 
-type AvatarColorKey = 'purple' | 'indigo' | 'blue' | 'default';
+type _AvatarColorKey = 'purple' | 'indigo' | 'blue' | 'default';
 
 function getAvatarColorStyle(colorKey: string): { bg: string; text: string } {
   const colorMapping: Record<string, { bg: string; text: string }> = {
@@ -19,10 +19,10 @@ function getAvatarColorStyle(colorKey: string): { bg: string; text: string } {
     blue: { bg: 'rgba(30, 58, 138, 0.40)', text: '#BFDBFE' },
     default: { bg: 'rgba(76, 29, 149, 0.40)', text: '#FFFFFF' },
   };
-  return colorMapping[colorKey] || colorMapping.default;
+  return colorMapping[colorKey] || (colorMapping as any).default || { bg: 'rgba(76, 29, 149, 0.40)', text: '#FFFFFF' };
 }
 
-function renderInvitedMemberAvatar(): JSX.Element {
+function renderInvitedMemberAvatar(): React.ReactElement {
   return (
     <div
       className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
@@ -33,7 +33,7 @@ function renderInvitedMemberAvatar(): JSX.Element {
   );
 }
 
-function renderActiveMemberAvatar(colorKey: string, initials: string): JSX.Element {
+function renderActiveMemberAvatar(colorKey: string, initials: string): React.ReactElement {
   const avatarStyle = getAvatarColorStyle(colorKey);
   return (
     <div

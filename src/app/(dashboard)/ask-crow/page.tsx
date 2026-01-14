@@ -1,14 +1,14 @@
 'use client';
 
+import type { Message } from '@/components/ask-crow/types';
 import { Header } from '@b3-crow/ui-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatView } from '@/components/ask-crow/ChatView';
+import { ANIMATION_DURATIONS } from '@/components/ask-crow/constants';
 import { LandingView } from '@/components/ask-crow/LandingView';
+import { createAssistantMessage, createUserMessage, isValidQuery, loadSessionMessages } from '@/components/ask-crow/utils';
 import { useChatHistory } from '@/contexts/ChatHistoryContext';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
-import { ANIMATION_DURATIONS } from '@/components/ask-crow/constants';
-import { createAssistantMessage, createUserMessage, isValidQuery, loadSessionMessages } from '@/components/ask-crow/utils';
-import type { Message } from '@/components/ask-crow/types';
 
 export default function AskCrowPage() {
   const { createNewSession, addMessageToSession, activeSessionId, sessions } = useChatHistory();
