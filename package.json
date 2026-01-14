@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.703.0",
-    "@b3-crow/ui-kit": "file:.yalc/@b3-crow/ui-kit",
+    "@b3-crow/ui-kit": "^0.0.35-preview",
     "@opennextjs/cloudflare": "^1.11.0",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
