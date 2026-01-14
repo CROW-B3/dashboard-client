@@ -1,9 +1,9 @@
 'use client';
 
 import { SearchInput, SuggestionChip } from '@b3-crow/ui-kit';
-import { COLORS, LAYOUT, TEXT } from './constants';
 import { AttachmentButton } from './AttachmentButton';
 import { AttachmentMenu } from './AttachmentMenu';
+import { COLORS, LAYOUT, TEXT } from './constants';
 
 const SUGGESTED_PROMPTS = [
   'Analyze recent patterns',
@@ -18,7 +18,7 @@ interface LandingViewProps {
   showAttachMenu: boolean;
   onAttachMenuToggle: () => void;
   onAttachOption: (type: string) => void;
-  attachMenuRef: React.RefObject<HTMLDivElement>;
+  attachMenuRef: React.RefObject<HTMLDivElement | null>;
 }
 
 function SystemStatus() {
