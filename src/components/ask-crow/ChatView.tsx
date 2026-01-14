@@ -1,11 +1,11 @@
 'use client';
 
-import { SearchInput, GeneratingState, MessageBubble } from '@b3-crow/ui-kit';
+import type { Message } from './types';
+import { GeneratingState, MessageBubble, SearchInput } from '@b3-crow/ui-kit';
 import { useEffect, useRef } from 'react';
-import { ANIMATION_DURATIONS, TEXT } from './constants';
 import { AttachmentButton } from './AttachmentButton';
 import { AttachmentMenu } from './AttachmentMenu';
-import type { Message } from './types';
+import { TEXT } from './constants';
 
 interface ChatViewProps {
   isVisible: boolean;
@@ -43,7 +43,7 @@ function MessagesContainer({
           onCopy={() => onCopyMessage(message.id, message.content)}
           avatarSrc="/favicon.webp"
           avatarAlt="CROW"
-          assistantLabel={message.role === 'assistant' ? 'CROW' : undefined}
+          assistantLabel={message.role === 'assistant' ? 'CROW' : ''}
         />
       ))}
 
