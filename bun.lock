@@ -6,7 +6,7 @@
       "name": "dashboard-client",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.703.0",
-        "@b3-crow/ui-kit": "0.0.36",
+        "@b3-crow/ui-kit": "file:.yalc/@b3-crow/ui-kit",
         "@opennextjs/cloudflare": "^1.11.0",
         "@typescript-eslint/eslint-plugin": "^8.46.4",
         "@typescript-eslint/parser": "^8.46.4",
@@ -186,7 +186,7 @@
 
     "@aws/lambda-invoke-store": ["@aws/lambda-invoke-store@0.2.2", "", {}, "sha512-C0NBLsIqzDIae8HFw9YIrIBsbc0xTiOtt7fAukGPnqQ/+zZNaq+4jhuccltK0QuWHBnNm/a6kLIRA6GFiM10eg=="],
 
-    "@b3-crow/ui-kit": ["@b3-crow/ui-kit@0.0.36", "", { "dependencies": { "@radix-ui/react-slot": "^1.2.4", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "cobe": "^0.6.5", "framer-motion": "^12.23.26", "lenis": "^1.2.1", "lucide-react": "^0.542.0", "react-icons": "^5.5.0", "shiki": "^3.21.0", "tailwind-merge": "^3.4.0" }, "peerDependencies": { "next": "^15.0.0", "react": "^19.2.0", "react-dom": "^19.2.0" } }, "sha512-F5vP5BLq7Mrt3kJoGWWA+uXxrXocu1ULKTLT0Kfog2HeLf8aL4nWapD50bvXPJ74qI12FjPMoMAkaC3OF3ctfg=="],
+    "@b3-crow/ui-kit": ["@b3-crow/ui-kit@file:.yalc/@b3-crow/ui-kit", { "dependencies": { "@radix-ui/react-slot": "^1.2.4", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "cobe": "^0.6.5", "framer-motion": "^12.23.26", "lenis": "^1.2.1", "lucide-react": "^0.542.0", "react-icons": "^5.5.0", "shiki": "^3.21.0", "tailwind-merge": "^3.4.0" }, "peerDependencies": { "next": "^15.0.0", "react": "^19.2.0", "react-dom": "^19.2.0" } }],
 
     "@babel/code-frame": ["@babel/code-frame@7.27.1", "", { "dependencies": { "@babel/helper-validator-identifier": "7.28.5", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg=="],
 

@@ -1,8 +1,12 @@
 'use client';
 
-import { SearchInput, SuggestionChip } from '@b3-crow/ui-kit';
-import { AttachmentButton } from './AttachmentButton';
-import { AttachmentMenu } from './AttachmentMenu';
+import {
+  SearchInput,
+  SuggestionChip,
+  AttachmentButton,
+  DropdownMenu,
+} from '@b3-crow/ui-kit';
+import { FileText, ImageIcon, Link2 } from 'lucide-react';
 import { COLORS, LAYOUT, TEXT } from './constants';
 
 const SUGGESTED_PROMPTS = [
@@ -86,6 +90,27 @@ function SearchBar({
   onAttachOption,
   attachMenuRef,
 }: Omit<LandingViewProps, 'isVisible'>) {
+  const attachmentOptions = [
+    {
+      type: 'document',
+      label: 'Upload Document',
+      icon: FileText,
+      color: 'text-purple-400',
+    },
+    {
+      type: 'image',
+      label: 'Upload Image',
+      icon: ImageIcon,
+      color: 'text-blue-400',
+    },
+    {
+      type: 'link',
+      label: 'Paste Link',
+      icon: Link2,
+      color: 'text-green-400',
+    },
+  ];
+
   return (
     <div className="w-full max-w-[672px] relative [&_button[aria-label='Submit']_svg]:rotate-[-90deg] [&_.absolute.left-4]:hidden">
       <div
@@ -94,7 +119,14 @@ function SearchBar({
         style={{ left: '1rem' }}
       >
         <AttachmentButton onClick={onAttachMenuToggle} />
-        <AttachmentMenu isOpen={showAttachMenu} onOptionSelect={onAttachOption} onClose={onAttachMenuToggle} />
+        <DropdownMenu
+          isOpen={showAttachMenu}
+          options={attachmentOptions}
+          onOptionSelect={onAttachOption}
+          onClose={onAttachMenuToggle}
+          bgColor={COLORS.BLACK_95}
+          borderColor={COLORS.WHITE_10}
+        />
       </div>
 <SearchInput
         className="w-full"

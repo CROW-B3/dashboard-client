@@ -20,6 +20,11 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
     href: '/ask-crow',
   },
   {
+    icon: 'package',
+    label: 'Products',
+    href: '/products',
+  },
+  {
     icon: 'timeline',
     label: 'Analysis',
     href: '#',
@@ -67,6 +72,7 @@ function createDashboardSidebarPropsObject(
   deleteSession: (id: string) => void,
   isCollapsed: boolean,
   onToggleCollapse: () => void,
+  onProfileClick: () => void,
 ) {
   return {
     navItems: DEFAULT_NAV_ITEMS,
@@ -76,6 +82,7 @@ function createDashboardSidebarPropsObject(
     userName: 'Demo User',
     userEmail: 'demo@crow.ai',
     onLogout: handleLogout,
+    onProfileClick,
     chatHistory,
     activeChatId: activeSessionId,
     chatHistoryExpanded: isExpanded,
@@ -98,9 +105,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => router.push('/');
   const handleNavigate = (href: string) => router.push(href);
+  const handleProfileClick = () => router.push('/settings/profile');
 
   const chatHistory = buildChatHistoryItemsFromSessions(sessions);
-  const sidebarProps = createDashboardSidebarPropsObject(
+const sidebarProps = createDashboardSidebarPropsObject(
     pathname,
     chatHistory,
     activeSessionId,
@@ -113,6 +121,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     deleteSession,
     isCollapsed,
     toggleCollapse,
+    handleProfileClick,
   );
 
   return (

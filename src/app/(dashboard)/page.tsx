@@ -1,6 +1,9 @@
 'use client';
 
 import { Header, MetricsCard } from '@b3-crow/ui-kit';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import {
   AskCrowCTA,
   DataSourceStatus,
@@ -93,18 +96,33 @@ function createDataSourceStatusGridSection() {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { toggle } = useMobileSidebar();
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+
+  const handleAvatarClick = () => router.push('/settings/profile');
+  const handleNotificationClick = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
+  const handleViewAllNotifications = () => router.push('/notifications');
 
   return (
     <>
-      <Header
-        orgName="Global Retail Ops"
-        dateRange="Last 7 days"
-        userInitials="SJ"
-        showNotification={true}
-        onMenuClick={toggle}
-        logoSrc="/favicon.webp"
-      />
+      <div className="relative">
+        <Header
+          orgName="Global Retail Ops"
+          dateRange="Last 7 days"
+          userInitials="SJ"
+          showNotification={true}
+          onMenuClick={toggle}
+          onAvatarClick={handleAvatarClick}
+          onNotificationClick={handleNotificationClick}
+          logoSrc="/favicon.webp"
+        />
+        <NotificationDropdown
+          isOpen={isNotificationDropdownOpen}
+          onClose={() => setIsNotificationDropdownOpen(false)}
+          onViewAll={handleViewAllNotifications}
+        />
+      </div>
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
