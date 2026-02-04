@@ -1,9 +1,7 @@
 'use client';
 
-import type { FilterOption } from '@b3-crow/ui-kit';
-import { cn, FilterDropdown } from '@b3-crow/ui-kit';
-import { Search } from 'lucide-react';
-import { useState } from 'react';
+import type { FilterOption, FilterConfig } from '@b3-crow/ui-kit';
+import { MultiFilterBar } from '@b3-crow/ui-kit';
 
 export interface TeamFilterBarProps {
   roleOptions?: FilterOption[];
@@ -39,66 +37,28 @@ export function TeamFilterBar({
   onSearch,
   className,
 }: TeamFilterBarProps) {
-  const [searchValue, setSearchValue] = useState('');
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
-    onSearch?.(e.target.value);
-  };
+  const filters: FilterConfig[] = [
+    {
+      label: 'Role: All',
+      options: roleOptions,
+      onChange: onRoleChange,
+      showBorder: true,
+    },
+    {
+      label: 'Status: All',
+      options: statusOptions,
+      onChange: onStatusChange,
+    },
+  ];
 
   return (
-    <div className={cn('flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto', className)}>
-      <div
-        className="w-full md:w-[384px] h-[38px] flex items-center rounded-lg overflow-hidden"
-        style={{
-          background: 'rgba(255, 255, 255, 0.03)',
-          outline: '1px rgba(255, 255, 255, 0.10) solid',
-          outlineOffset: '-1px',
-        }}
-      >
-        <div className="pl-3 flex items-center justify-center">
-          <Search size={14} color="#6B7280" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search members..."
-          value={searchValue}
-          onChange={handleSearchChange}
-          className="flex-1 h-full px-2.5 bg-transparent text-sm text-gray-200 placeholder:text-gray-500 focus:outline-none"
-        />
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-        <div
-          className="h-[38px] flex items-center rounded-lg"
-          style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            outline: '1px rgba(255, 255, 255, 0.10) solid',
-            outlineOffset: '-1px',
-          }}
-        >
-          <FilterDropdown
-            label="Role: All"
-            options={roleOptions}
-            {...(onRoleChange && { onChange: onRoleChange })}
-          />
-        </div>
-
-        <div
-          className="h-[38px] flex items-center rounded-lg"
-          style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            outline: '1px rgba(255, 255, 255, 0.10) solid',
-            outlineOffset: '-1px',
-          }}
-        >
-          <FilterDropdown
-            label="Status: All"
-            options={statusOptions}
-            {...(onStatusChange && { onChange: onStatusChange })}
-          />
-        </div>
-      </div>
-    </div>
+    <MultiFilterBar
+      filters={filters}
+      onSearch={onSearch}
+      searchPlaceholder="Search members..."
+      showSearch={true}
+      showActions={false}
+      className={className}
+    />
   );
 }

@@ -3,9 +3,8 @@
 import type { Interaction, LatestInteractionsProps } from './types';
 
 import {
-  GlassPanel,
+  ListCard,
   ListItem,
-  SectionHeader,
 } from '@b3-crow/ui-kit';
 import { Globe, Store, Video } from 'lucide-react';
 import Link from 'next/link';
@@ -51,23 +50,20 @@ export function LatestInteractions({
   onInteractionClick,
 }: LatestInteractionsProps) {
   return (
-    <GlassPanel variant="heavy" className="overflow-hidden">
-      <SectionHeader
-        title="Latest Interactions"
-        viewAllHref="/analysis/interactions"
-        viewAllText="View all interactions"
-        LinkComponent={Link}
-      />
-      <div className="p-3 sm:p-4 space-y-1">
-        {interactions.map((interaction) => (
-          <InteractionItem
-            key={interaction.id}
-            interaction={interaction}
-            onClick={() => onInteractionClick?.(interaction)}
-          />
-        ))}
-      </div>
-    </GlassPanel>
+    <ListCard
+      title="Latest Interactions"
+      viewAllHref="/analysis/interactions"
+      viewAllText="View all interactions"
+      LinkComponent={Link}
+    >
+      {interactions.map((interaction) => (
+        <InteractionItem
+          key={interaction.id}
+          interaction={interaction}
+          onClick={() => onInteractionClick?.(interaction)}
+        />
+      ))}
+    </ListCard>
   );
 }
 

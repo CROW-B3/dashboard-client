@@ -2,7 +2,10 @@
 
 import type { Message } from '@/components/ask-crow/types';
 import { Header } from '@b3-crow/ui-kit';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { ChatView } from '@/components/ask-crow/ChatView';
 import { ANIMATION_DURATIONS } from '@/components/ask-crow/constants';
 import { LandingView } from '@/components/ask-crow/LandingView';
@@ -11,8 +14,12 @@ import { useChatHistory } from '@/contexts/ChatHistoryContext';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
 export default function AskCrowPage() {
+  const router = useRouter();
   const { createNewSession, addMessageToSession, activeSessionId, sessions } = useChatHistory();
   const { toggle } = useMobileSidebar();
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const handleAvatarClick = () => router.push('/settings/profile');
+  const handleNotificationClick = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
   const attachMenuRef = useRef<HTMLDivElement>(null);
 
   const [chatStarted, setChatStarted] = useState(false);
@@ -102,13 +109,22 @@ export default function AskCrowPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header
-        userInitials="SJ"
-        showNotification
-        minimal
-        onMenuClick={toggle}
-        logoSrc="/favicon.webp"
-      />
+      <div className="relative">
+        <Header
+          userInitials="SJ"
+          showNotification
+          minimal
+          onMenuClick={toggle}
+          onAvatarClick={handleAvatarClick}
+          onNotificationClick={handleNotificationClick}
+          logoSrc="/favicon.webp"
+        />
+        <NotificationDropdown
+          isOpen={isNotificationDropdownOpen}
+          onClose={() => setIsNotificationDropdownOpen(false)}
+          onViewAll={() => router.push('/notifications')}
+        />
+      </div>
 
       <main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <LandingView

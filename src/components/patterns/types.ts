@@ -1,7 +1,4 @@
-import type { SourceType } from '@b3-crow/ui-kit';
-
-export type SeverityLevel = 'high' | 'medium' | 'low';
-export type ConfidenceLevel = 'high' | 'medium' | 'low';
+import type { SourceType, SeverityLevel, ConfidenceLevel, MetricItem } from '@b3-crow/ui-kit';
 
 export interface PatternData {
   id: string;
@@ -33,11 +30,4 @@ export interface TimelineItem {
   title: string;
   timestamp: string;
   type: 'detection' | 'update' | 'action';
-}
-
-export interface MetricItem {
-  label: string;
-  value: string;
-  change?: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
 }

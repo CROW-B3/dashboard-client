@@ -3,7 +3,10 @@
 import type { PatternData, PatternDetail } from '@/components/patterns';
 import type { SourceFilter } from '@/components/patterns/PatternsFilterBar';
 import { Header, PatternCard, TipCard } from '@b3-crow/ui-kit';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { PatternDetailPanel, PatternsFilterBar } from '@/components/patterns';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { mockPatternDetails, mockPatterns } from './mock-data';
@@ -21,10 +24,14 @@ function buildDetailFromMockData(pattern: PatternData): PatternDetail {
 }
 
 export default function PatternsPage() {
+  const router = useRouter();
   const { toggle } = useMobileSidebar();
   const [selectedPattern, setSelectedPattern] = useState<PatternDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const handleAvatarClick = () => router.push('/settings/profile');
+  const handleNotificationClick = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
 
   const filteredPatterns = useMemo(
     () => (sourceFilter === 'all' ? mockPatterns : mockPatterns.filter((p) => p.source === sourceFilter)),
@@ -33,7 +40,14 @@ export default function PatternsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials="SJ" showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <div className="relative">
+        <Header userInitials="SJ" showNotification minimal onMenuClick={toggle} onAvatarClick={handleAvatarClick} onNotificationClick={handleNotificationClick} logoSrc="/favicon.webp" />
+        <NotificationDropdown
+          isOpen={isNotificationDropdownOpen}
+          onClose={() => setIsNotificationDropdownOpen(false)}
+          onViewAll={() => router.push('/notifications')}
+        />
+      </div>
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-[120px] py-6 sm:py-8">
         <div className="max-w-[1640px] mx-auto">

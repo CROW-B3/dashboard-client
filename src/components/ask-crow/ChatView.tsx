@@ -1,11 +1,16 @@
 'use client';
 
 import type { Message } from './types';
-import { GeneratingState, MessageBubble, SearchInput } from '@b3-crow/ui-kit';
+import {
+  GeneratingState,
+  MessageBubble,
+  SearchInput,
+  AttachmentButton,
+  DropdownMenu,
+} from '@b3-crow/ui-kit';
+import { FileText, ImageIcon, Link2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { AttachmentButton } from './AttachmentButton';
-import { AttachmentMenu } from './AttachmentMenu';
-import { TEXT } from './constants';
+import { TEXT, COLORS } from './constants';
 
 interface ChatViewProps {
   isVisible: boolean;
@@ -65,12 +70,40 @@ function ChatInput({
   onAttachMenuToggle: () => void;
   onAttachOption: (type: string) => void;
 }) {
+  const attachmentOptions = [
+    {
+      type: 'document',
+      label: 'Upload Document',
+      icon: FileText,
+      color: 'text-purple-400',
+    },
+    {
+      type: 'image',
+      label: 'Upload Image',
+      icon: ImageIcon,
+      color: 'text-blue-400',
+    },
+    {
+      type: 'link',
+      label: 'Paste Link',
+      icon: Link2,
+      color: 'text-green-400',
+    },
+  ];
+
   return (
     <div className="sticky bottom-0 pb-4 pt-6">
       <div className="w-full relative [&_button[aria-label='Submit']_svg]:rotate-[-90deg] [&_.absolute.left-4]:hidden">
         <div className="absolute top-0 h-[48px] sm:h-[54px] z-20 flex items-center justify-center" style={{ left: '1rem' }}>
           <AttachmentButton onClick={onAttachMenuToggle} />
-          <AttachmentMenu isOpen={showAttachMenu} onOptionSelect={onAttachOption} onClose={onAttachMenuToggle} />
+          <DropdownMenu
+            isOpen={showAttachMenu}
+            options={attachmentOptions}
+            onOptionSelect={onAttachOption}
+            onClose={onAttachMenuToggle}
+            bgColor={COLORS.BLACK_95}
+            borderColor={COLORS.WHITE_10}
+          />
         </div>
         <SearchInput
           className="w-full"

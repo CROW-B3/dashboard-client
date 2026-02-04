@@ -6,6 +6,7 @@ const sora = Sora({
   variable: '--font-sora',
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
 });
 
 const geistMono = Geist_Mono({

@@ -3,9 +3,9 @@
 import type { Pattern, PatternsSectionProps } from './types';
 
 import {
-  GlassPanel,
+  ListCard,
   ListItem,
-  SectionHeader,
+  SeverityBadge,
 } from '@b3-crow/ui-kit';
 import Link from 'next/link';
 
@@ -34,37 +34,25 @@ function getDefaultPatterns(): Pattern[] {
   ];
 }
 
-function getSeverityBadgeStyles(severity: string): React.CSSProperties {
-  const styleMapping: Record<string, React.CSSProperties> = {
-    high: { background: 'rgba(139, 92, 246, 0.2)', color: '#C4B5FD' },
-    medium: { background: 'rgba(139, 92, 246, 0.15)', color: '#A78BFA' },
-    low: { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' },
-  };
-  return styleMapping[severity] || (styleMapping as any).low || { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' };
-}
-
 export function PatternsSection({
   patterns = getDefaultPatterns(),
   onPatternClick,
 }: PatternsSectionProps) {
   return (
-    <GlassPanel variant="heavy" className="overflow-hidden">
-      <SectionHeader
-        title="Top Patterns"
-        viewAllHref="/analysis/patterns"
-        viewAllText="View all patterns"
-        LinkComponent={Link}
-      />
-      <div className="p-3 sm:p-4 space-y-1">
-        {patterns.map((pattern) => (
-          <PatternItem
-            key={pattern.id}
-            pattern={pattern}
-            onClick={() => onPatternClick?.(pattern)}
-          />
-        ))}
-      </div>
-    </GlassPanel>
+    <ListCard
+      title="Top Patterns"
+      viewAllHref="/analysis/patterns"
+      viewAllText="View all patterns"
+      LinkComponent={Link}
+    >
+      {patterns.map((pattern) => (
+        <PatternItem
+          key={pattern.id}
+          pattern={pattern}
+          onClick={() => onPatternClick?.(pattern)}
+        />
+      ))}
+    </ListCard>
   );
 }
 
@@ -84,26 +72,11 @@ function PatternItem({ pattern, onClick }: PatternItemProps) {
         <h4 className="text-xs sm:text-sm font-medium text-gray-200">
           {pattern.title}
         </h4>
-        <SeverityBadge severity={pattern.severity} />
+        <SeverityBadge severity={pattern.severity as any} />
       </div>
       <p className="text-[10px] sm:text-xs text-gray-500 line-clamp-2">
         {pattern.description}
       </p>
     </ListItem>
-  );
-}
-
-interface SeverityBadgeProps {
-  severity: 'high' | 'medium' | 'low';
-}
-
-function SeverityBadge({ severity }: SeverityBadgeProps) {
-  return (
-    <span
-      className="text-[8px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded uppercase tracking-wide leading-none flex-shrink-0"
-      style={getSeverityBadgeStyles(severity)}
-    >
-      {severity}
-    </span>
   );
 }

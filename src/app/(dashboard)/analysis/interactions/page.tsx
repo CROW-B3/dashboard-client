@@ -2,7 +2,10 @@
 
 import type { InteractionData, InteractionDetail } from '@/components/interactions';
 import { Header, TipCard } from '@b3-crow/ui-kit';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import {
   InteractionDetailPanel,
   InteractionsFilterBar,
@@ -23,13 +26,24 @@ function buildDetailFromMockData(interaction: InteractionData): InteractionDetai
 }
 
 export default function InteractionsPage() {
+  const router = useRouter();
   const { toggle } = useMobileSidebar();
   const [selectedInteraction, setSelectedInteraction] = useState<InteractionDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const handleAvatarClick = () => router.push('/settings/profile');
+  const handleNotificationClick = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials="SJ" showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <div className="relative">
+        <Header userInitials="SJ" showNotification minimal onMenuClick={toggle} onAvatarClick={handleAvatarClick} onNotificationClick={handleNotificationClick} logoSrc="/favicon.webp" />
+        <NotificationDropdown
+          isOpen={isNotificationDropdownOpen}
+          onClose={() => setIsNotificationDropdownOpen(false)}
+          onViewAll={() => router.push('/notifications')}
+        />
+      </div>
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-[120px] py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
