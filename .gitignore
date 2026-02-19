@@ -51,7 +51,3 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
-# Yalc (local package development)
-.yalc/
-yalc.lock

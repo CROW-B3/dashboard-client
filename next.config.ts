@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
-        transpilePackages: ["@b3-crow/ui-kit"],
         trailingSlash: true,
         generateEtags: true,
         cacheMaxMemorySize: 0,
