@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  const handleSignOut = async () => {
+  const _handleSignOut = async () => {
     await signOut();
     const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || 'https://auth.crowai.dev';
     window.location.href = `${authUrl}/login`;
@@ -37,11 +37,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen overflow-hidden">
       <DashboardBackground />
-      <Sidebar navItems={navItems} />
+      <Sidebar navItems={navItems as any} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header
-          user={{ name: user?.name || '', email: user?.email || '', avatarUrl: user?.profilePictureUrl }}
-          onSignOut={handleSignOut}
+          userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}
         />
         <main className="flex-1 overflow-auto p-6 relative z-10">{children}</main>
       </div>

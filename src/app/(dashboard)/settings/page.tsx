@@ -32,12 +32,12 @@ export default function SettingsPage() {
     queryKey: ['api-keys'],
     queryFn: async () => {
       const res = await apiKey.list();
-      return res.data?.apiKeys || [];
+      return res.data || [];
     },
     enabled: activeTab === 'api-keys' && !!permissions?.apiKeyManagement,
   });
 
-  const { data: billing } = useQuery({
+  const { data: billing } = useQuery<{ plan?: string; status?: string } | null>({
     queryKey: ['billing', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}`, { credentials: 'include' });
@@ -90,7 +90,7 @@ export default function SettingsPage() {
 
   const handleRevokeKey = async (keyId: string) => {
     try {
-      await apiKey.revoke({ keyId });
+      await apiKey.delete({ keyId });
       toast.success('API key revoked');
       refetchKeys();
     } catch {
@@ -163,11 +163,11 @@ export default function SettingsPage() {
             {newKeyValue && (
               <div className="p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
                 <p className="text-xs text-violet-300 mb-1">Save this key — it won't be shown again:</p>
-                <ApiKeyInput value={newKeyValue} />
+                <ApiKeyInput apiKey={newKeyValue} />
               </div>
             )}
             <div className="space-y-2">
-              {apiKeys?.map((k: { id: string; name: string; createdAt: string; start: string }) => (
+              {apiKeys?.map((k: { id: string; name: string | null; createdAt: Date | string; start: string | null }) => (
                 <div key={k.id} className="flex items-center justify-between p-3 bg-white/[0.03] border border-white/10 rounded-lg">
                   <div>
                     <p className="text-sm text-white">{k.name}</p>
