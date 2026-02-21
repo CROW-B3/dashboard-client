@@ -1,6 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+interface SessionResponse {
+  user?: {
+    id: string;
+  };
+}
+
 export async function middleware(request: NextRequest) {
   const apiGatewayUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.crowai.dev';
   const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || 'https://auth.crowai.dev';
@@ -16,7 +22,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(`${authUrl}/login`);
     }
 
-    const session = await sessionRes.json();
+    const session = (await sessionRes.json()) as SessionResponse;
     if (!session?.user) {
       return NextResponse.redirect(`${authUrl}/login`);
     }
