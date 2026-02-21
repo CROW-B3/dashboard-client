@@ -79,7 +79,7 @@ export default function TeamPage() {
                 <p className="text-sm text-white">{member.name}</p>
                 <p className="text-xs text-gray-400">{member.email}</p>
               </div>
-              <StatusBadge status={member.role} />
+              <StatusBadge>{member.role}</StatusBadge>
             </div>
           ))}
         </div>

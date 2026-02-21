@@ -19,7 +19,7 @@ export default function PatternsPage() {
   const orgId = user?.organizationId;
   const [period, setPeriod] = useState('weekly');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<{ patterns: { id: string; report: string; generatedAt: string }[] } | null>({
     queryKey: ['patterns', orgId, period],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?period=${period}`, { credentials: 'include' });

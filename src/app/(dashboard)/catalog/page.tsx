@@ -24,7 +24,7 @@ export default function CatalogPage() {
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const { data: productsData, isLoading } = useQuery({
+  const { data: productsData, isLoading } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ['products', orgId, page, searchQuery],
     queryFn: async () => {
       if (searchQuery) {
@@ -33,7 +33,7 @@ export default function CatalogPage() {
           { credentials: 'include' }
         );
         if (!res.ok) return { products: [], total: 0 };
-        const data = await res.json();
+        const data = await res.json() as { results?: Product[] };
         return { products: data.results || [], total: data.results?.length || 0 };
       }
       const res = await fetch(
@@ -46,7 +46,7 @@ export default function CatalogPage() {
     enabled: !!orgId,
   });
 
-  const { data: aiDescriptions } = useQuery({
+  const { data: aiDescriptions } = useQuery<{ descriptions: { id: string; type: string; content: string; createdAt: string }[] }>({
     queryKey: ['ai-descriptions', selectedProduct?.id],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/products/${selectedProduct!.id}/ai-descriptions`, { credentials: 'include' });
@@ -66,7 +66,7 @@ export default function CatalogPage() {
       <SearchInput
         placeholder="Search products semantically..."
         value={searchQuery}
-        onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
+        onChange={(value) => { setSearchQuery(value); setPage(1); }}
       />
 
       {isLoading ? (
@@ -86,34 +86,33 @@ export default function CatalogPage() {
                 <div className="p-3 space-y-1">
                   <p className="text-sm text-white font-medium line-clamp-2">{product.title}</p>
                   {product.price && <p className="text-xs text-violet-400">${(product.price / 100).toFixed(2)}</p>}
-                  {product.category && <StatusBadge status={product.category} />}
+                  {product.category && <StatusBadge>{product.category}</StatusBadge>}
                 </div>
               </div>
             ))}
           </div>
 
-          {productsData?.total > 24 && (
+          {(productsData?.total ?? 0) > 24 && (
             <div className="flex gap-2 justify-center">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 bg-white/10 rounded-lg text-sm text-white disabled:opacity-50">Previous</button>
-              <button onClick={() => setPage(p => p + 1)} disabled={productsData.products.length < 24} className="px-4 py-2 bg-white/10 rounded-lg text-sm text-white disabled:opacity-50">Next</button>
+              <button onClick={() => setPage(p => p + 1)} disabled={(productsData?.products?.length ?? 0) < 24} className="px-4 py-2 bg-white/10 rounded-lg text-sm text-white disabled:opacity-50">Next</button>
             </div>
           )}
         </>
       )}
 
       {selectedProduct && (
-        <SidePanel onClose={() => setSelectedProduct(null)} title={selectedProduct.title}>
+        <SidePanel isOpen={true} onClose={() => setSelectedProduct(null)} title={selectedProduct.title}>
           <div className="space-y-4">
             {selectedProduct.images?.[0] && (
               <img src={selectedProduct.images[0]} alt={selectedProduct.title} className="w-full rounded-lg" />
             )}
             <p className="text-gray-300 text-sm">{selectedProduct.description}</p>
             {selectedProduct.price && <p className="text-violet-400 font-semibold">${(selectedProduct.price / 100).toFixed(2)}</p>}
-            <StatusBadge status={selectedProduct.metadata?.inStock ? 'In Stock' : 'Out of Stock'} />
-            {aiDescriptions?.descriptions?.map((desc: { id: string; imageUrl: string; description: string; features?: string[]; colors?: string[]; materials?: string[] }) => (
+            <StatusBadge>{selectedProduct.metadata?.inStock ? 'In Stock' : 'Out of Stock'}</StatusBadge>
+            {aiDescriptions?.descriptions?.map((desc) => (
               <div key={desc.id} className="border border-white/10 rounded-lg p-3 space-y-2">
-                <p className="text-sm text-gray-300">{desc.description}</p>
-                {desc.features && <div className="flex flex-wrap gap-1">{desc.features.map((f: string) => <span key={f} className="text-xs bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded">{f}</span>)}</div>}
+                <p className="text-sm text-gray-300">{(desc as any).content}</p>
               </div>
             ))}
           </div>
