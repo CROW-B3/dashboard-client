@@ -20,7 +20,7 @@ export default function InteractionsPage() {
   const [sourceType, setSourceType] = useState('');
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<{ interactions: { id: string; sourceType: string; summary: string; timestamp: string }[]; total: number }>({
     queryKey: ['interactions', orgId, sourceType, page],
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -43,7 +43,7 @@ export default function InteractionsPage() {
           options={SOURCE_TYPE_OPTIONS}
           value={sourceType}
           onChange={v => { setSourceType(v); setPage(1); }}
-          placeholder="Filter by source"
+          label="Filter by source"
         />
       </div>
 
@@ -54,7 +54,7 @@ export default function InteractionsPage() {
           {data?.interactions?.map((interaction: { id: string; sourceType: string; summary: string; timestamp: string }) => (
             <div key={interaction.id} className="bg-white/[0.04] border border-white/10 rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <StatusBadge status={interaction.sourceType} />
+                <StatusBadge>{interaction.sourceType}</StatusBadge>
                 <span className="text-xs text-gray-500">{new Date(interaction.timestamp).toLocaleString()}</span>
               </div>
               {interaction.summary && <p className="text-sm text-gray-300">{interaction.summary}</p>}
@@ -64,10 +64,10 @@ export default function InteractionsPage() {
         </div>
       )}
 
-      {data?.total > 20 && (
+      {(data?.total ?? 0) > 20 && (
         <div className="flex gap-2 justify-center">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 bg-white/10 rounded-lg text-sm text-white disabled:opacity-50">Previous</button>
-          <button onClick={() => setPage(p => p + 1)} disabled={data.interactions.length < 20} className="px-4 py-2 bg-white/10 rounded-lg text-sm text-white disabled:opacity-50">Next</button>
+          <button onClick={() => setPage(p => p + 1)} disabled={(data?.interactions?.length ?? 0) < 20} className="px-4 py-2 bg-white/10 rounded-lg text-sm text-white disabled:opacity-50">Next</button>
         </div>
       )}
     </div>

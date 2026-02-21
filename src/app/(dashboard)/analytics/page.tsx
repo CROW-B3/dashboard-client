@@ -13,7 +13,7 @@ export default function AnalyticsPage() {
   const orgId = user?.organizationId;
   const { data: permissions } = usePermissions(user?.id);
 
-  const { data: summary } = useQuery({
+  const { data: summary } = useQuery<Record<string, number | string> | null>({
     queryKey: ['interactions-summary', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary`, { credentials: 'include' });

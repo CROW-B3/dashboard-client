@@ -13,7 +13,7 @@ export default function OrganizationPage() {
   const orgId = user?.organizationId;
   const [regenerating, setRegenerating] = useState(false);
 
-  const { data: org } = useQuery({
+  const { data: org } = useQuery<{ id: string; name: string; slug?: string; apiKey?: string } | null>({
     queryKey: ['org', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}`, { credentials: 'include' });
@@ -23,7 +23,7 @@ export default function OrganizationPage() {
     enabled: !!orgId,
   });
 
-  const { data: orgContext, refetch: refetchContext } = useQuery({
+  const { data: orgContext, refetch: refetchContext } = useQuery<{ context?: string; updatedAt?: string; structuredData?: { summary?: string; keyProducts?: string; insights?: string } } | null>({
     queryKey: ['org-context', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/context`, { credentials: 'include' });
@@ -33,7 +33,7 @@ export default function OrganizationPage() {
     enabled: !!orgId,
   });
 
-  const { data: members } = useQuery({
+  const { data: members } = useQuery<{ id: string; name: string; email: string; role?: string }[]>({
     queryKey: ['members', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/members`, { credentials: 'include' });
@@ -120,13 +120,13 @@ export default function OrganizationPage() {
       <GlassPanel>
         <h2 className="text-lg font-semibold text-white mb-3">Members</h2>
         <div className="space-y-2">
-          {Array.isArray(members) && members.map((member: { id: string; name: string; email: string; role: string }) => (
+          {Array.isArray(members) && members.map((member: { id: string; name: string; email: string; role?: string }) => (
             <div key={member.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
               <div>
                 <p className="text-sm text-white">{member.name}</p>
                 <p className="text-xs text-gray-400">{member.email}</p>
               </div>
-              <StatusBadge status={member.role} />
+              <StatusBadge>{member.role}</StatusBadge>
             </div>
           ))}
         </div>

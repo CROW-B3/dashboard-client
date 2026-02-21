@@ -2,7 +2,6 @@
 
 import { GlassPanel, MetricsCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, Globe, Package, Users } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -11,7 +10,7 @@ export default function OverviewPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
 
-  const { data: products } = useQuery({
+  const { data: products } = useQuery<{ total: number }>({
     queryKey: ['products-count', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/products/organization/${orgId}?page=1&pageSize=1`, { credentials: 'include' });
@@ -21,7 +20,7 @@ export default function OverviewPage() {
     enabled: !!orgId,
   });
 
-  const { data: members } = useQuery({
+  const { data: members } = useQuery<{ id: string; name: string; email: string; role?: string }[]>({
     queryKey: ['members', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/members`, { credentials: 'include' });
@@ -31,7 +30,7 @@ export default function OverviewPage() {
     enabled: !!orgId,
   });
 
-  const { data: orgContext } = useQuery({
+  const { data: orgContext } = useQuery<{ structuredData?: { summary?: string } } | null>({
     queryKey: ['org-context', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/context`, { credentials: 'include' });
@@ -41,7 +40,7 @@ export default function OverviewPage() {
     enabled: !!orgId,
   });
 
-  const { data: crawlerJobs } = useQuery({
+  const { data: crawlerJobs } = useQuery<{ jobs: { status: string; [key: string]: unknown }[] }>({
     queryKey: ['crawler-jobs', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs/organization/${orgId}`, { credentials: 'include' });
@@ -63,23 +62,27 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricsCard
           title="Total Products"
-          value={products?.total ?? 0}
-          icon={<Package className="w-5 h-5" />}
+          value={String(products?.total ?? 0)}
+          change=""
+          changeType="neutral"
         />
         <MetricsCard
           title="Team Members"
-          value={Array.isArray(members) ? members.length : 0}
-          icon={<Users className="w-5 h-5" />}
+          value={String(Array.isArray(members) ? members.length : 0)}
+          change=""
+          changeType="neutral"
         />
         <MetricsCard
           title="Active Sources"
-          value={crawlerJobs?.jobs?.filter((j: { status: string }) => j.status === 'completed').length ?? 0}
-          icon={<Globe className="w-5 h-5" />}
+          value={String(crawlerJobs?.jobs?.filter((j: { status: string }) => j.status === 'completed').length ?? 0)}
+          change=""
+          changeType="neutral"
         />
         <MetricsCard
           title="Last Crawl"
-          value={lastJob ? new Date(lastJob.completedAt || lastJob.createdAt).toLocaleDateString() : 'Never'}
-          icon={<Clock className="w-5 h-5" />}
+          value={lastJob ? new Date((lastJob.completedAt || lastJob.createdAt) as string).toLocaleDateString() : 'Never'}
+          change=""
+          changeType="neutral"
         />
       </div>
 
