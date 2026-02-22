@@ -35,9 +35,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-[#030005]">
       <DashboardBackground />
-      <Sidebar navItems={navItems as any} />
+      <Sidebar
+        navItems={navItems as any}
+        logoSrc="/logo.webp"
+        userName={user?.name || user?.email || 'User'}
+        userEmail={user?.email || ''}
+        onLogout={_handleSignOut}
+      />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header
           userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}

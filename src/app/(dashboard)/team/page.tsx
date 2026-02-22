@@ -8,6 +8,8 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
+interface InvitationItem { id: string; email: string; role: string; status: string }
+
 export default function TeamPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
@@ -24,6 +26,19 @@ export default function TeamPage() {
     enabled: !!orgId,
   });
 
+  const { data: invitationsData, refetch: refetchInvitations } = useQuery<{ invitations: InvitationItem[] }>({
+    queryKey: ['invitations', orgId],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/auth/team-invitations/list-invitations?organizationId=${orgId}`, { credentials: 'include' });
+      if (!res.ok) return { invitations: [] };
+      return res.json() as Promise<{ invitations: InvitationItem[] }>;
+    },
+    enabled: !!orgId,
+  });
+
+  const pendingInvitations: InvitationItem[] =
+    invitationsData?.invitations?.filter((inv) => inv.status === 'pending') ?? [];
+
   const handleInvite = async () => {
     if (!emails.length || !orgId) return;
     setInviting(true);
@@ -38,6 +53,7 @@ export default function TeamPage() {
       toast.success(`Invited ${emails.length} member(s)`);
       setEmails([]);
       refetch();
+      refetchInvitations();
     } catch {
       toast.error('Failed to send invitations');
     } finally {
@@ -56,9 +72,8 @@ export default function TeamPage() {
         <h2 className="text-lg font-semibold text-white mb-4">Invite Members</h2>
         <div className="space-y-3">
           <EmailTagInput
-            value={emails}
-            onChange={setEmails}
-            placeholder="Enter email addresses..."
+            emails={emails}
+            onEmailsChange={setEmails}
           />
           <button
             onClick={handleInvite}
@@ -84,6 +99,23 @@ export default function TeamPage() {
           ))}
         </div>
       </GlassPanel>
+
+      {pendingInvitations.length > 0 && (
+        <GlassPanel>
+          <h2 className="text-lg font-semibold text-white mb-4">Pending Invitations</h2>
+          <div className="space-y-2">
+            {pendingInvitations.map((inv) => (
+              <div key={inv.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                <div>
+                  <p className="text-sm text-white">{inv.email}</p>
+                  <p className="text-xs text-gray-400">{inv.role}</p>
+                </div>
+                <StatusBadge>{inv.status}</StatusBadge>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
     </div>
   );
 }
