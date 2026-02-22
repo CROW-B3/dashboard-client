@@ -8,7 +8,7 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://local
 
 export default function OverviewPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.organizationId;
+  const orgId = user?.orgUuid;
 
   const { data: products } = useQuery<{ total: number }>({
     queryKey: ['products-count', orgId],

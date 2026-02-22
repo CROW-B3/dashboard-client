@@ -16,7 +16,7 @@ const PERIOD_OPTIONS = [
 
 export default function PatternsPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.organizationId;
+  const orgId = user?.orgUuid;
   const [period, setPeriod] = useState('weekly');
 
   const { data, isLoading } = useQuery<{ patterns: { id: string; report: string; generatedAt: string }[] } | null>({
