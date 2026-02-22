@@ -101,7 +101,11 @@ export default function DashboardSettingsPage() {
   const createKeyMutation = useMutation<CreateApiKeyResponse, Error, string>({
     mutationFn: async (name: string) => {
       const res = await fetch(`${API_URL}/api/v1/auth/api-key/create`, {
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({
+          name,
+          expiresIn: 60 * 60 * 24 * 365,
+          metadata: { organizationId: orgId },
+        }),
         headers: { ...headers, 'Content-Type': 'application/json' },
         method: 'POST',
       });
