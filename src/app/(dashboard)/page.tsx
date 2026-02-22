@@ -1,125 +1,99 @@
 'use client';
 
-import { Header, MetricsCard } from '@b3-crow/ui-kit';
-import {
-  AskCrowCTA,
-  DataSourceStatus,
-  LatestInteractions,
-  PatternsSection,
-} from '@/components/overview';
-import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
+import { GlassPanel, MetricsCard } from '@b3-crow/ui-kit';
+import { useQuery } from '@tanstack/react-query';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
-function createPageHeaderElement() {
-  return (
-    <div className="relative mb-6 sm:mb-8">
-      <h1 className="mb-1 text-xl sm:text-2xl font-bold leading-7 sm:leading-8 text-white">
-        Overview
-      </h1>
-      <p className="text-xs sm:text-sm font-normal leading-5 text-gray-400">
-        Key changes across channels — Web, CCTV, Social.
-      </p>
-      <p className="sm:absolute sm:right-0 sm:top-2 text-[10px] sm:text-xs font-normal leading-4 text-gray-500 mt-2 sm:mt-0">
-        Last updated 2 min ago
-      </p>
-    </div>
-  );
-}
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
-function createMetricsGridSection() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-      <MetricsCard
-        title="Total Interactions"
-        value="84,392"
-        change="+12.5%"
-        changeType="positive"
-        chartData={[25, 50, 35, 70, 95]}
-        chartColor="violet"
-      />
-      <MetricsCard
-        title="Total Patterns"
-        value="14"
-        change="+2"
-        changeType="info"
-        chartData={[10, 10, 60, 25, 10]}
-        chartColor="violet"
-      />
-      <MetricsCard
-        title="Friction Signals"
-        value="1,204"
-        change="+5.2%"
-        changeType="negative"
-        chartData={[35, 50, 40, 55, 70]}
-        chartColor="rose"
-      />
-      <MetricsCard
-        title="Conversion Signals"
-        value="4.2%"
-        change="-1.1%"
-        changeType="neutral"
-        chartData={[85, 80, 80, 75, 70]}
-        chartColor="gray"
-      />
-    </div>
-  );
-}
+export default function OverviewPage() {
+  const { data: user } = useCurrentUser();
+  const orgId = user?.organizationId;
 
-function createDataSourceStatusGridSection() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-      <DataSourceStatus
-        icon="web"
-        name="Web"
-        isActive={true}
-        statusText="Connected • Ingesting"
-        lastUpdate="2ms ago"
-      />
-      <DataSourceStatus
-        icon="cctv"
-        name="CCTV"
-        isActive={true}
-        statusText="Connected • 42 Cameras"
-        lastUpdate="Live"
-      />
-      <DataSourceStatus
-        icon="social"
-        name="Social"
-        isActive={false}
-        statusText="Connected • Tracking"
-        lastUpdate="12s ago"
-      />
-    </div>
-  );
-}
+  const { data: products } = useQuery<{ total: number }>({
+    queryKey: ['products-count', orgId],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/products/organization/${orgId}?page=1&pageSize=1`, { credentials: 'include' });
+      if (!res.ok) return { total: 0 };
+      return res.json();
+    },
+    enabled: !!orgId,
+  });
 
-export default function DashboardPage() {
-  const { toggle } = useMobileSidebar();
+  const { data: members } = useQuery<{ id: string; name: string; email: string; role?: string }[]>({
+    queryKey: ['members', orgId],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/members`, { credentials: 'include' });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!orgId,
+  });
+
+  const { data: orgContext } = useQuery<{ structuredData?: { summary?: string } } | null>({
+    queryKey: ['org-context', orgId],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/context`, { credentials: 'include' });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!orgId,
+  });
+
+  const { data: crawlerJobs } = useQuery<{ jobs: { status: string; [key: string]: unknown }[] }>({
+    queryKey: ['crawler-jobs', orgId],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs/organization/${orgId}`, { credentials: 'include' });
+      if (!res.ok) return { jobs: [] };
+      return res.json();
+    },
+    enabled: !!orgId,
+  });
+
+  const lastJob = crawlerJobs?.jobs?.[crawlerJobs.jobs.length - 1];
 
   return (
-    <>
-      <Header
-        orgName="Global Retail Ops"
-        dateRange="Last 7 days"
-        userInitials="SJ"
-        showNotification={true}
-        onMenuClick={toggle}
-        logoSrc="/favicon.webp"
-      />
-
-      <div className="relative z-10 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
-        <div className="max-w-[1400px] mx-auto">
-          {createPageHeaderElement()}
-          {createMetricsGridSection()}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <PatternsSection />
-            <LatestInteractions />
-          </div>
-          {createDataSourceStatusGridSection()}
-          <div className="mb-6 sm:mb-8">
-            <AskCrowCTA />
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Overview</h1>
+        <p className="text-gray-400 text-sm mt-1">Your organization at a glance</p>
       </div>
-    </>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricsCard
+          title="Total Products"
+          value={String(products?.total ?? 0)}
+          change=""
+          changeType="neutral"
+        />
+        <MetricsCard
+          title="Team Members"
+          value={String(Array.isArray(members) ? members.length : 0)}
+          change=""
+          changeType="neutral"
+        />
+        <MetricsCard
+          title="Active Sources"
+          value={String(crawlerJobs?.jobs?.filter((j: { status: string }) => j.status === 'completed').length ?? 0)}
+          change=""
+          changeType="neutral"
+        />
+        <MetricsCard
+          title="Last Crawl"
+          value={lastJob ? new Date((lastJob.completedAt || lastJob.createdAt) as string).toLocaleDateString() : 'Never'}
+          change=""
+          changeType="neutral"
+        />
+      </div>
+
+      {orgContext?.structuredData && (
+        <GlassPanel>
+          <h2 className="text-lg font-semibold text-white mb-3">AI Organization Summary</h2>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            {orgContext.structuredData.summary || 'No summary available yet.'}
+          </p>
+        </GlassPanel>
+      )}
+    </div>
   );
 }

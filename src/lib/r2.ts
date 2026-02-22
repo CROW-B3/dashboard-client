@@ -13,16 +13,17 @@ interface R2Config {
   publicUrl?: string;
 }
 
-function getR2EnvVariable(key: string): string | undefined {
-  return env[key];
-}
-
 function getR2Config(): R2Config {
-  const accountId = getR2EnvVariable("CLOUDFLARE_ACCOUNT_ID");
-  const accessKeyId = getR2EnvVariable("CLOUDFLARE_R2_ACCESS_KEY");
-  const secretAccessKey = getR2EnvVariable("CLOUDFLARE_R2_SECRET_ACCESS_KEY");
-  const bucketName = getR2EnvVariable("CLOUDFLARE_R2_STORAGE_BUCKET");
-  const publicUrl = getR2EnvVariable("NEXT_PUBLIC_R2_PUBLIC_URL");
+  // eslint-disable-next-line dot-notation
+  const accountId = env["CLOUDFLARE_ACCOUNT_ID"];
+  // eslint-disable-next-line dot-notation
+  const accessKeyId = env["CLOUDFLARE_R2_ACCESS_KEY"];
+  // eslint-disable-next-line dot-notation
+  const secretAccessKey = env["CLOUDFLARE_R2_SECRET_ACCESS_KEY"];
+  // eslint-disable-next-line dot-notation
+  const bucketName = env["CLOUDFLARE_R2_STORAGE_BUCKET"];
+  // eslint-disable-next-line dot-notation
+  const publicUrl = env["NEXT_PUBLIC_R2_PUBLIC_URL"];
 
   if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
     throw new Error("Missing required R2 configuration");
