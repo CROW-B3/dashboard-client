@@ -10,7 +10,7 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://local
 
 export default function AnalyticsPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.organizationId;
+  const orgId = user?.orgUuid;
   const { data: permissions } = usePermissions(user?.id);
 
   const { data: summary } = useQuery<Record<string, number | string> | null>({
