@@ -16,7 +16,7 @@ const SOURCE_TYPE_OPTIONS = [
 
 export default function InteractionsPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.organizationId;
+  const orgId = user?.orgUuid;
   const [sourceType, setSourceType] = useState('');
   const [page, setPage] = useState(1);
 

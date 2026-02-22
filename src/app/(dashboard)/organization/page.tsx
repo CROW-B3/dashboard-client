@@ -10,7 +10,7 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://local
 
 export default function OrganizationPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.organizationId;
+  const orgId = user?.orgUuid;
   const [regenerating, setRegenerating] = useState(false);
 
   const { data: org } = useQuery<{ id: string; name: string; slug?: string; apiKey?: string } | null>({
