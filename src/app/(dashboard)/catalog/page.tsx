@@ -20,7 +20,7 @@ interface Product {
 
 export default function CatalogPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.organizationId;
+  const orgId = user?.orgUuid;
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -160,12 +160,27 @@ export default function CatalogPage() {
                 className="bg-white/[0.04] border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-violet-500/50 transition-all"
                 onClick={() => setSelectedProduct(product)}
               >
-                {product.images?.[0] && (
-                  <img src={product.images[0]} alt={product.title} className="w-full aspect-square object-cover" />
-                )}
+                <div className="w-full aspect-square bg-white/[0.03] relative overflow-hidden">
+                  {product.images?.[0] ? (
+                    <img
+                      src={product.images[0]}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const el = e.currentTarget;
+                        el.style.display = 'none';
+                        el.nextElementSibling?.removeAttribute('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div hidden={!!product.images?.[0]} className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-900/30 to-black/50">
+                    <span className="text-xs text-gray-500 text-center px-2">{product.title.slice(0, 20)}</span>
+                  </div>
+                </div>
                 <div className="p-3 space-y-1">
                   <p className="text-sm text-white font-medium line-clamp-2">{product.title}</p>
                   {product.price && <p className="text-xs text-violet-400">${(product.price / 100).toFixed(2)}</p>}
+                  {product.description && <p className="text-xs text-gray-400 line-clamp-2">{product.description}</p>}
                   {product.category && <StatusBadge>{product.category}</StatusBadge>}
                 </div>
               </div>
@@ -197,11 +212,17 @@ export default function CatalogPage() {
             >
               {isRescraping ? 'Re-scraping...' : 'Re-scrape'}
             </button>
-            {aiDescriptions?.descriptions?.map((desc) => (
-              <div key={desc.id} className="border border-white/10 rounded-lg p-3 space-y-2">
-                <p className="text-sm text-gray-300">{(desc as any).content}</p>
+            {aiDescriptions?.descriptions && aiDescriptions.descriptions.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">AI Analysis</p>
+                {aiDescriptions.descriptions.map((desc) => (
+                  <div key={desc.id} className="border border-white/10 rounded-lg p-3 space-y-1">
+                    <p className="text-xs text-violet-400 font-medium capitalize">{desc.type}</p>
+                    <p className="text-sm text-gray-300">{desc.content}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </SidePanel>
       )}

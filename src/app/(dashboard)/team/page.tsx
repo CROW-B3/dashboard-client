@@ -12,7 +12,7 @@ interface InvitationItem { id: string; email: string; role: string; status: stri
 
 export default function TeamPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.organizationId;
+  const orgId = user?.orgUuid;
   const [emails, setEmails] = useState<string[]>([]);
   const [inviting, setInviting] = useState(false);
 
@@ -40,14 +40,20 @@ export default function TeamPage() {
     invitationsData?.invitations?.filter((inv) => inv.status === 'pending') ?? [];
 
   const handleInvite = async () => {
-    if (!emails.length || !orgId) return;
+    if (!emails.length || !orgId || !user) return;
     setInviting(true);
     try {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/auth/team-invitations/send-invites`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emails, organizationId: orgId }),
+        body: JSON.stringify({
+          emails,
+          organizationId: orgId,
+          organizationName: user.orgName ?? '',
+          inviterName: user.name,
+          inviterId: user.betterAuthUserId,
+        }),
       });
       if (!res.ok) throw new Error("Request failed");
       toast.success(`Invited ${emails.length} member(s)`);

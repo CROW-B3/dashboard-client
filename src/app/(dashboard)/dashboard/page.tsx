@@ -5,9 +5,9 @@ import { Activity, BarChart2, Layers, Package } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSession } from '@/lib/auth-client';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev.api.crowai.dev';
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
 const SKELETON_KEYS = ['a', 'b', 'c'];
 
@@ -36,6 +36,10 @@ interface InteractionsResponse {
 interface PatternsResponse {
   data?: Pattern[];
   patterns?: Pattern[];
+  total?: number;
+}
+
+interface ProductsResponse {
   total?: number;
 }
 
@@ -68,23 +72,16 @@ function StatCard({
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
-  const orgId =
-    (session?.session as { activeOrganizationId?: string })?.activeOrganizationId || '';
-  const token = session?.session?.token || '';
-
-  const headers: Record<string, string> = {
-    'Authorization': `Bearer ${token}`,
-    'X-Organization-Id': orgId,
-  };
+  const { data: user } = useCurrentUser();
+  const orgId = user?.orgUuid;
 
   const { data: interactionsData, isLoading: interactionsLoading } =
     useQuery<InteractionsResponse>({
       enabled: !!orgId,
       queryFn: async () => {
         const res = await fetch(
-          `${API_URL}/api/v1/interactions/organization/${orgId}?limit=5`,
-          { headers },
+          `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?limit=5`,
+          { credentials: 'include' },
         );
         if (!res.ok) return {};
         return res.json();
@@ -97,8 +94,8 @@ export default function DashboardPage() {
       enabled: !!orgId,
       queryFn: async () => {
         const res = await fetch(
-          `${API_URL}/api/v1/patterns/organization/${orgId}?limit=5`,
-          { headers },
+          `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?limit=5`,
+          { credentials: 'include' },
         );
         if (!res.ok) return {};
         return res.json();
@@ -106,10 +103,25 @@ export default function DashboardPage() {
       queryKey: ['dashboard-patterns', orgId],
     });
 
+  const { data: productsData, isLoading: productsLoading } =
+    useQuery<ProductsResponse>({
+      enabled: !!orgId,
+      queryFn: async () => {
+        const res = await fetch(
+          `${API_GATEWAY_URL}/api/v1/products/organization/${orgId}?pageSize=1`,
+          { credentials: 'include' },
+        );
+        if (!res.ok) return {};
+        return res.json();
+      },
+      queryKey: ['dashboard-products-count', orgId],
+    });
+
   const interactions = interactionsData?.interactions || interactionsData?.data || [];
   const patterns = patternsData?.patterns || patternsData?.data || [];
   const totalInteractions = interactionsData?.total ?? interactions.length;
   const totalPatterns = patternsData?.total ?? patterns.length;
+  const totalProducts = productsData?.total ?? 0;
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const recentInteractions = interactions.filter(
@@ -121,7 +133,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Welcome back, {session?.user?.name || session?.user?.email || 'User'}
+          Welcome back, {user?.name || user?.email || 'User'}
         </p>
       </div>
 
@@ -138,7 +150,12 @@ export default function DashboardPage() {
           title="Active Patterns"
           value={totalPatterns}
         />
-        <StatCard icon={Package} title="Products" value="—" />
+        <StatCard
+          icon={Package}
+          loading={productsLoading}
+          title="Products"
+          value={productsLoading ? '—' : totalProducts}
+        />
         <StatCard
           icon={BarChart2}
           loading={interactionsLoading}
