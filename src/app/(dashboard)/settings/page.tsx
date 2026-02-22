@@ -1,7 +1,7 @@
 'use client';
 
 import { ApiKeyInput, GlassPanel, SegmentedControl } from '@b3-crow/ui-kit';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -24,11 +24,10 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [keyName, setKeyName] = useState('');
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [saving, setSaving] = useState(false);
   const orgId = currentUser?.organizationId;
+  const queryClient = useQueryClient();
 
-  const { data: apiKeys, refetch: refetchKeys } = useQuery({
+  const { data: apiKeys } = useQuery({
     queryKey: ['api-keys'],
     queryFn: async () => {
       const res = await apiKey.list();
@@ -47,56 +46,53 @@ export default function SettingsPage() {
     enabled: activeTab === 'billing' && !!orgId,
   });
 
-  const handleSaveProfile = async () => {
-    if (!currentUser?.id) return;
-    setSaving(true);
-    try {
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUser?.id) throw new Error('No user');
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/${currentUser.id}/profile`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name || user?.name }),
       });
-      if (!res.ok) throw new Error("Request failed");
-      toast.success('Profile updated');
-    } catch {
-      toast.error('Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
-  };
+      if (!res.ok) throw new Error('Request failed');
+    },
+    onSuccess: () => toast.success('Profile updated'),
+    onError: () => toast.error('Failed to update profile'),
+  });
 
-  const handleCreateKey = async () => {
-    if (!keyName || !orgId) return;
-    setCreating(true);
-    try {
+  const createKeyMutation = useMutation({
+    mutationFn: async () => {
       const res = await apiKey.create({
         name: keyName,
         expiresIn: 60 * 60 * 24 * 365,
         metadata: { organizationId: orgId },
       });
-      if (res.data?.key) {
-        setNewKeyValue(res.data.key);
-        toast.success('API key created');
-        refetchKeys();
-        setKeyName('');
-      }
-    } catch {
-      toast.error('Failed to create API key');
-    } finally {
-      setCreating(false);
-    }
-  };
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (data?.key) setNewKeyValue(data.key);
+      toast.success('API key created');
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      setKeyName('');
+    },
+    onError: () => toast.error('Failed to create API key'),
+  });
 
-  const handleRevokeKey = async (keyId: string) => {
-    try {
+  const revokeKeyMutation = useMutation({
+    mutationFn: async (keyId: string) => {
       await apiKey.delete({ keyId });
+    },
+    onSuccess: () => {
       toast.success('API key revoked');
-      refetchKeys();
-    } catch {
-      toast.error('Failed to revoke key');
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+    },
+    onError: () => toast.error('Failed to revoke key'),
+  });
+
+  const handleSaveProfile = () => saveProfileMutation.mutate();
+  const handleCreateKey = () => { if (keyName && orgId) createKeyMutation.mutate(); };
+  const handleRevokeKey = (keyId: string) => revokeKeyMutation.mutate(keyId);
 
   const visibleTabs = TABS.filter(tab => {
     if (tab.value === 'api-keys') return permissions?.apiKeyManagement;
