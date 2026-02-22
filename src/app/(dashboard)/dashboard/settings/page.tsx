@@ -1,21 +1,15 @@
 'use client';
 
+import { GlassPanel } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { apiKey, useSession } from '@/lib/auth-client';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev.api.crowai.dev';
@@ -49,12 +43,11 @@ interface CreateApiKeyResponse {
 
 export default function DashboardSettingsPage() {
   const { data: session } = useSession();
+  const { data: currentUser } = useCurrentUser();
   const orgId =
     (session?.session as { activeOrganizationId?: string })?.activeOrganizationId || '';
   const token = session?.session?.token || '';
-  const orgName =
-    (session?.session as { activeOrganizationName?: string })?.activeOrganizationName ||
-    'Your Organization';
+  const orgName = currentUser?.orgName || (session?.session as { activeOrganizationName?: string })?.activeOrganizationName || 'Your Organization';
   const queryClient = useQueryClient();
 
   const [newKeyName, setNewKeyName] = useState('');
@@ -151,8 +144,8 @@ export default function DashboardSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <p className="mt-1 text-sm text-gray-400">
           Manage your organization settings and preferences
         </p>
       </div>
@@ -165,72 +158,74 @@ export default function DashboardSettingsPage() {
         </TabsList>
 
         <TabsContent className="mt-6 space-y-6" value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>Organization</CardTitle>
-              <CardDescription>General information about your organization</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <GlassPanel className="p-6">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-white">Organization</h2>
+              <p className="text-sm text-gray-400">General information about your organization</p>
+            </div>
+            <div className="space-y-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium">Organization Name</p>
-                <p className="text-sm text-muted-foreground">{orgName}</p>
+                <p className="text-sm font-medium text-white">Organization Name</p>
+                <p className="text-sm text-gray-400">{orgName}</p>
               </div>
               {orgId && (
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Organization ID</p>
-                  <p className="font-mono text-xs text-muted-foreground">{orgId}</p>
+                  <p className="text-sm font-medium text-white">Organization ID</p>
+                  <p className="font-mono text-xs text-gray-400">{orgId}</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </GlassPanel>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Members</CardTitle>
-              <CardDescription>People in your organization</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {membersLoading ? (
-                <div className="space-y-2">
-                  {skeletonRows.map((k) => (
-                    <div key={k} className="h-10 animate-pulse rounded bg-muted" />
-                  ))}
-                </div>
-              ) : !members || members.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No members found</p>
-              ) : (
-                <div className="space-y-2">
-                  {members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">
-                          {member.name || member.email || member.id}
-                        </p>
-                        {member.email && member.name && (
-                          <p className="text-xs text-muted-foreground">{member.email}</p>
-                        )}
-                      </div>
-                      {member.role && <Badge variant="secondary">{member.role}</Badge>}
+          <GlassPanel className="p-6">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-white">Members</h2>
+              <p className="text-sm text-gray-400">People in your organization</p>
+            </div>
+            {membersLoading ? (
+              <div className="space-y-2">
+                {skeletonRows.map((k) => (
+                  <div key={k} className="h-10 animate-pulse rounded-lg bg-white/5" />
+                ))}
+              </div>
+            ) : !members || members.length === 0 ? (
+              <p className="text-sm text-gray-400">No members found</p>
+            ) : (
+              <div className="space-y-2">
+                {members.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {member.name || member.email || member.id}
+                      </p>
+                      {member.email && member.name && (
+                        <p className="text-xs text-gray-400">{member.email}</p>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    {member.role && (
+                      <span className="rounded-full bg-white/10 border border-white/20 px-2 py-0.5 text-xs text-gray-300">
+                        {member.role}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </GlassPanel>
         </TabsContent>
 
         <TabsContent className="mt-6 space-y-6" value="api-keys">
-          <Card>
-            <CardHeader>
-              <CardTitle>API Keys</CardTitle>
-              <CardDescription>
+          <GlassPanel className="p-6">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-white">API Keys</h2>
+              <p className="text-sm text-gray-400">
                 Manage API keys for programmatic access to CROW
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </p>
+            </div>
+            <div className="space-y-4">
               <div className="flex gap-2">
                 <Input
                   placeholder="Key name (e.g. production-key)"
@@ -249,11 +244,11 @@ export default function DashboardSettingsPage() {
 
               {createdKey && (
                 <div className="space-y-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3">
-                  <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                  <p className="text-xs font-medium text-green-400">
                     Save this key now — it will not be shown again
                   </p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 break-all rounded bg-muted px-2 py-1 text-xs">
+                    <code className="flex-1 break-all rounded bg-white/5 px-2 py-1 text-xs text-gray-300">
                       {createdKey}
                     </code>
                     <Button
@@ -270,11 +265,11 @@ export default function DashboardSettingsPage() {
               {apiKeysLoading ? (
                 <div className="space-y-2">
                   {skeletonRows.map((k) => (
-                    <div key={k} className="h-14 animate-pulse rounded bg-muted" />
+                    <div key={k} className="h-14 animate-pulse rounded-lg bg-white/5" />
                   ))}
                 </div>
               ) : !apiKeys || apiKeys.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">
+                <p className="py-4 text-center text-sm text-gray-400">
                   No API keys yet
                 </p>
               ) : (
@@ -282,11 +277,11 @@ export default function DashboardSettingsPage() {
                   {apiKeys.map((k) => (
                     <div
                       key={k.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
                     >
                       <div>
-                        <p className="text-sm font-medium">{k.name || 'Unnamed key'}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm font-medium text-white">{k.name || 'Unnamed key'}</p>
+                        <p className="text-xs text-gray-400">
                           Created {new Date(k.createdAt).toLocaleDateString()}
                           {k.start && ` · ${k.start}...`}
                         </p>
@@ -304,39 +299,41 @@ export default function DashboardSettingsPage() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </GlassPanel>
         </TabsContent>
 
         <TabsContent className="mt-6" value="billing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing</CardTitle>
-              <CardDescription>Manage your subscription and billing</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <GlassPanel className="p-6">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-white">Billing</h2>
+              <p className="text-sm text-gray-400">Manage your subscription and billing</p>
+            </div>
+            <div className="space-y-4">
               {billingLoading ? (
                 <div className="space-y-2">
                   {skeletonRows.map((k) => (
-                    <div key={k} className="h-6 animate-pulse rounded bg-muted" />
+                    <div key={k} className="h-6 animate-pulse rounded-lg bg-white/5" />
                   ))}
                 </div>
               ) : billing ? (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b py-2">
-                    <span className="text-sm text-muted-foreground">Plan</span>
-                    <Badge>{billing.plan || 'Free'}</Badge>
+                  <div className="flex items-center justify-between border-b border-white/10 py-2">
+                    <span className="text-sm text-gray-400">Plan</span>
+                    <span className="rounded-full bg-white/10 border border-white/20 px-2 py-0.5 text-xs text-gray-300">
+                      {billing.plan || 'Free'}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between border-b py-2">
-                    <span className="text-sm text-muted-foreground">Status</span>
-                    <Badge variant={billing.status === 'active' ? 'default' : 'secondary'}>
+                  <div className="flex items-center justify-between border-b border-white/10 py-2">
+                    <span className="text-sm text-gray-400">Status</span>
+                    <span className="rounded-full bg-white/10 border border-white/20 px-2 py-0.5 text-xs text-gray-300">
                       {billing.status || 'Unknown'}
-                    </Badge>
+                    </span>
                   </div>
                   {billing.currentPeriodEnd && (
-                    <div className="flex items-center justify-between border-b py-2">
-                      <span className="text-sm text-muted-foreground">Renews</span>
-                      <span className="text-sm">
+                    <div className="flex items-center justify-between border-b border-white/10 py-2">
+                      <span className="text-sm text-gray-400">Renews</span>
+                      <span className="text-sm text-white">
                         {new Date(billing.currentPeriodEnd).toLocaleDateString()}
                       </span>
                     </div>
@@ -351,13 +348,13 @@ export default function DashboardSettingsPage() {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-400">
                   No billing information available. Contact support to manage your
                   subscription.
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </GlassPanel>
         </TabsContent>
       </Tabs>
     </div>
