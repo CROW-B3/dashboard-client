@@ -3,6 +3,7 @@
 import { SearchInput, SidePanel, StatusBadge } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -14,7 +15,7 @@ interface Product {
   images: string[];
   price: number | null;
   category: string | null;
-  metadata: { inStock?: boolean } | null;
+  metadata: { inStock?: boolean; sourceUrl?: string } | null;
 }
 
 export default function CatalogPage() {
@@ -23,8 +24,12 @@ export default function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showAddSource, setShowAddSource] = useState(false);
+  const [newSourceUrl, setNewSourceUrl] = useState('');
+  const [isSubmittingCrawl, setIsSubmittingCrawl] = useState(false);
+  const [isRescraping, setIsRescraping] = useState(false);
 
-  const { data: productsData, isLoading } = useQuery<{ products: Product[]; total: number }>({
+  const { data: productsData, isLoading, refetch } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ['products', orgId, page, searchQuery],
     queryFn: async () => {
       if (searchQuery) {
@@ -56,12 +61,87 @@ export default function CatalogPage() {
     enabled: !!selectedProduct,
   });
 
+  const handleStartCrawl = async () => {
+    if (!newSourceUrl.trim() || !orgId) return;
+    setIsSubmittingCrawl(true);
+    try {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sourceType: 'url', sourceValue: newSourceUrl.trim(), organizationId: orgId }),
+      });
+      if (!res.ok) throw new Error('Failed to start crawl');
+      toast.success('Crawl started');
+      setNewSourceUrl('');
+      setShowAddSource(false);
+      setTimeout(() => { void refetch(); }, 5000);
+    } catch {
+      toast.error('Failed to start crawl');
+    } finally {
+      setIsSubmittingCrawl(false);
+    }
+  };
+
+  const handleRescrape = async () => {
+    if (!selectedProduct || !orgId) return;
+    const sourceUrl = selectedProduct.metadata?.sourceUrl ?? selectedProduct.images?.[0];
+    if (!sourceUrl) {
+      toast.error('No source URL available for this product');
+      return;
+    }
+    setIsRescraping(true);
+    try {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sourceType: 'url', sourceValue: sourceUrl, organizationId: orgId }),
+      });
+      if (!res.ok) throw new Error('Failed to start re-scrape');
+      toast.success('Re-scrape started');
+      setTimeout(() => { void refetch(); }, 5000);
+    } catch {
+      toast.error('Failed to start re-scrape');
+    } finally {
+      setIsRescraping(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Product Catalog</h1>
-        <p className="text-gray-400 text-sm mt-1">Browse and search your products</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Product Catalog</h1>
+          <p className="text-gray-400 text-sm mt-1">Browse and search your products</p>
+        </div>
+        <button
+          onClick={() => setShowAddSource((v) => !v)}
+          className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {showAddSource ? 'Cancel' : 'Scrape New Source'}
+        </button>
       </div>
+
+      {showAddSource && (
+        <div className="flex gap-3 items-center p-4 bg-white/[0.04] border border-white/10 rounded-xl">
+          <input
+            type="url"
+            placeholder="https://example.com/products"
+            value={newSourceUrl}
+            onChange={(e) => setNewSourceUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void handleStartCrawl(); }}
+            className="flex-1 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500"
+          />
+          <button
+            onClick={() => void handleStartCrawl()}
+            disabled={isSubmittingCrawl || !newSourceUrl.trim()}
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+          >
+            {isSubmittingCrawl ? 'Starting...' : 'Start Crawl'}
+          </button>
+        </div>
+      )}
 
       <SearchInput
         placeholder="Search products semantically..."
@@ -110,6 +190,13 @@ export default function CatalogPage() {
             <p className="text-gray-300 text-sm">{selectedProduct.description}</p>
             {selectedProduct.price && <p className="text-violet-400 font-semibold">${(selectedProduct.price / 100).toFixed(2)}</p>}
             <StatusBadge>{selectedProduct.metadata?.inStock ? 'In Stock' : 'Out of Stock'}</StatusBadge>
+            <button
+              onClick={() => void handleRescrape()}
+              disabled={isRescraping}
+              className="w-full px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              {isRescraping ? 'Re-scraping...' : 'Re-scrape'}
+            </button>
             {aiDescriptions?.descriptions?.map((desc) => (
               <div key={desc.id} className="border border-white/10 rounded-lg p-3 space-y-2">
                 <p className="text-sm text-gray-300">{(desc as any).content}</p>
