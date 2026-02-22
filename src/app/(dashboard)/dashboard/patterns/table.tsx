@@ -5,7 +5,6 @@ import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +25,12 @@ import { useSession } from '@/lib/auth-client';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev.api.crowai.dev';
 
 const SKELETON_KEYS = ['a', 'b', 'c', 'd', 'e'];
+
+const SOURCE_COLORS: Record<string, string> = {
+  web: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  cctv: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+  social: 'bg-pink-500/20 text-pink-300 border border-pink-500/30',
+};
 
 interface Pattern {
   [key: string]: unknown;
@@ -93,7 +98,7 @@ export function PatternsTable() {
   return (
     <>
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
           className="pl-9"
           placeholder="Search patterns..."
@@ -105,47 +110,51 @@ export function PatternsTable() {
       {isLoading ? (
         <div className="space-y-2">
           {SKELETON_KEYS.map((k) => (
-            <div key={k} className="h-12 animate-pulse rounded bg-muted" />
+            <div key={k} className="h-12 animate-pulse rounded-lg bg-white/5" />
           ))}
         </div>
       ) : patterns.length === 0 ? (
-        <div className="py-12 text-center text-muted-foreground">
+        <div className="py-12 text-center text-gray-400">
           {query ? `No patterns found for "${query}"` : 'No patterns detected yet'}
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-lg border border-white/10">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Pattern ID</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Confidence</TableHead>
-                <TableHead>Detected At</TableHead>
+              <TableRow className="border-white/10">
+                <TableHead className="text-gray-400">Pattern ID</TableHead>
+                <TableHead className="text-gray-400">Type</TableHead>
+                <TableHead className="text-gray-400">Confidence</TableHead>
+                <TableHead className="text-gray-400">Detected At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {patterns.map((pattern) => (
                 <TableRow
                   key={pattern.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer border-white/10 hover:bg-white/5"
                   onClick={() => setSelected(pattern)}
                 >
-                  <TableCell className="font-mono text-xs">{pattern.id}</TableCell>
+                  <TableCell className="font-mono text-xs text-white">{pattern.id}</TableCell>
                   <TableCell>
                     {pattern.type ? (
-                      <Badge variant="outline">{pattern.type}</Badge>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_COLORS[pattern.type] ?? 'bg-white/10 text-gray-300 border border-white/20'}`}
+                      >
+                        {pattern.type}
+                      </span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-gray-400">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell className="text-sm text-white">
                     {pattern.confidence != null ? (
                       <span>{Math.round(pattern.confidence * 100)}%</span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-gray-400">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-gray-400">
                     {pattern.detectedAt || pattern.generatedAt || pattern.createdAt
                       ? new Date(
                           (pattern.detectedAt ||
@@ -167,7 +176,7 @@ export function PatternsTable() {
             <DialogTitle>Pattern Detail</DialogTitle>
           </DialogHeader>
           {selected && (
-            <pre className="overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-4 text-xs">
+            <pre className="overflow-auto whitespace-pre-wrap break-all rounded-lg bg-white/5 p-4 text-xs text-gray-300">
               {JSON.stringify(selected, null, 2)}
             </pre>
           )}
