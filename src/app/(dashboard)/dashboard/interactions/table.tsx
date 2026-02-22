@@ -5,7 +5,6 @@ import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +25,12 @@ import { useSession } from '@/lib/auth-client';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev.api.crowai.dev';
 
 const SKELETON_KEYS = ['a', 'b', 'c', 'd', 'e'];
+
+const SOURCE_COLORS: Record<string, string> = {
+  web: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  cctv: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+  social: 'bg-pink-500/20 text-pink-300 border border-pink-500/30',
+};
 
 interface Interaction {
   [key: string]: unknown;
@@ -93,7 +98,7 @@ export function InteractionsTable() {
   return (
     <>
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
           className="pl-9"
           placeholder="Search interactions..."
@@ -105,51 +110,55 @@ export function InteractionsTable() {
       {isLoading ? (
         <div className="space-y-2">
           {SKELETON_KEYS.map((k) => (
-            <div key={k} className="h-12 animate-pulse rounded bg-muted" />
+            <div key={k} className="h-12 animate-pulse rounded-lg bg-white/5" />
           ))}
         </div>
       ) : interactions.length === 0 ? (
-        <div className="py-12 text-center text-muted-foreground">
+        <div className="py-12 text-center text-gray-400">
           {query ? `No interactions found for "${query}"` : 'No interactions yet'}
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-lg border border-white/10">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Session ID</TableHead>
-                <TableHead>Source Type</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>Summary</TableHead>
+              <TableRow className="border-white/10">
+                <TableHead className="text-gray-400">Session ID</TableHead>
+                <TableHead className="text-gray-400">Source Type</TableHead>
+                <TableHead className="text-gray-400">Timestamp</TableHead>
+                <TableHead className="text-gray-400">Summary</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {interactions.map((interaction) => (
                 <TableRow
                   key={interaction.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer border-white/10 hover:bg-white/5"
                   onClick={() => setSelected(interaction)}
                 >
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="font-mono text-xs text-white">
                     {interaction.sessionId || interaction.id}
                   </TableCell>
                   <TableCell>
                     {interaction.sourceType ? (
-                      <Badge variant="secondary">{interaction.sourceType}</Badge>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_COLORS[interaction.sourceType] ?? 'bg-white/10 text-gray-300 border border-white/20'}`}
+                      >
+                        {interaction.sourceType}
+                      </span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-gray-400">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-gray-400">
                     {interaction.timestamp || interaction.createdAt
                       ? new Date(
                           (interaction.timestamp || interaction.createdAt) as string,
                         ).toLocaleString()
                       : '—'}
                   </TableCell>
-                  <TableCell className="max-w-[240px] truncate text-sm">
+                  <TableCell className="max-w-[240px] truncate text-sm text-white">
                     {interaction.summary || (
-                      <span className="text-muted-foreground">No summary</span>
+                      <span className="text-gray-400">No summary</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -165,7 +174,7 @@ export function InteractionsTable() {
             <DialogTitle>Interaction Detail</DialogTitle>
           </DialogHeader>
           {selected && (
-            <pre className="overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-4 text-xs">
+            <pre className="overflow-auto whitespace-pre-wrap break-all rounded-lg bg-white/5 p-4 text-xs text-gray-300">
               {JSON.stringify(selected, null, 2)}
             </pre>
           )}
