@@ -1,10 +1,10 @@
 'use client';
 
 import { DashboardBackground, Header, Sidebar } from '@b3-crow/ui-kit';
-import { BarChart, Building, Home, Package, Settings, Users } from 'lucide-react';
+import { BarChart, Building, CreditCard, Home, MessageSquare, Package, Plug, Settings, Users } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import { usePermissions } from '@/hooks/use-permissions';
+import { canAccessChat, usePermissions } from '@/hooks/use-permissions';
 import { signOut } from '@/lib/auth-client';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -26,7 +26,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         ...(permissions?.patterns ? [{ label: 'Patterns', href: '/dashboard/patterns' }] : []),
       ],
     },
+    ...(canAccessChat(permissions) ? [{ label: 'Chat', href: '/dashboard/chat', icon: MessageSquare }] : []),
     ...(permissions?.teamManagement ? [{ label: 'Team', href: '/team', icon: Users }] : []),
+    { label: 'Integrations', href: '/integrations', icon: Plug },
+    { label: 'Billing', href: '/billing', icon: CreditCard },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
