@@ -1,8 +1,7 @@
 'use client';
 
 import { GlassPanel, StatusBadge } from '@b3-crow/ui-kit';
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
@@ -11,7 +10,7 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://local
 export default function OrganizationPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.orgUuid;
-  const [regenerating, setRegenerating] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: org } = useQuery<{ id: string; name: string; slug?: string; apiKey?: string } | null>({
     queryKey: ['org', orgId],
@@ -23,7 +22,7 @@ export default function OrganizationPage() {
     enabled: !!orgId,
   });
 
-  const { data: orgContext, refetch: refetchContext } = useQuery<{ context?: string; updatedAt?: string; structuredData?: { summary?: string; keyProducts?: string; insights?: string } } | null>({
+  const { data: orgContext } = useQuery<{ context?: string; updatedAt?: string; structuredData?: { summary?: string; keyProducts?: string; insights?: string } } | null>({
     queryKey: ['org-context', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/context`, { credentials: 'include' });
@@ -43,24 +42,23 @@ export default function OrganizationPage() {
     enabled: !!orgId,
   });
 
-  const handleRegenerateContext = async () => {
-    if (!orgId) return;
-    setRegenerating(true);
-    try {
+  const regenerateContextMutation = useMutation({
+    mutationFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/context/trigger`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (!res.ok) throw new Error("Request failed");
+      if (!res.ok) throw new Error('Request failed');
+    },
+    onSuccess: () => {
       toast.success('Context regeneration started');
-      setTimeout(() => refetchContext(), 5000);
-    } catch {
-      toast.error('Failed to regenerate context');
-    } finally {
-      setRegenerating(false);
-    }
-  };
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ['org-context', orgId] });
+      }, 5000);
+    },
+    onError: () => toast.error('Failed to regenerate context'),
+  });
 
   return (
     <div className="space-y-6">
@@ -87,11 +85,11 @@ export default function OrganizationPage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-white">AI Context</h2>
           <button
-            onClick={handleRegenerateContext}
-            disabled={regenerating}
+            onClick={() => regenerateContextMutation.mutate()}
+            disabled={regenerateContextMutation.isPending}
             className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
           >
-            {regenerating ? 'Generating...' : 'Re-generate'}
+            {regenerateContextMutation.isPending ? 'Generating...' : 'Re-generate'}
           </button>
         </div>
         {orgContext?.structuredData ? (

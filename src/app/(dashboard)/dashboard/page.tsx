@@ -1,6 +1,6 @@
 'use client';
 
-import { GlassPanel, MetricsCard } from '@b3-crow/ui-kit';
+import { GlassPanel, MetricsCard, SourceIcon } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
@@ -8,101 +8,89 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://local
 
 const SKELETON_KEYS = ['a', 'b', 'c'];
 
+interface InteractionSummary {
+  web: number;
+  cctv: number;
+  social: number;
+  total: number;
+}
+
 interface Interaction {
   id: string;
-  sessionId?: string;
-  sourceType?: string;
-  summary?: string;
-  timestamp?: string;
+  organizationId: string;
+  sourceType: string;
+  sessionId: string | null;
+  data: string;
+  summary: string | null;
+  timestamp: number;
+  createdAt: number;
 }
 
 interface Pattern {
-  confidence?: number;
-  detectedAt?: string;
-  generatedAt?: string;
   id: string;
-  type?: string;
+  organizationId: string;
+  type: string;
+  confidence: number | null;
+  data: string;
+  detectedAt: number;
+  createdAt: number;
 }
 
 interface InteractionsResponse {
-  data?: Interaction[];
-  interactions?: Interaction[];
-  total?: number;
+  interactions: Interaction[];
+  total: number;
 }
 
 interface PatternsResponse {
-  data?: Pattern[];
-  patterns?: Pattern[];
-  total?: number;
+  patterns: Pattern[];
+  total: number;
 }
-
-interface ProductsResponse {
-  total?: number;
-}
-
-const SOURCE_COLORS: Record<string, string> = {
-  web: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  cctv: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
-  social: 'bg-pink-500/20 text-pink-300 border border-pink-500/30',
-  unknown: 'bg-white/10 text-gray-400 border border-white/10',
-};
 
 export default function DashboardPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.orgUuid;
 
-  const { data: interactionsData, isLoading: interactionsLoading } =
-    useQuery<InteractionsResponse>({
-      enabled: !!orgId,
-      queryFn: async () => {
-        const res = await fetch(
-          `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?limit=5`,
-          { credentials: 'include' },
-        );
-        if (!res.ok) return {};
-        return res.json();
-      },
-      queryKey: ['dashboard-interactions', orgId],
-    });
+  const { data: summaryData, isLoading: summaryLoading } = useQuery<InteractionSummary>({
+    queryKey: ['dashboard-summary', orgId],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { web: 0, cctv: 0, social: 0, total: 0 };
+      return res.json();
+    },
+    enabled: !!orgId,
+  });
 
-  const { data: patternsData, isLoading: patternsLoading } =
-    useQuery<PatternsResponse>({
-      enabled: !!orgId,
-      queryFn: async () => {
-        const res = await fetch(
-          `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?limit=5`,
-          { credentials: 'include' },
-        );
-        if (!res.ok) return {};
-        return res.json();
-      },
-      queryKey: ['dashboard-patterns', orgId],
-    });
+  const { data: interactionsData, isLoading: interactionsLoading } = useQuery<InteractionsResponse>({
+    queryKey: ['dashboard-interactions', orgId],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?limit=5`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { interactions: [], total: 0 };
+      return res.json();
+    },
+    enabled: !!orgId,
+  });
 
-  const { data: productsData, isLoading: productsLoading } =
-    useQuery<ProductsResponse>({
-      enabled: !!orgId,
-      queryFn: async () => {
-        const res = await fetch(
-          `${API_GATEWAY_URL}/api/v1/products/organization/${orgId}?pageSize=1`,
-          { credentials: 'include' },
-        );
-        if (!res.ok) return {};
-        return res.json();
-      },
-      queryKey: ['dashboard-products-count', orgId],
-    });
+  const { data: patternsData, isLoading: patternsLoading } = useQuery<PatternsResponse>({
+    queryKey: ['dashboard-patterns', orgId],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?limit=5`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { patterns: [], total: 0 };
+      return res.json();
+    },
+    enabled: !!orgId,
+  });
 
-  const interactions = interactionsData?.interactions || interactionsData?.data || [];
-  const patterns = patternsData?.patterns || patternsData?.data || [];
-  const totalInteractions = interactionsData?.total ?? interactions.length;
-  const totalPatterns = patternsData?.total ?? patterns.length;
-  const totalProducts = productsData?.total ?? 0;
-
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const recentInteractions = interactions.filter(
-    (i) => new Date(i.timestamp ?? '').getTime() >= sevenDaysAgo.getTime(),
-  ).length;
+  const interactions = interactionsData?.interactions ?? [];
+  const patterns = patternsData?.patterns ?? [];
 
   return (
     <div className="space-y-6">
@@ -115,28 +103,28 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricsCard
-          title="Total Sessions"
-          value={interactionsLoading ? '—' : String(totalInteractions)}
+          title="Total Interactions"
+          value={summaryLoading ? '...' : String(summaryData?.total ?? 0)}
           change=""
           changeType="neutral"
         />
         <MetricsCard
           title="Active Patterns"
-          value={patternsLoading ? '—' : String(totalPatterns)}
+          value={patternsLoading ? '...' : String(patternsData?.total ?? 0)}
           change=""
           changeType="neutral"
         />
         <MetricsCard
-          title="Products"
-          value={productsLoading ? '—' : String(totalProducts)}
+          title="Web Sources"
+          value={summaryLoading ? '...' : String(summaryData?.web ?? 0)}
           change=""
-          changeType="neutral"
+          changeType="info"
         />
         <MetricsCard
-          title="Interactions (7d)"
-          value={interactionsLoading ? '—' : String(recentInteractions)}
+          title="CCTV Sources"
+          value={summaryLoading ? '...' : String(summaryData?.cctv ?? 0)}
           change=""
-          changeType="neutral"
+          changeType="info"
         />
       </div>
 
@@ -153,25 +141,23 @@ export default function DashboardPage() {
             <p className="py-4 text-center text-sm text-gray-500">No interactions yet</p>
           ) : (
             <div className="space-y-2">
-              {interactions.slice(0, 5).map((interaction) => (
+              {interactions.map((interaction) => (
                 <div
                   key={interaction.id}
                   className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_COLORS[interaction.sourceType ?? 'unknown'] ?? SOURCE_COLORS.unknown}`}
-                    >
-                      {interaction.sourceType || 'unknown'}
-                    </span>
-                    <span className="max-w-[140px] truncate text-xs text-gray-400">
+                  <div className="flex items-center gap-3">
+                    {(['web', 'cctv', 'social'] as const).includes(interaction.sourceType as 'web' | 'cctv' | 'social') && (
+                      <SourceIcon source={interaction.sourceType as 'web' | 'cctv' | 'social'} size="sm" />
+                    )}
+                    <span className="max-w-[180px] truncate text-xs text-gray-300">
                       {interaction.summary || interaction.sessionId || interaction.id}
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">
                     {interaction.timestamp
                       ? new Date(interaction.timestamp).toLocaleDateString()
-                      : '—'}
+                      : ''}
                   </span>
                 </div>
               ))}
@@ -191,7 +177,7 @@ export default function DashboardPage() {
             <p className="py-4 text-center text-sm text-gray-500">No patterns detected yet</p>
           ) : (
             <div className="space-y-2">
-              {patterns.slice(0, 5).map((pattern) => (
+              {patterns.map((pattern) => (
                 <div
                   key={pattern.id}
                   className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
@@ -207,11 +193,9 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <span className="text-xs text-gray-500">
-                    {pattern.detectedAt || pattern.generatedAt
-                      ? new Date(
-                          (pattern.detectedAt || pattern.generatedAt) as string,
-                        ).toLocaleDateString()
-                      : '—'}
+                    {pattern.detectedAt
+                      ? new Date(pattern.detectedAt).toLocaleDateString()
+                      : ''}
                   </span>
                 </div>
               ))}
