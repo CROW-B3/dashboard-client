@@ -1,7 +1,7 @@
 'use client';
 
 import { SearchInput, SidePanel, StatusBadge } from '@b3-crow/ui-kit';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -26,10 +26,9 @@ export default function CatalogPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showAddSource, setShowAddSource] = useState(false);
   const [newSourceUrl, setNewSourceUrl] = useState('');
-  const [isSubmittingCrawl, setIsSubmittingCrawl] = useState(false);
-  const [isRescraping, setIsRescraping] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data: productsData, isLoading, refetch } = useQuery<{ products: Product[]; total: number }>({
+  const { data: productsData, isLoading } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ['products', orgId, page, searchQuery],
     queryFn: async () => {
       if (searchQuery) {
@@ -61,37 +60,29 @@ export default function CatalogPage() {
     enabled: !!selectedProduct,
   });
 
-  const handleStartCrawl = async () => {
-    if (!newSourceUrl.trim() || !orgId) return;
-    setIsSubmittingCrawl(true);
-    try {
+  const startCrawlMutation = useMutation({
+    mutationFn: async (sourceUrl: string) => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ sourceType: 'url', sourceValue: newSourceUrl.trim(), organizationId: orgId }),
+        body: JSON.stringify({ sourceType: 'url', sourceValue: sourceUrl, organizationId: orgId }),
       });
       if (!res.ok) throw new Error('Failed to start crawl');
+    },
+    onSuccess: () => {
       toast.success('Crawl started');
       setNewSourceUrl('');
       setShowAddSource(false);
-      setTimeout(() => { void refetch(); }, 5000);
-    } catch {
-      toast.error('Failed to start crawl');
-    } finally {
-      setIsSubmittingCrawl(false);
-    }
-  };
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ['products', orgId] });
+      }, 5000);
+    },
+    onError: () => toast.error('Failed to start crawl'),
+  });
 
-  const handleRescrape = async () => {
-    if (!selectedProduct || !orgId) return;
-    const sourceUrl = selectedProduct.metadata?.sourceUrl ?? selectedProduct.images?.[0];
-    if (!sourceUrl) {
-      toast.error('No source URL available for this product');
-      return;
-    }
-    setIsRescraping(true);
-    try {
+  const rescrapeMutation = useMutation({
+    mutationFn: async (sourceUrl: string) => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,13 +90,29 @@ export default function CatalogPage() {
         body: JSON.stringify({ sourceType: 'url', sourceValue: sourceUrl, organizationId: orgId }),
       });
       if (!res.ok) throw new Error('Failed to start re-scrape');
+    },
+    onSuccess: () => {
       toast.success('Re-scrape started');
-      setTimeout(() => { void refetch(); }, 5000);
-    } catch {
-      toast.error('Failed to start re-scrape');
-    } finally {
-      setIsRescraping(false);
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ['products', orgId] });
+      }, 5000);
+    },
+    onError: () => toast.error('Failed to start re-scrape'),
+  });
+
+  const handleStartCrawl = () => {
+    if (!newSourceUrl.trim() || !orgId) return;
+    startCrawlMutation.mutate(newSourceUrl.trim());
+  };
+
+  const handleRescrape = () => {
+    if (!selectedProduct || !orgId) return;
+    const sourceUrl = selectedProduct.metadata?.sourceUrl ?? selectedProduct.images?.[0];
+    if (!sourceUrl) {
+      toast.error('No source URL available for this product');
+      return;
     }
+    rescrapeMutation.mutate(sourceUrl);
   };
 
   return (
@@ -130,15 +137,15 @@ export default function CatalogPage() {
             placeholder="https://example.com/products"
             value={newSourceUrl}
             onChange={(e) => setNewSourceUrl(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void handleStartCrawl(); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleStartCrawl(); }}
             className="flex-1 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500"
           />
           <button
-            onClick={() => void handleStartCrawl()}
-            disabled={isSubmittingCrawl || !newSourceUrl.trim()}
+            onClick={handleStartCrawl}
+            disabled={startCrawlMutation.isPending || !newSourceUrl.trim()}
             className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
           >
-            {isSubmittingCrawl ? 'Starting...' : 'Start Crawl'}
+            {startCrawlMutation.isPending ? 'Starting...' : 'Start Crawl'}
           </button>
         </div>
       )}
@@ -206,11 +213,11 @@ export default function CatalogPage() {
             {selectedProduct.price && <p className="text-violet-400 font-semibold">${(selectedProduct.price / 100).toFixed(2)}</p>}
             <StatusBadge>{selectedProduct.metadata?.inStock ? 'In Stock' : 'Out of Stock'}</StatusBadge>
             <button
-              onClick={() => void handleRescrape()}
-              disabled={isRescraping}
+              onClick={handleRescrape}
+              disabled={rescrapeMutation.isPending}
               className="w-full px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              {isRescraping ? 'Re-scraping...' : 'Re-scrape'}
+              {rescrapeMutation.isPending ? 'Re-scraping...' : 'Re-scrape'}
             </button>
             {aiDescriptions?.descriptions && aiDescriptions.descriptions.length > 0 && (
               <div className="space-y-2">

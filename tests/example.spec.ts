@@ -1,18 +1,30 @@
 import { expect, test } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3002';
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
+test.describe('Dashboard - Unauthenticated access', () => {
+  test('root path redirects to auth login when not authenticated', async ({ page }) => {
+    await page.goto(`${BASE_URL  }/`);
+    // Middleware calls the gateway session endpoint; without a valid session cookie
+    // it redirects to the external auth service login page.
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+  });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+  test('dashboard sub-path redirects to auth login when not authenticated', async ({ page }) => {
+    await page.goto(`${BASE_URL  }/dashboard`);
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+  });
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+  test('page title contains CROW or Dashboard after redirect', async ({ page }) => {
+    await page.goto(`${BASE_URL  }/`);
+    // The auth-client login page carries the CROW branding.
+    await expect(page).toHaveTitle(/crow|dashboard|sign.?in|log.?in/i, { timeout: 10000 });
+  });
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+  test('dashboard domain responds without a server error', async ({ page }) => {
+    const response = await page.goto(`${BASE_URL  }/`);
+    // Any redirect (3xx) or successful auth page (2xx) is acceptable;
+    // a 5xx would indicate a broken deployment.
+    expect(response?.status()).toBeLessThan(500);
+  });
 });

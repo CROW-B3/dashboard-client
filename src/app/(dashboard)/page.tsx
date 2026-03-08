@@ -1,56 +1,86 @@
 'use client';
 
-import { GlassPanel, MetricsCard } from '@b3-crow/ui-kit';
+import { GlassPanel, MetricsCard, SourceIcon } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
+const SKELETON_KEYS = ['a', 'b', 'c'];
+
+interface InteractionSummary {
+  web: number;
+  cctv: number;
+  social: number;
+  total: number;
+}
+
+interface Pattern {
+  id: string;
+  organizationId: string;
+  type: string;
+  confidence: number | null;
+  data: string;
+  detectedAt: number;
+  createdAt: number;
+}
+
+interface Interaction {
+  id: string;
+  organizationId: string;
+  sourceType: string;
+  sessionId: string | null;
+  data: string;
+  summary: string | null;
+  timestamp: number;
+  createdAt: number;
+}
+
 export default function OverviewPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.orgUuid;
 
-  const { data: products } = useQuery<{ total: number }>({
-    queryKey: ['products-count', orgId],
+  const { data: interactionSummary, isLoading: summaryLoading } = useQuery<InteractionSummary>({
+    queryKey: ['interactions-summary', orgId],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/products/organization/${orgId}?page=1&pageSize=1`, { credentials: 'include' });
-      if (!res.ok) return { total: 0 };
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { web: 0, cctv: 0, social: 0, total: 0 };
       return res.json();
     },
     enabled: !!orgId,
   });
 
-  const { data: members } = useQuery<{ id: string; name: string; email: string; role?: string }[]>({
-    queryKey: ['members', orgId],
+  const { data: topPatternsData, isLoading: patternsLoading } = useQuery<{ patterns: Pattern[]; total: number }>({
+    queryKey: ['top-patterns', orgId],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/members`, { credentials: 'include' });
-      if (!res.ok) return [];
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?limit=5`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { patterns: [], total: 0 };
       return res.json();
     },
     enabled: !!orgId,
   });
 
-  const { data: orgContext } = useQuery<{ structuredData?: { summary?: string } } | null>({
-    queryKey: ['org-context', orgId],
+  const { data: latestInteractionsData, isLoading: interactionsLoading } = useQuery<{ interactions: Interaction[]; total: number }>({
+    queryKey: ['latest-interactions', orgId],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/context`, { credentials: 'include' });
-      if (!res.ok) return null;
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?limit=5`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { interactions: [], total: 0 };
       return res.json();
     },
     enabled: !!orgId,
   });
 
-  const { data: crawlerJobs } = useQuery<{ jobs: { status: string; [key: string]: unknown }[] }>({
-    queryKey: ['crawler-jobs', orgId],
-    queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs/organization/${orgId}`, { credentials: 'include' });
-      if (!res.ok) return { jobs: [] };
-      return res.json();
-    },
-    enabled: !!orgId,
-  });
-
-  const lastJob = crawlerJobs?.jobs?.[crawlerJobs.jobs.length - 1];
+  const patterns = topPatternsData?.patterns ?? [];
+  const interactions = latestInteractionsData?.interactions ?? [];
 
   return (
     <div className="space-y-6">
@@ -61,39 +91,106 @@ export default function OverviewPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricsCard
-          title="Total Products"
-          value={String(products?.total ?? 0)}
+          title="Total Interactions"
+          value={summaryLoading ? '...' : String(interactionSummary?.total ?? 0)}
           change=""
           changeType="neutral"
         />
         <MetricsCard
-          title="Team Members"
-          value={String(Array.isArray(members) ? members.length : 0)}
+          title="Total Patterns"
+          value={patternsLoading ? '...' : String(topPatternsData?.total ?? 0)}
           change=""
           changeType="neutral"
         />
         <MetricsCard
-          title="Active Sources"
-          value={String(crawlerJobs?.jobs?.filter((j: { status: string }) => j.status === 'completed').length ?? 0)}
+          title="Web Interactions"
+          value={summaryLoading ? '...' : String(interactionSummary?.web ?? 0)}
           change=""
-          changeType="neutral"
+          changeType="info"
         />
         <MetricsCard
-          title="Last Crawl"
-          value={lastJob ? new Date((lastJob.completedAt || lastJob.createdAt) as string).toLocaleDateString() : 'Never'}
+          title="CCTV Interactions"
+          value={summaryLoading ? '...' : String(interactionSummary?.cctv ?? 0)}
           change=""
-          changeType="neutral"
+          changeType="info"
         />
       </div>
 
-      {orgContext?.structuredData && (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <GlassPanel>
-          <h2 className="text-lg font-semibold text-white mb-3">AI Organization Summary</h2>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            {orgContext.structuredData.summary || 'No summary available yet.'}
-          </p>
+          <h2 className="mb-4 text-base font-semibold text-white">Top Patterns</h2>
+          {patternsLoading ? (
+            <div className="space-y-2">
+              {SKELETON_KEYS.map((k) => (
+                <div key={k} className="h-10 animate-pulse rounded-lg bg-white/5" />
+              ))}
+            </div>
+          ) : patterns.length === 0 ? (
+            <p className="py-4 text-center text-sm text-gray-500">No patterns detected yet</p>
+          ) : (
+            <div className="space-y-2">
+              {patterns.map((pattern) => (
+                <div
+                  key={pattern.id}
+                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full border border-purple-500/30 bg-purple-500/20 px-2 py-0.5 text-xs font-medium text-purple-300">
+                      {pattern.type || 'pattern'}
+                    </span>
+                    {pattern.confidence != null && (
+                      <span className="text-xs text-gray-400">
+                        {Math.round(pattern.confidence * 100)}% confidence
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {pattern.detectedAt
+                      ? new Date(pattern.detectedAt).toLocaleDateString()
+                      : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </GlassPanel>
-      )}
+
+        <GlassPanel>
+          <h2 className="mb-4 text-base font-semibold text-white">Latest Interactions</h2>
+          {interactionsLoading ? (
+            <div className="space-y-2">
+              {SKELETON_KEYS.map((k) => (
+                <div key={k} className="h-10 animate-pulse rounded-lg bg-white/5" />
+              ))}
+            </div>
+          ) : interactions.length === 0 ? (
+            <p className="py-4 text-center text-sm text-gray-500">No interactions yet</p>
+          ) : (
+            <div className="space-y-2">
+              {interactions.map((interaction) => (
+                <div
+                  key={interaction.id}
+                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                >
+                  <div className="flex items-center gap-3">
+                    {(['web', 'cctv', 'social'] as const).includes(interaction.sourceType as 'web' | 'cctv' | 'social') && (
+                      <SourceIcon source={interaction.sourceType as 'web' | 'cctv' | 'social'} size="sm" />
+                    )}
+                    <span className="max-w-[200px] truncate text-xs text-gray-300">
+                      {interaction.summary || interaction.sessionId || interaction.id}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {interaction.timestamp
+                      ? new Date(interaction.timestamp).toLocaleDateString()
+                      : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </GlassPanel>
+      </div>
     </div>
   );
 }
