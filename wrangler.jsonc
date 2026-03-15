@@ -14,6 +14,8 @@
   },
   "vars": {
     "ENVIRONMENT": "prod",
+    "NEXT_PUBLIC_API_GATEWAY_URL": "https://api.crowai.dev",
+    "NEXT_PUBLIC_AUTH_URL": "https://auth.crowai.dev",
   },
   "d1_databases": [
     {
@@ -42,6 +44,9 @@
     "dev": {
       "vars": {
         "ENVIRONMENT": "dev",
+        "NEXT_PUBLIC_API_GATEWAY_URL": "https://dev.api.crowai.dev",
+        "NEXT_PUBLIC_API_URL": "https://dev.api.crowai.dev",
+        "NEXT_PUBLIC_AUTH_URL": "https://dev.auth.crowai.dev",
       },
       "routes": [
         { "pattern": "dev.app.crowai.dev", "custom_domain": true }
@@ -50,7 +55,7 @@
         {
           "binding": "DB_MAIN",
           "database_name": "crow-dashboard-client-db-dev",
-          "database_id": "875cfb9a-11a1-4891-b569-aadf3afb24f4",
+          "database_id": "ecc8b6ef-ab1a-4b95-ab1b-63c19812f7b3",
         },
       ],
       "r2_buckets": [
@@ -62,13 +67,15 @@
       "kv_namespaces": [
         {
           "binding": "NEXT_INC_CACHE_KV",
-          "id": "7863efdaa9c347e2bbd5bb303b88635a",
+          "id": "b17357bef07c48d097074bde3ef15d55",
         },
       ],
     },
     "local": {
       "vars": {
         "ENVIRONMENT": "local",
+        "NEXT_PUBLIC_API_GATEWAY_URL": "http://localhost:8000",
+        "NEXT_PUBLIC_AUTH_URL": "http://localhost:3000",
       },
     },
   },

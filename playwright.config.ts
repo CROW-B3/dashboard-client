@@ -1,44 +1,32 @@
-import { env } from "node:process";
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test';
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
-const config = {
-  testDir: "./tests",
+export default defineConfig({
+  testDir: './e2e',
   fullyParallel: true,
-  // eslint-disable-next-line dot-notation
-  forbidOnly: !!env["CI"],
-  // eslint-disable-next-line dot-notation
-  retries: env["CI"] ? 2 : 0,
-  // eslint-disable-next-line dot-notation
-  workers: env["CI"] ? 1 : undefined,
-  reporter: "html" as const,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   use: {
-    trace: "on-first-retry" as const,
+    baseURL: process.env.BASE_URL || 'https://dev.app.crowai.dev',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: 'setup',
+      testMatch: /global-setup\.ts/,
     },
     {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: './e2e/.auth/user.json',
+      },
+      dependencies: ['setup'],
     },
   ],
-};
-
-export default defineConfig(config as any);
+});

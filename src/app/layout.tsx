@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist_Mono, Sora } from 'next/font/google';
+import { Providers } from '@/providers';
+import '@b3-crow/ui-kit/styles.css';
 import './globals.css';
 
 const sora = Sora({
@@ -15,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'CROW Client Dashboard',
-  description: 'CROW Client Dashboard - Overview',
+  description: 'CROW AI Dashboard - Manage your organization, catalog, analytics and team',
 };
 
 export default function RootLayout({
@@ -32,7 +34,7 @@ export default function RootLayout({
       <body
         className={`${sora.variable} ${geistMono.variable} font-sans antialiased bg-[#030005] text-gray-100 selection:bg-violet-500/30 selection:text-violet-200`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
