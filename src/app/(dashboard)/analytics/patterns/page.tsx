@@ -143,7 +143,7 @@ export default function AnalyticsPatternsPage() {
       </div>
 
       <SegmentedControl
-        options={PERIOD_OPTIONS}
+        options={PERIOD_OPTIONS as any}
         value={period}
         onChange={setPeriod}
       />

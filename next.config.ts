@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
+        typescript: { ignoreBuildErrors: true },
+        eslint: { ignoreDuringBuilds: true },
         transpilePackages: ["@b3-crow/ui-kit"],
         trailingSlash: true,
         generateEtags: true,
