@@ -40,7 +40,6 @@ useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, isCollapsed.toString());
     } catch {
-      // Handle quota exceeded or other localStorage errors
     }
   }, [isCollapsed, isMounted]);
 
