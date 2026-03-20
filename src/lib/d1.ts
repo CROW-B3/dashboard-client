@@ -13,10 +13,8 @@ export const getDb = cache(() => {
                         schema,
                         logger: true,
                         cache: upstashCache({
-                                // eslint-disable-next-line dot-notation
-                                url: processEnv["UPSTASH_URL"]!,
-                                // eslint-disable-next-line dot-notation
-                                token: processEnv["UPSTASH_TOKEN"]!,
+                                url: processEnv.UPSTASH_URL!,
+                                token: processEnv.UPSTASH_TOKEN!,
                                 global: true,
                                 config: { ex: 60 },
                         }),

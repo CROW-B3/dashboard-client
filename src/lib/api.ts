@@ -16,7 +16,6 @@ async function getAuthToken(): Promise<string | null> {
       credentials: 'include',
     });
     if (!res.ok) { tokenCache = { token: null, expiresAt: 0 }; return null; }
-    // Token is handled via cookies; return a placeholder
     tokenCache = { token: 'cookie-auth', expiresAt: Date.now() + 5 * 60 * 1000 };
     return tokenCache.token;
   } catch {
