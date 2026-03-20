@@ -37,15 +37,24 @@ export default function CatalogPage() {
           { credentials: 'include' }
         );
         if (!res.ok) return { products: [], total: 0 };
-        const data = await res.json() as { results?: Product[] };
-        return { products: data.results || [], total: data.results?.length || 0 };
+        try {
+          const data = await res.json() as { products?: Product[]; total?: number };
+          return { products: data.products || [], total: data.total ?? data.products?.length ?? 0 };
+        } catch {
+          return { products: [], total: 0 };
+        }
       }
       const res = await fetch(
         `${API_GATEWAY_URL}/api/v1/products/organization/${orgId}?page=${page}&pageSize=24`,
         { credentials: 'include' }
       );
       if (!res.ok) return { products: [], total: 0 };
-      return res.json();
+      try {
+        const data = await res.json() as { products?: Product[]; total?: number };
+        return { products: data.products || [], total: data.total ?? 0 };
+      } catch {
+        return { products: [], total: 0 };
+      }
     },
     enabled: !!orgId,
   });
@@ -53,11 +62,16 @@ export default function CatalogPage() {
   const { data: aiDescriptions } = useQuery<{ descriptions: { id: string; type: string; content: string; createdAt: string }[] }>({
     queryKey: ['ai-descriptions', selectedProduct?.id],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/products/${selectedProduct!.id}/ai-descriptions`, { credentials: 'include' });
+      if (!selectedProduct?.id) return { descriptions: [] };
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/products/${selectedProduct.id}/ai-descriptions`, { credentials: 'include' });
       if (!res.ok) return { descriptions: [] };
-      return res.json();
+      try {
+        return await res.json();
+      } catch {
+        return { descriptions: [] };
+      }
     },
-    enabled: !!selectedProduct,
+    enabled: !!selectedProduct?.id,
   });
 
   const startCrawlMutation = useMutation({
@@ -181,7 +195,7 @@ export default function CatalogPage() {
                     />
                   ) : null}
                   <div hidden={!!product.images?.[0]} className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-900/30 to-black/50">
-                    <span className="text-xs text-gray-500 text-center px-2">{product.title.slice(0, 20)}</span>
+                    <span className="text-xs text-gray-500 text-center px-2">{(product.title || '').slice(0, 20)}</span>
                   </div>
                 </div>
                 <div className="p-3 space-y-1">
