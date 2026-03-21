@@ -1,196 +1,125 @@
 'use client';
 
-import { GlassPanel, MetricsCard, SourceIcon } from '@b3-crow/ui-kit';
-import { useQuery } from '@tanstack/react-query';
-import { useCurrentUser } from '@/hooks/use-current-user';
+import { Header, MetricsCard } from '@b3-crow/ui-kit';
+import {
+  AskCrowCTA,
+  DataSourceStatus,
+  LatestInteractions,
+  PatternsSection,
+} from '@/components/overview';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
-
-const SKELETON_KEYS = ['a', 'b', 'c'];
-
-interface InteractionSummary {
-  web: number;
-  cctv: number;
-  social: number;
-  total: number;
+function createPageHeaderElement() {
+  return (
+    <div className="relative mb-6 sm:mb-8">
+      <h1 className="mb-1 text-xl sm:text-2xl font-bold leading-7 sm:leading-8 text-white">
+        Overview
+      </h1>
+      <p className="text-xs sm:text-sm font-normal leading-5 text-gray-400">
+        Key changes across channels — Web, CCTV, Social.
+      </p>
+      <p className="sm:absolute sm:right-0 sm:top-2 text-[10px] sm:text-xs font-normal leading-4 text-gray-500 mt-2 sm:mt-0">
+        Last updated 2 min ago
+      </p>
+    </div>
+  );
 }
 
-interface Pattern {
-  id: string;
-  organizationId: string;
-  type: string;
-  confidence: number | null;
-  data: string;
-  detectedAt: number;
-  createdAt: number;
+function createMetricsGridSection() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <MetricsCard
+        title="Total Interactions"
+        value="84,392"
+        change="+12.5%"
+        changeType="positive"
+        chartData={[25, 50, 35, 70, 95]}
+        chartColor="violet"
+      />
+      <MetricsCard
+        title="Total Patterns"
+        value="14"
+        change="+2"
+        changeType="info"
+        chartData={[10, 10, 60, 25, 10]}
+        chartColor="violet"
+      />
+      <MetricsCard
+        title="Friction Signals"
+        value="1,204"
+        change="+5.2%"
+        changeType="negative"
+        chartData={[35, 50, 40, 55, 70]}
+        chartColor="rose"
+      />
+      <MetricsCard
+        title="Conversion Signals"
+        value="4.2%"
+        change="-1.1%"
+        changeType="neutral"
+        chartData={[85, 80, 80, 75, 70]}
+        chartColor="gray"
+      />
+    </div>
+  );
 }
 
-interface Interaction {
-  id: string;
-  organizationId: string;
-  sourceType: string;
-  sessionId: string | null;
-  data: string;
-  summary: string | null;
-  timestamp: number;
-  createdAt: number;
+function createDataSourceStatusGridSection() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <DataSourceStatus
+        icon="web"
+        name="Web"
+        isActive={true}
+        statusText="Connected • Ingesting"
+        lastUpdate="2ms ago"
+      />
+      <DataSourceStatus
+        icon="cctv"
+        name="CCTV"
+        isActive={true}
+        statusText="Connected • 42 Cameras"
+        lastUpdate="Live"
+      />
+      <DataSourceStatus
+        icon="social"
+        name="Social"
+        isActive={false}
+        statusText="Connected • Tracking"
+        lastUpdate="12s ago"
+      />
+    </div>
+  );
 }
 
-export default function OverviewPage() {
-  const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
-
-  const { data: interactionSummary, isLoading: summaryLoading } = useQuery<InteractionSummary>({
-    queryKey: ['interactions-summary', orgId],
-    queryFn: async () => {
-      const res = await fetch(
-        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary`,
-        { credentials: 'include' },
-      );
-      if (!res.ok) return { web: 0, cctv: 0, social: 0, total: 0 };
-      return res.json();
-    },
-    enabled: !!orgId,
-  });
-
-  const { data: topPatternsData, isLoading: patternsLoading } = useQuery<{ patterns: Pattern[]; total: number }>({
-    queryKey: ['top-patterns', orgId],
-    queryFn: async () => {
-      const res = await fetch(
-        `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?limit=5`,
-        { credentials: 'include' },
-      );
-      if (!res.ok) return { patterns: [], total: 0 };
-      return res.json();
-    },
-    enabled: !!orgId,
-  });
-
-  const { data: latestInteractionsData, isLoading: interactionsLoading } = useQuery<{ interactions: Interaction[]; total: number }>({
-    queryKey: ['latest-interactions', orgId],
-    queryFn: async () => {
-      const res = await fetch(
-        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?limit=5`,
-        { credentials: 'include' },
-      );
-      if (!res.ok) return { interactions: [], total: 0 };
-      return res.json();
-    },
-    enabled: !!orgId,
-  });
-
-  const patterns = topPatternsData?.patterns ?? [];
-  const interactions = latestInteractionsData?.interactions ?? [];
+export default function DashboardPage() {
+  const { toggle } = useMobileSidebar();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Overview</h1>
-        <p className="text-gray-400 text-sm mt-1">Your organization at a glance</p>
-      </div>
+    <>
+      <Header
+        orgName="Global Retail Ops"
+        dateRange="Last 7 days"
+        userInitials="SJ"
+        showNotification={true}
+        onMenuClick={toggle}
+        logoSrc="/favicon.webp"
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricsCard
-          title="Total Interactions"
-          value={summaryLoading ? '...' : String(interactionSummary?.total ?? 0)}
-          change=""
-          changeType="neutral"
-        />
-        <MetricsCard
-          title="Total Patterns"
-          value={patternsLoading ? '...' : String(topPatternsData?.total ?? 0)}
-          change=""
-          changeType="neutral"
-        />
-        <MetricsCard
-          title="Web Interactions"
-          value={summaryLoading ? '...' : String(interactionSummary?.web ?? 0)}
-          change=""
-          changeType="info"
-        />
-        <MetricsCard
-          title="CCTV Interactions"
-          value={summaryLoading ? '...' : String(interactionSummary?.cctv ?? 0)}
-          change=""
-          changeType="info"
-        />
+      <div className="relative z-10 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto">
+          {createPageHeaderElement()}
+          {createMetricsGridSection()}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <PatternsSection />
+            <LatestInteractions />
+          </div>
+          {createDataSourceStatusGridSection()}
+          <div className="mb-6 sm:mb-8">
+            <AskCrowCTA />
+          </div>
+        </div>
       </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <GlassPanel>
-          <h2 className="mb-4 text-base font-semibold text-white">Top Patterns</h2>
-          {patternsLoading ? (
-            <div className="space-y-2">
-              {SKELETON_KEYS.map((k) => (
-                <div key={k} className="h-10 animate-pulse rounded-lg bg-white/5" />
-              ))}
-            </div>
-          ) : patterns.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-500">No patterns detected yet</p>
-          ) : (
-            <div className="space-y-2">
-              {patterns.map((pattern) => (
-                <div
-                  key={pattern.id}
-                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full border border-purple-500/30 bg-purple-500/20 px-2 py-0.5 text-xs font-medium text-purple-300">
-                      {pattern.type || 'pattern'}
-                    </span>
-                    {pattern.confidence != null && (
-                      <span className="text-xs text-gray-400">
-                        {Math.round(pattern.confidence * 100)}% confidence
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {pattern.detectedAt
-                      ? new Date(pattern.detectedAt).toLocaleDateString()
-                      : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </GlassPanel>
-
-        <GlassPanel>
-          <h2 className="mb-4 text-base font-semibold text-white">Latest Interactions</h2>
-          {interactionsLoading ? (
-            <div className="space-y-2">
-              {SKELETON_KEYS.map((k) => (
-                <div key={k} className="h-10 animate-pulse rounded-lg bg-white/5" />
-              ))}
-            </div>
-          ) : interactions.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-500">No interactions yet</p>
-          ) : (
-            <div className="space-y-2">
-              {interactions.map((interaction) => (
-                <div
-                  key={interaction.id}
-                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
-                >
-                  <div className="flex items-center gap-3">
-                    {(['web', 'cctv', 'social'] as const).includes(interaction.sourceType as 'web' | 'cctv' | 'social') && (
-                      <SourceIcon source={interaction.sourceType as 'web' | 'cctv' | 'social'} size="sm" />
-                    )}
-                    <span className="max-w-[200px] truncate text-xs text-gray-300">
-                      {interaction.summary || interaction.sessionId || interaction.id}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {interaction.timestamp
-                      ? new Date(interaction.timestamp).toLocaleDateString()
-                      : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </GlassPanel>
-      </div>
-    </div>
+    </>
   );
 }
