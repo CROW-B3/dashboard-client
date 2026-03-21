@@ -46,7 +46,7 @@
         "ENVIRONMENT": "dev",
         "NEXT_PUBLIC_API_GATEWAY_URL": "https://dev.api.crowai.dev",
         "NEXT_PUBLIC_API_URL": "https://dev.api.crowai.dev",
-        "NEXT_PUBLIC_AUTH_URL": "https://dev.auth.crowai.dev",
+        "NEXT_PUBLIC_AUTH_URL": "https://auth.crowai.dev",
       },
       "routes": [
         { "pattern": "dev.app.crowai.dev", "custom_domain": true }
