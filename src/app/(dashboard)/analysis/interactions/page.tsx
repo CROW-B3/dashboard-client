@@ -91,8 +91,8 @@ function buildDetailFromApiInteraction(
 
   return {
     ...interaction,
-    description: api.summary ?? undefined,
-    sourceData: rawDataItems.length > 0 ? rawDataItems : undefined,
+    ...(api.summary ? { description: api.summary } : {}),
+    ...(rawDataItems.length > 0 ? { sourceData: rawDataItems } : {}),
   };
 }
 
