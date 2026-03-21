@@ -105,8 +105,9 @@ export default function TeamPage() {
           emails: emailList,
           organizationId: orgId,
           organizationName: user?.orgName ?? '',
-          inviterName: user?.name,
-          inviterId: user?.betterAuthUserId,
+          inviterName: user?.name ?? 'Team Admin',
+          inviterId: user!.betterAuthUserId,
+          permissions: { interactions: true },
         }),
       });
       if (!res.ok) throw new Error('Request failed');
@@ -121,7 +122,10 @@ export default function TeamPage() {
   });
 
   const handleInvite = () => {
-    if (!emails.length || !orgId || !user) return;
+    if (!emails.length || !orgId || !user?.betterAuthUserId) {
+      if (!user?.betterAuthUserId) toast.error('Session expired. Please refresh the page.');
+      return;
+    }
     inviteMutation.mutate(emails);
   };
 
