@@ -7,9 +7,36 @@ import {
   ListItem,
   SectionHeader,
 } from '@b3-crow/ui-kit';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
 export type { Pattern, PatternsSectionProps };
+
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
+
+interface ApiPattern {
+  id: string;
+  type: string;
+  confidence: number | null;
+  detectedAt: number;
+  createdAt: number;
+}
+
+interface PatternsApiResponse {
+  patterns: ApiPattern[];
+  total: number;
+}
+
+function mapApiPatternToPattern(p: ApiPattern, index: number): Pattern {
+  const severities: Array<'high' | 'medium' | 'low'> = ['high', 'medium', 'low'];
+  const severity = severities[index % severities.length] ?? 'low';
+  return {
+    id: p.id,
+    title: p.type || `Pattern ${p.id}`,
+    description: `Detected at ${new Date(p.detectedAt * 1000).toLocaleString()}${p.confidence != null ? ` — confidence: ${(p.confidence * 100).toFixed(0)}%` : ''}`,
+    severity,
+  };
+}
 
 function getDefaultPatterns(): Pattern[] {
   return [
@@ -43,10 +70,38 @@ function getSeverityBadgeStyles(severity: string): React.CSSProperties {
   return styleMapping[severity] || (styleMapping as any).low || { background: 'rgba(107, 114, 128, 0.15)', color: '#6B7280' };
 }
 
+interface PatternsSectionWithOrgProps extends PatternsSectionProps {
+  orgId?: string;
+}
+
 export function PatternsSection({
-  patterns = getDefaultPatterns(),
+  patterns: patternsProp,
   onPatternClick,
-}: PatternsSectionProps) {
+  orgId,
+}: PatternsSectionWithOrgProps) {
+  const { data, isError } = useQuery<PatternsApiResponse>({
+    queryKey: ['patterns-overview', orgId],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?limit=5`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) throw new Error('Failed to fetch patterns');
+      return res.json();
+    },
+    enabled: !!orgId,
+    staleTime: 60 * 1000,
+  });
+
+  let patterns: Pattern[];
+  if (patternsProp) {
+    patterns = patternsProp;
+  } else if (orgId && data && !isError) {
+    patterns = data.patterns.map(mapApiPatternToPattern);
+  } else {
+    patterns = getDefaultPatterns();
+  }
+
   return (
     <GlassPanel variant="heavy" className="overflow-hidden">
       <SectionHeader
