@@ -1,9 +1,10 @@
 'use client';
 
 import type { NavItem } from '@b3-crow/ui-kit';
-import { LenisProvider, MobileSidebar, Sidebar } from '@b3-crow/ui-kit';
+import { MobileSidebar, Sidebar } from '@b3-crow/ui-kit';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
+import { LenisProvider } from '@/components/LenisProvider';
 import { ChatHistoryProvider, useChatHistory } from '@/contexts/ChatHistoryContext';
 import { MobileSidebarProvider, useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { SidebarCollapseProvider, useSidebarCollapse } from '@/contexts/SidebarCollapseContext';
