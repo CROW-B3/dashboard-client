@@ -2,7 +2,7 @@
 
 import { Header, MetricsCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   DataSourceStatus,
   LatestInteractions,
@@ -99,8 +99,8 @@ export default function DashboardPage() {
   const orgId = user?.organizationId;
   const [dateRange, setDateRange] = useState('Last 7 days');
 
-  const range = getDateRange(dateRange);
-  const prevRange = getPreviousDateRange(dateRange);
+  const range = useMemo(() => getDateRange(dateRange), [dateRange]);
+  const prevRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
 
   const handleDateRangeChange = useCallback((value: string) => {
     setDateRange(value);
