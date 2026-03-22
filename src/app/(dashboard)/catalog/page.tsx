@@ -1,9 +1,10 @@
 'use client';
 
-import { SearchInput, SidePanel, StatusBadge } from '@b3-crow/ui-kit';
+import { Header, SearchInput, SidePanel, StatusBadge } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -118,6 +119,7 @@ function RelatedPatternsSection({ productId }: { productId: string }) {
 
 export default function CatalogPage() {
   const { data: user } = useCurrentUser();
+  const { toggle } = useMobileSidebar();
   const orgId = user?.orgUuid;
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -228,7 +230,10 @@ export default function CatalogPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col min-h-screen">
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Product Catalog</h1>
@@ -353,6 +358,8 @@ export default function CatalogPage() {
           </div>
         </SidePanel>
       )}
+        </div>
+      </main>
     </div>
   );
 }

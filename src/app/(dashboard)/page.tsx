@@ -210,7 +210,7 @@ export default function DashboardPage() {
         logoSrc="/favicon.webp"
       />
 
-      <div className="relative z-10 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
           {createPageHeaderElement(summary)}
 

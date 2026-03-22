@@ -139,7 +139,7 @@ function InteractionItem({ interaction, onClick }: InteractionItemProps) {
       ariaLabel={`View interaction: ${interaction.title}`}
       highlighted={interaction.isHighlighted ?? false}
     >
-      <h4 className="text-xs sm:text-sm font-medium text-gray-200 mb-1">
+      <h4 className="text-xs sm:text-sm font-medium text-gray-200 mb-1 line-clamp-2">
         {interaction.title}
       </h4>
       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">

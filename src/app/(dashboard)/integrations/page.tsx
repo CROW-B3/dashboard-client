@@ -1,10 +1,11 @@
 'use client';
 
 import type { ConnectionOptionStatus } from '@b3-crow/ui-kit';
-import { CodeBlock, ConnectionOption, GlassPanel } from '@b3-crow/ui-kit';
+import { CodeBlock, ConnectionOption, GlassPanel, Header } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import { Camera, Globe, Share2 } from 'lucide-react';
 import { useState } from 'react';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { apiKey } from '@/lib/auth-client';
 
@@ -21,6 +22,7 @@ interface ApiKeyRecord {
 
 export default function IntegrationsPage() {
   const { data: user } = useCurrentUser();
+  const { toggle } = useMobileSidebar();
   const orgId = user?.orgUuid;
   const [expandedSection, setExpandedSection] = useState<IntegrationSection>(null);
 
@@ -106,7 +108,10 @@ crow-cctv analyze --file /path/to/video.mp4`;
   -d '${socialWebhookPayload}'`;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col min-h-screen">
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Integrations</h1>
         <p className="text-gray-400 text-sm mt-1">Connect your data sources to CROW</p>
@@ -217,6 +222,8 @@ crow-cctv analyze --file /path/to/video.mp4`;
           </div>
         </GlassPanel>
       )}
+        </div>
+      </main>
     </div>
   );
 }

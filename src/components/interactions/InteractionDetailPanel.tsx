@@ -2,19 +2,17 @@
 
 import type { ConfidenceLevel, MetricItem, SourceType } from '@b3-crow/ui-kit';
 
-import { cn, CONFIDENCE_CONFIG, SidePanel, SourceIcon, Tag } from '@b3-crow/ui-kit';
-import { Activity, AlertCircle, Clock, ExternalLink, FileText, MapPin, TrendingUp } from 'lucide-react';
+import { cn, CONFIDENCE_CONFIG, SidePanel, SourceIcon } from '@b3-crow/ui-kit';
+import { Activity, Clock, ExternalLink, FileText, TrendingUp } from 'lucide-react';
 
 export interface InteractionDetail {
   id: string;
   source: SourceType;
   title: string;
   subtitle: string;
-  storeSite: string;
   timestamp: string;
   confidence: number;
   confidenceLevel: ConfidenceLevel;
-  tags: string[];
   description?: string;
   evidence?: EvidenceItem[];
   sourceData?: SourceDataItem[];
@@ -70,7 +68,6 @@ export function InteractionDetailPanel({
         {interaction.metrics && interaction.metrics.length > 0 && (
           <MetricsSection metrics={interaction.metrics} />
         )}
-        <ActionsSection />
       </div>
     </SidePanel>
   );
@@ -81,21 +78,9 @@ function HeaderSection({ interaction }: { interaction: InteractionDetail }) {
     <div className="flex items-start gap-4">
       <SourceIcon source={interaction.source} size="md" />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex items-center gap-1.5 text-sm" style={{ color: '#9CA3AF' }}>
-            <MapPin size={14} />
-            <span>{interaction.storeSite}</span>
-          </div>
-          <div className="w-1 h-1 rounded-full bg-gray-600" />
-          <div className="flex items-center gap-1.5 text-sm" style={{ color: '#9CA3AF' }}>
-            <Clock size={14} />
-            <span>{interaction.timestamp}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {interaction.tags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
+        <div className="flex items-center gap-1.5 text-sm" style={{ color: '#9CA3AF' }}>
+          <Clock size={14} />
+          <span>{interaction.timestamp}</span>
         </div>
       </div>
     </div>
@@ -264,34 +249,6 @@ function MetricsSection({ metrics }: { metrics: MetricItem[] }) {
         ))}
       </div>
     </Section>
-  );
-}
-
-function ActionsSection() {
-  return (
-    <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-      <button
-        type="button"
-        className="flex-1 h-10 flex items-center justify-center gap-2 rounded-lg transition-colors hover:bg-white/5"
-        style={{
-          border: '1px solid rgba(255, 255, 255, 0.10)',
-        }}
-      >
-        <AlertCircle size={16} color="#9CA3AF" />
-        <span className="text-sm font-medium" style={{ color: '#D1D5DB' }}>Flag Issue</span>
-      </button>
-      <button
-        type="button"
-        className="flex-1 h-10 flex items-center justify-center gap-2 rounded-lg transition-colors"
-        style={{
-          background: '#7C3AED',
-          boxShadow: '0px 0px 10px rgba(124, 58, 237, 0.30)',
-        }}
-      >
-        <ExternalLink size={16} color="white" />
-        <span className="text-sm font-medium text-white">View Full Report</span>
-      </button>
-    </div>
   );
 }
 

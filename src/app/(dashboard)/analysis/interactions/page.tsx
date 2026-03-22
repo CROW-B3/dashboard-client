@@ -4,7 +4,6 @@ import type { InteractionData, InteractionDetail } from '@/components/interactio
 import { Header, TipCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import toast from 'react-hot-toast';
 import {
   InteractionDetailPanel,
   InteractionsFilterBar,
@@ -33,12 +32,12 @@ interface InteractionsApiResponse {
   total: number;
 }
 
-function parseInteractionData(raw: string): { confidence?: number; tags?: string[] } {
+function parseInteractionData(raw: string): { confidence?: number; url?: string } {
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     return {
       confidence: parsed?.confidence ?? parsed?.score ?? undefined,
-      tags: parsed?.tags ?? parsed?.labels ?? [],
+      url: parsed?.url ?? parsed?.pageUrl ?? undefined,
     };
   } catch {
     return {};
@@ -47,51 +46,30 @@ function parseInteractionData(raw: string): { confidence?: number; tags?: string
 
 function toConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' {
   if (confidence >= 0.7) return 'high';
-  if (confidence >=  0.4) return 'medium';
+  if (confidence >= 0.4) return 'medium';
   return 'low';
+}
+
+function deriveTitle(summary: string | null, url: string | undefined): string {
+  if (summary) return summary;
+  if (url) return `Web session on ${url}`;
+  return 'Untitled interaction';
 }
 
 function mapApiInteractionToData(api: ApiInteraction): InteractionData {
   const parsed = parseInteractionData(api.data);
   const confidence = api.confidence ?? parsed.confidence ?? 0;
-  const rawTags = api.tags ?? parsed.tags ?? [];
-  const tags = Array.isArray(rawTags) ? rawTags : (typeof rawTags === 'string' ? (() => { try { return JSON.parse(rawTags); } catch { return []; } })() : []);
   const sourceType = api.sourceType as 'web' | 'cctv' | 'social';
 
   return {
     id: api.id,
     source: (['web', 'cctv', 'social'] as const).includes(sourceType) ? sourceType : 'web',
-    title: api.summary ?? `Interaction ${api.id}`,
+    title: deriveTitle(api.summary, parsed.url),
     subtitle: api.sessionId ? `Session ID: ${api.sessionId}` : api.id,
-    storeSite: (parsed as Record<string, unknown>)?.storeSite as string ?? api.sourceType,
     timestamp: api.timestamp ? new Date(api.timestamp).toLocaleString() : '',
     confidence,
     confidenceLevel: toConfidenceLevel(confidence),
-    tags,
   };
-}
-
-function downloadCsv(filename: string, rows: InteractionData[]): void {
-  const headers = ['ID', 'Source', 'Title', 'Subtitle', 'Store/Site', 'Timestamp', 'Confidence', 'Tags'];
-  const csvRows = [
-    headers.join(','),
-    ...rows.map((r) =>
-      [r.id, r.source, `"${r.title}"`, `"${r.subtitle}"`, r.storeSite, r.timestamp, r.confidence, `"${(r.tags ?? []).join(';')}"`].join(',')
-    ),
-  ];
-  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function saveFilterView(key: string, filters: Record<string, string>): void {
-  const existing = JSON.parse(localStorage.getItem('crow-saved-views') ?? '{}');
-  existing[key] = { ...filters, savedAt: new Date().toISOString() };
-  localStorage.setItem('crow-saved-views', JSON.stringify(existing));
 }
 
 function buildDetailFromApiInteraction(
@@ -128,7 +106,6 @@ export default function InteractionsPage() {
   const [selectedInteraction, setSelectedInteraction] = useState<InteractionDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [page] = useState(1);
-  const [filterState, setFilterState] = useState<Record<string, string>>({});
 
   const { data, isLoading } = useQuery<InteractionsApiResponse>({
     enabled: !!orgId,
@@ -149,27 +126,14 @@ export default function InteractionsPage() {
 
   const apiInteractionMap = new Map(apiInteractions.map((i) => [i.id, i]));
 
-  const handleExport = useCallback(() => {
-    if (interactions.length === 0) return;
-    downloadCsv(`interactions-${new Date().toISOString().slice(0, 10)}.csv`, interactions);
-    toast.success('Interactions exported');
-  }, [interactions]);
-
-  const handleSaveView = useCallback(() => {
-    saveFilterView('interactions', filterState);
-    toast.success('View saved');
-  }, [filterState]);
-
-  const handleDateRangeChange = useCallback((v: string) => setFilterState((s) => ({ ...s, dateRange: v })), []);
-  const handleSourceChange = useCallback((v: string) => setFilterState((s) => ({ ...s, source: v })), []);
-  const handleSiteChange = useCallback((v: string) => setFilterState((s) => ({ ...s, site: v })), []);
-  const handleSeverityChange = useCallback((v: string) => setFilterState((s) => ({ ...s, severity: v })), []);
+  const handleDateRangeChange = useCallback((v: string) => void v, []);
+  const handleSourceChange = useCallback((v: string) => void v, []);
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
 
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-[120px] py-6 sm:py-8">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
           <div className="relative mb-6 sm:mb-8">
             <h1 className="mb-1 text-[30px] font-bold leading-9 text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -185,13 +149,9 @@ export default function InteractionsPage() {
 
           <div className="mb-6">
             <InteractionsFilterBar
-              onExport={handleExport}
-              onSaveView={handleSaveView}
               onSearch={() => {}}
               onDateRangeChange={handleDateRangeChange}
               onSourceChange={handleSourceChange}
-              onSiteChange={handleSiteChange}
-              onSeverityChange={handleSeverityChange}
             />
           </div>
 

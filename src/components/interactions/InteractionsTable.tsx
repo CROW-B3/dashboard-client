@@ -2,18 +2,16 @@
 
 import type { ConfidenceLevel, SourceType } from '@b3-crow/ui-kit';
 
-import { cn, CONFIDENCE_CONFIG, SourceIcon, Tag } from '@b3-crow/ui-kit';
+import { cn, CONFIDENCE_CONFIG, SourceIcon } from '@b3-crow/ui-kit';
 
 export interface InteractionData {
   id: string;
   source: SourceType;
   title: string;
   subtitle: string;
-  storeSite: string;
   timestamp: string;
   confidence: number;
   confidenceLevel: ConfidenceLevel;
-  tags: string[];
 }
 
 export interface InteractionsTableProps {
@@ -25,17 +23,14 @@ export interface InteractionsTableProps {
 interface TableColumn {
   label: string;
   width: string;
-  left?: string;
 }
 
 function getInteractionsTableColumns(): TableColumn[] {
   return [
-    { label: 'Source', width: 'w-[92px]', left: 'left-6' },
-    { label: 'Interaction Summary', width: 'flex-1' },
-    { label: 'Store / Site', width: 'w-[140px]' },
+    { label: 'Source', width: 'w-[92px]' },
+    { label: 'Summary', width: 'flex-1' },
     { label: 'Timestamp', width: 'w-[100px]' },
     { label: 'Confidence', width: 'w-[100px]' },
-    { label: 'Tags', width: 'w-[150px]' },
   ];
 }
 
@@ -122,20 +117,9 @@ export function InteractionsTable({
 
             <div className="space-y-2 mb-3 text-xs">
               <div style={{ color: '#9CA3AF' }}>
-                <span className="text-gray-500">Store:</span> {interaction.storeSite}
-              </div>
-              <div style={{ color: '#9CA3AF' }}>
                 <span className="text-gray-500">Time:</span> {interaction.timestamp}
               </div>
             </div>
-
-            {interaction.tags.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {interaction.tags.slice(0, 2).map((tag) => (
-                  <Tag key={tag}>{tag}</Tag>
-                ))}
-              </div>
-            )}
           </button>
         ))}
       </div>
@@ -208,15 +192,6 @@ function InteractionRow({ interaction, onClick, showBorder }: InteractionRowProp
         </p>
       </div>
 
-      <div className="w-[140px]">
-        <span
-          className="text-sm"
-          style={{ color: '#9CA3AF', lineHeight: '20px' }}
-        >
-          {interaction.storeSite}
-        </span>
-      </div>
-
       <div className="w-[100px]">
         <span
           className="text-sm"
@@ -238,12 +213,6 @@ function InteractionRow({ interaction, onClick, showBorder }: InteractionRowProp
         >
           {interaction.confidence.toFixed(2)} {confidenceLabel}
         </span>
-      </div>
-
-      <div className="w-[150px] flex items-center gap-1.5">
-        {interaction.tags.slice(0, 2).map((tag) => (
-          <Tag key={tag}>{tag}</Tag>
-        ))}
       </div>
     </button>
   );
