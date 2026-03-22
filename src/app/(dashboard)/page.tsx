@@ -254,6 +254,7 @@ export default function DashboardPage() {
               isActive={webActive}
               statusText={webStatus.statusText}
               lastUpdate={webStatus.lastUpdate}
+              eventCount={summary?.web ?? 0}
             />
             <DataSourceStatus
               icon="cctv"
@@ -261,6 +262,7 @@ export default function DashboardPage() {
               isActive={cctvActive}
               statusText={cctvStatus.statusText}
               lastUpdate={cctvStatus.lastUpdate}
+              eventCount={summary?.cctv ?? 0}
             />
             <DataSourceStatus
               icon="social"
@@ -268,6 +270,7 @@ export default function DashboardPage() {
               isActive={socialActive}
               statusText={socialStatus.statusText}
               lastUpdate={socialStatus.lastUpdate}
+              eventCount={summary?.social ?? 0}
             />
           </div>
 

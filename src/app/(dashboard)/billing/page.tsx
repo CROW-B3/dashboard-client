@@ -1,9 +1,27 @@
 'use client';
 
 import { GlassPanel, MetricsCard, PlanCard } from '@b3-crow/ui-kit';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Check, CreditCard } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, CreditCard, Download, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -31,51 +49,149 @@ interface Plan {
   features: string[];
 }
 
-interface InteractionSummary {
-  web: number;
-  cctv: number;
-  social: number;
-  total: number;
+interface Invoice {
+  id: string;
+  number: string | null;
+  status: string | null;
+  amountDue: number;
+  amountPaid: number;
+  currency: string;
+  created: string;
+  periodStart: string;
+  periodEnd: string;
+  hostedInvoiceUrl: string | null;
+  invoicePdf: string | null;
+}
+
+interface PaymentMethod {
+  id: string;
+  type: string;
+  card: {
+    brand: string;
+    last4: string;
+    expMonth: number;
+    expYear: number;
+  } | null;
+}
+
+interface ModuleUsage {
+  module: string;
+  current: number;
+  limit: number;
+  percentage: number;
+}
+
+interface UsageData {
+  modules: ModuleUsage[];
+  totalInteractions: number;
+  billingPeriodStart: string;
+  billingPeriodEnd: string;
+}
+
+function fetchJson<T>(url: string): () => Promise<T | null> {
+  return async () => {
+    const res = await fetch(url, { credentials: 'include' });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  };
+}
+
+function getUsageColor(percentage: number): string {
+  if (percentage >= 90) return 'bg-red-500';
+  if (percentage >= 70) return 'bg-yellow-500';
+  return 'bg-green-500';
+}
+
+function getUsageTextColor(percentage: number): string {
+  if (percentage >= 90) return 'text-red-400';
+  if (percentage >= 70) return 'text-yellow-400';
+  return 'text-green-400';
+}
+
+function formatCurrency(amount: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: 2,
+  }).format(amount / 100);
+}
+
+function UsageProgressBar({ usage }: { usage: ModuleUsage }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-white capitalize">{usage.module}</span>
+        <span className={`text-xs font-medium ${getUsageTextColor(usage.percentage)}`}>
+          {usage.current.toLocaleString()} / {usage.limit.toLocaleString()}
+        </span>
+      </div>
+      <div className="h-2 w-full rounded-full bg-white/10">
+        <div
+          className={`h-2 rounded-full transition-all ${getUsageColor(usage.percentage)}`}
+          style={{ width: `${Math.min(usage.percentage, 100)}%` }}
+        />
+      </div>
+      <p className="text-xs text-gray-500">{usage.percentage}% used</p>
+    </div>
+  );
+}
+
+function InvoiceStatusBadge({ status }: { status: string | null }) {
+  const styles: Record<string, string> = {
+    paid: 'bg-green-500/20 text-green-300 border-green-500/30',
+    open: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    draft: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+    uncollectible: 'bg-red-500/20 text-red-300 border-red-500/30',
+    void: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+  };
+
+  const displayStatus = status ?? 'unknown';
+  const className = styles[displayStatus] ?? styles.draft;
+
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium border ${className}`}>
+      {displayStatus}
+    </span>
+  );
 }
 
 export default function BillingPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.orgUuid;
+  const queryClient = useQueryClient();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const { data: subscription, isLoading: subscriptionLoading } = useQuery<SubscriptionData | null>({
     queryKey: ['subscription', orgId],
-    queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) return null;
-      return res.json();
-    },
+    queryFn: fetchJson<SubscriptionData>(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}`),
     enabled: !!orgId,
   });
 
   const { data: plansData } = useQuery<{ plans: Plan[] }>({
     queryKey: ['billing-plans'],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/plans`, {
-        credentials: 'include',
-      });
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/plans`, { credentials: 'include' });
       if (!res.ok) return { plans: [] };
       return res.json();
     },
   });
 
-  const { data: usageData } = useQuery<InteractionSummary>({
+  const { data: usageData } = useQuery<UsageData | null>({
     queryKey: ['billing-usage', orgId],
-    queryFn: async () => {
-      const res = await fetch(
-        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary`,
-        { credentials: 'include' },
-      );
-      if (!res.ok) return { web: 0, cctv: 0, social: 0, total: 0 };
-      return res.json();
-    },
-    enabled: !!orgId,
+    queryFn: fetchJson<UsageData>(`${API_GATEWAY_URL}/api/v1/billing/usage/${orgId}`),
+    enabled: !!orgId && !!subscription,
+  });
+
+  const { data: invoicesData } = useQuery<{ invoices: Invoice[] } | null>({
+    queryKey: ['billing-invoices', orgId],
+    queryFn: fetchJson<{ invoices: Invoice[] }>(`${API_GATEWAY_URL}/api/v1/billing/invoices/${orgId}`),
+    enabled: !!orgId && !!subscription,
+  });
+
+  const { data: paymentMethodsData } = useQuery<{ paymentMethods: PaymentMethod[] } | null>({
+    queryKey: ['billing-payment-methods', orgId],
+    queryFn: fetchJson<{ paymentMethods: PaymentMethod[] }>(`${API_GATEWAY_URL}/api/v1/billing/payment-methods/${orgId}`),
+    enabled: !!orgId && !!subscription,
   });
 
   const checkoutMutation = useMutation({
@@ -108,14 +224,66 @@ export default function BillingPage() {
       return (await checkoutRes.json()) as { url: string };
     },
     onSuccess: (data) => {
-      if (data?.url) {
-        window.location.href = data.url;
-      }
+      if (data?.url) window.location.href = data.url;
     },
     onError: () => toast.error('Failed to start checkout'),
   });
 
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}/cancel`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to cancel subscription');
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('Subscription will be cancelled at the end of the billing period');
+      setCancelDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['subscription', orgId] });
+    },
+    onError: () => toast.error('Failed to cancel subscription'),
+  });
+
+  const resumeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}/resume`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to resume subscription');
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('Subscription resumed');
+      queryClient.invalidateQueries({ queryKey: ['subscription', orgId] });
+    },
+    onError: () => toast.error('Failed to resume subscription'),
+  });
+
+  const portalMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/portal-session`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnUrl: window.location.href }),
+      });
+      if (!res.ok) throw new Error('Failed to create portal session');
+      return (await res.json()) as { url: string };
+    },
+    onSuccess: (data) => {
+      if (data?.url) window.location.href = data.url;
+    },
+    onError: () => toast.error('Failed to open billing portal'),
+  });
+
   const plans = plansData?.plans ?? [];
+  const invoices = invoicesData?.invoices ?? [];
+  const paymentMethods = paymentMethodsData?.paymentMethods ?? [];
+  const primaryCard = paymentMethods.find(pm => pm.card !== null);
+
   const activeModules = subscription?.modules
     ? [
         subscription.modules.web && 'Web',
@@ -133,14 +301,48 @@ export default function BillingPage() {
 
       {subscriptionLoading ? (
         <div className="space-y-4">
-          {['a', 'b', 'c'].map((k) => (
+          {['a', 'b', 'c', 'd', 'e'].map((k) => (
             <div key={k} className="h-24 animate-pulse rounded-xl bg-white/5" />
           ))}
         </div>
       ) : (
         <>
           <GlassPanel>
-            <h2 className="text-lg font-semibold text-white mb-4">Current Plan</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">Current Plan</h2>
+              {subscription && (
+                <div className="flex items-center gap-2">
+                  {subscription.status === 'cancelled' ? (
+                    <Button
+                      size="sm"
+                      onClick={() => resumeMutation.mutate()}
+                      disabled={resumeMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {resumeMutation.isPending ? 'Resuming...' : 'Resume Subscription'}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setCancelDialogOpen(true)}
+                    >
+                      Cancel Subscription
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => portalMutation.mutate()}
+                    disabled={portalMutation.isPending}
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    {portalMutation.isPending ? 'Opening...' : 'Manage Subscription'}
+                  </Button>
+                </div>
+              )}
+            </div>
             {subscription ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -191,35 +393,137 @@ export default function BillingPage() {
             )}
           </GlassPanel>
 
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4">Usage</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricsCard
-                title="Total Interactions"
-                value={String(usageData?.total ?? 0)}
-                change=""
-                changeType="neutral"
-              />
-              <MetricsCard
-                title="Web Interactions"
-                value={String(usageData?.web ?? 0)}
-                change=""
-                changeType="info"
-              />
-              <MetricsCard
-                title="CCTV Interactions"
-                value={String(usageData?.cctv ?? 0)}
-                change=""
-                changeType="info"
-              />
-              <MetricsCard
-                title="Social Interactions"
-                value={String(usageData?.social ?? 0)}
-                change=""
-                changeType="info"
-              />
+          {subscription && usageData && (
+            <GlassPanel>
+              <h2 className="text-lg font-semibold text-white mb-4">Usage</h2>
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-gray-400">Billing period</span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(usageData.billingPeriodStart).toLocaleDateString()} - {new Date(usageData.billingPeriodEnd).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm text-white">
+                  Total interactions: {usageData.totalInteractions.toLocaleString()}
+                </p>
+              </div>
+              <div className="space-y-4">
+                {usageData.modules.map((usage) => (
+                  <UsageProgressBar key={usage.module} usage={usage} />
+                ))}
+              </div>
+              {usageData.modules.length === 0 && (
+                <p className="text-gray-500 text-sm">No active modules to track usage for.</p>
+              )}
+            </GlassPanel>
+          )}
+
+          {!subscription && (
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-4">Usage</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MetricsCard title="Total Interactions" value="0" change="" changeType="neutral" />
+                <MetricsCard title="Web Interactions" value="0" change="" changeType="info" />
+                <MetricsCard title="CCTV Interactions" value="0" change="" changeType="info" />
+                <MetricsCard title="Social Interactions" value="0" change="" changeType="info" />
+              </div>
             </div>
-          </div>
+          )}
+
+          {subscription && invoices.length > 0 && (
+            <GlassPanel>
+              <h2 className="text-lg font-semibold text-white mb-4">Invoice History</h2>
+              <div className="rounded-lg border border-white/10 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-transparent">
+                      <TableHead className="text-gray-400">Invoice</TableHead>
+                      <TableHead className="text-gray-400">Date</TableHead>
+                      <TableHead className="text-gray-400">Amount</TableHead>
+                      <TableHead className="text-gray-400">Status</TableHead>
+                      <TableHead className="text-gray-400 text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((invoice) => (
+                      <TableRow key={invoice.id} className="border-white/10">
+                        <TableCell className="text-white text-sm">
+                          {invoice.number ?? invoice.id.slice(0, 12)}
+                        </TableCell>
+                        <TableCell className="text-gray-400 text-sm">
+                          {new Date(invoice.created).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-white text-sm">
+                          {formatCurrency(invoice.amountDue, invoice.currency)}
+                        </TableCell>
+                        <TableCell>
+                          <InvoiceStatusBadge status={invoice.status} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {invoice.invoicePdf && (
+                              <a
+                                href={invoice.invoicePdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 hover:text-white transition-colors"
+                              >
+                                <Download className="h-4 w-4" />
+                              </a>
+                            )}
+                            {invoice.hostedInvoiceUrl && (
+                              <a
+                                href={invoice.hostedInvoiceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 hover:text-white transition-colors"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </GlassPanel>
+          )}
+
+          {subscription && (
+            <GlassPanel>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Payment Method</h2>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => portalMutation.mutate()}
+                  disabled={portalMutation.isPending}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Update Payment Method
+                </Button>
+              </div>
+              {primaryCard?.card ? (
+                <div className="flex items-center gap-4 rounded-lg bg-white/5 border border-white/10 p-4">
+                  <CreditCard className="h-8 w-8 text-violet-400" />
+                  <div>
+                    <p className="text-white font-medium capitalize">
+                      {primaryCard.card.brand} ending in {primaryCard.card.last4}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Expires {String(primaryCard.card.expMonth).padStart(2, '0')}/{primaryCard.card.expYear}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-400 text-sm">No payment method on file.</p>
+                </div>
+              )}
+            </GlassPanel>
+          )}
 
           {plans.length > 0 && (
             <div>
@@ -269,6 +573,35 @@ export default function BillingPage() {
           )}
         </>
       )}
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="bg-gray-900 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white">Cancel Subscription</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Your subscription will remain active until the end of the current billing period on{' '}
+              {subscription ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : ''}.
+              You can resume your subscription at any time before then.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+              className="border-white/20 text-white hover:bg-white/10"
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancelMutation.mutate()}
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending ? 'Cancelling...' : 'Confirm Cancellation'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

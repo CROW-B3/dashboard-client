@@ -9,6 +9,7 @@ import { ChatHistoryProvider, useChatHistory } from '@/contexts/ChatHistoryConte
 import { MobileSidebarProvider, useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { SidebarCollapseProvider, useSidebarCollapse } from '@/contexts/SidebarCollapseContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { buildProfilePictureUrl } from '@/lib/api';
 import { signOut } from '@/lib/auth-client';
 
 const DEFAULT_NAV_ITEMS: NavItem[] = [
@@ -90,6 +91,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const chatHistory = buildChatHistoryItemsFromSessions(sessions);
 
+  const userAvatarUrl = user?.profilePictureUrl && user?.id
+    ? buildProfilePictureUrl(user.id)
+    : undefined;
+
   const sidebarProps = {
     navItems: DEFAULT_NAV_ITEMS,
     activeHref: pathname ?? '/',
@@ -97,6 +102,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     logoSrc: '/favicon.webp',
     userName: user?.name || user?.email || 'User',
     userEmail: user?.email || '',
+    userAvatar: userAvatarUrl,
     onLogout: handleLogout,
     chatHistory,
     activeChatId: activeSessionId,
