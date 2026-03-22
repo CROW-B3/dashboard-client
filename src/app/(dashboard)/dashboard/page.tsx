@@ -235,10 +235,9 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header
+      <Header showNotification={false}
         orgName={user?.orgName || 'Dashboard'}
         userInitials={userInitials}
-        showNotification
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
       />

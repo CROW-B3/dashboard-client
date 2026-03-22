@@ -73,7 +73,7 @@ function apiMessagesToUiMessages(apiMessages: ApiMessage[]): Message[] {
 }
 
 export default function AskCrowPage() {
-  const { setActiveSession } = useChatHistory();
+  const { setActiveSession, refreshSessions } = useChatHistory();
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
@@ -153,6 +153,7 @@ export default function AskCrowPage() {
 
       setActiveSessionId(sessionId);
       setActiveSession(sessionId);
+      refreshSessions();
 
       setTimeout(() => {
         setChatStarted(true);
@@ -163,7 +164,7 @@ export default function AskCrowPage() {
         sendMessageMutation.mutate({ sessionId, content: query });
       }, ANIMATION_DURATIONS.START_CHAT);
     },
-    [organizationId, userId, createSessionMutation, sendMessageMutation, setActiveSession]
+    [organizationId, userId, createSessionMutation, sendMessageMutation, setActiveSession, refreshSessions]
   );
 
   const handleFollowUpMessage = useCallback(
@@ -204,7 +205,7 @@ export default function AskCrowPage() {
     <div className="flex flex-col min-h-screen">
       <Header
         userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}
-        showNotification
+        showNotification={false}
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"

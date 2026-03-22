@@ -109,7 +109,7 @@ crow-cctv analyze --file /path/to/video.mp4`;
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
@@ -118,27 +118,33 @@ crow-cctv analyze --file /path/to/video.mp4`;
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ConnectionOption
-          icon={<Globe className="h-5 w-5" />}
-          title="Web SDK"
-          description="Track customer interactions on your website"
-          status={webConnectionStatus}
-          onClick={() => setExpandedSection(expandedSection === 'web' ? null : 'web')}
-        />
-        <ConnectionOption
-          icon={<Camera className="h-5 w-5" />}
-          title="CCTV CLI"
-          description="Analyze in-store camera feeds with AI"
-          status={cctvConnectionStatus}
-          onClick={() => setExpandedSection(expandedSection === 'cctv' ? null : 'cctv')}
-        />
-        <ConnectionOption
-          icon={<Share2 className="h-5 w-5" />}
-          title="Social Webhook"
-          description="Receive social media interactions via webhooks"
-          status={socialConnectionStatus}
-          onClick={() => setExpandedSection(expandedSection === 'social' ? null : 'social')}
-        />
+        <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(10, 5, 20, 0.40)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <ConnectionOption
+            icon={<Globe className="h-5 w-5" />}
+            title="Web SDK"
+            description="Track customer interactions on your website"
+            status={webConnectionStatus}
+            onClick={() => setExpandedSection(expandedSection === 'web' ? null : 'web')}
+          />
+        </div>
+        <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(10, 5, 20, 0.40)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <ConnectionOption
+            icon={<Camera className="h-5 w-5" />}
+            title="CCTV CLI"
+            description="Analyze in-store camera feeds with AI"
+            status={cctvConnectionStatus}
+            onClick={() => setExpandedSection(expandedSection === 'cctv' ? null : 'cctv')}
+          />
+        </div>
+        <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(10, 5, 20, 0.40)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <ConnectionOption
+            icon={<Share2 className="h-5 w-5" />}
+            title="Social Webhook"
+            description="Receive social media interactions via webhooks"
+            status={socialConnectionStatus}
+            onClick={() => setExpandedSection(expandedSection === 'social' ? null : 'social')}
+          />
+        </div>
       </div>
 
       {expandedSection === 'web' && (

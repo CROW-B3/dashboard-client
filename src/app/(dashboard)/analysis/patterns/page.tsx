@@ -90,11 +90,15 @@ function mapApiPatternToData(api: ApiPattern): PatternData {
     ? (parsed.source as typeof validSources[number])
     : null;
 
+  const typeLabel = api.type
+    ? api.type.charAt(0).toUpperCase() + api.type.slice(1).replace(/[_-]/g, ' ')
+    : null;
+
   return {
     id: api.id,
     title: generatePatternTitle(parsed, api.type),
     severity: parsed.severity ?? 'medium',
-    affectedStores: parsed.affectedStores ?? api.type,
+    affectedStores: parsed.affectedStores ?? (typeLabel ? `Type: ${typeLabel}` : 'N/A'),
     lastSeen: formatRelativeTime(api.detectedAt ?? api.createdAt ?? 0),
     confidence: toConfidenceLevel(api.confidence),
     ...(resolvedSource ? { source: resolvedSource } : {}),
@@ -156,6 +160,7 @@ export default function PatternsPage() {
   const [selectedPattern, setSelectedPattern] = useState<PatternDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
+  const [timeFilter, setTimeFilter] = useState('1h');
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, isLoading } = useQuery<PatternsApiResponse>({
@@ -200,7 +205,7 @@ export default function PatternsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
@@ -216,11 +221,13 @@ export default function PatternsPage() {
             </p>
           </div>
 
-          <div className="mb-6 flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
+          <div className="mb-6 flex flex-col sm:flex-row gap-3 items-start">
+            <div className="flex-1 min-w-0">
               <PatternsFilterBar
                 activeSource={sourceFilter}
                 onSourceChange={setSourceFilter}
+                timeValue={timeFilter}
+                onTimeChange={setTimeFilter}
                 onExport={handleExport}
                 timeOptions={[
                   { label: '1 Hour', value: '1h' },

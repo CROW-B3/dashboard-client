@@ -33,7 +33,7 @@ function mapApiPatternToPattern(p: ApiPattern, index: number): Pattern {
   return {
     id: p.id,
     title: p.type || `Pattern ${p.id}`,
-    description: `Detected at ${new Date(p.detectedAt * 1000).toLocaleString()}${p.confidence != null ? ` — confidence: ${(p.confidence * 100).toFixed(0)}%` : ''}`,
+    description: `Detected at ${new Date(p.detectedAt > 1e12 ? p.detectedAt : p.detectedAt * 1000).toLocaleString()}${p.confidence != null ? ` — confidence: ${(p.confidence * 100).toFixed(0)}%` : ''}`,
     severity,
   };
 }

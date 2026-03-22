@@ -204,7 +204,7 @@ export default function DashboardPage() {
         orgName={orgName}
         dateRange="Last 7 days"
         userInitials={userInitials}
-        showNotification={true}
+        showNotification={false}
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
       />
