@@ -2,9 +2,10 @@
 
 import type { NavItem } from '@b3-crow/ui-kit';
 import { MobileSidebar, Sidebar } from '@b3-crow/ui-kit';
+import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { LenisProvider } from '@/components/LenisProvider';
 import { ChatHistoryProvider, useChatHistory } from '@/contexts/ChatHistoryContext';
 import { MobileSidebarProvider, useMobileSidebar } from '@/contexts/MobileSidebarContext';
@@ -62,6 +63,24 @@ const DashboardBackground = dynamic(
   () => import('@b3-crow/ui-kit').then((mod) => mod.DashboardBackground)
 );
 
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
+
+function usePrefetchDashboardData(orgId: string | undefined) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!orgId) return;
+    const base = `${API_GATEWAY_URL}/api/v1`;
+    const opts = { credentials: 'include' as const };
+    const prefetch = (key: string[], url: string) =>
+      queryClient.prefetchQuery({ queryKey: key, queryFn: () => fetch(url, opts).then(r => r.ok ? r.json() : null) });
+
+    prefetch(['interaction-summary', orgId], `${base}/interactions/organization/${orgId}/summary`);
+    prefetch(['patterns-overview', orgId], `${base}/patterns/organization/${orgId}?limit=5`);
+    prefetch(['analysis-interactions', orgId, 1, '', 'all'], `${base}/interactions/organization/${orgId}?limit=20`);
+    prefetch(['products', orgId], `${base}/products/organization/${orgId}`);
+  }, [orgId, queryClient]);
+}
+
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -70,6 +89,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     useChatHistory();
   const { isOpen: isMobileSidebarOpen, close: closeMobileSidebar } = useMobileSidebar();
   const { isCollapsed, toggle: toggleCollapse } = useSidebarCollapse();
+
+  usePrefetchDashboardData(user?.organizationId);
 
   const handleLogout = useCallback(async () => {
     await signOut();
