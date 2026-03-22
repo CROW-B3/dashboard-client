@@ -9,6 +9,20 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
+interface OrgMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  profilePictureUrl: string | null;
+}
+
+interface MembersResponse {
+  members: OrgMember[];
+  total: number;
+}
+
 interface InvitationItem { id: string; email: string; role: string; status: string }
 interface EmailSuggestion { email: string; name: string }
 
@@ -74,12 +88,13 @@ export default function TeamPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const { data: members } = useQuery({
+  const { data: members = [] } = useQuery<OrgMember[]>({
     queryKey: ['members', orgId],
     queryFn: async () => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/members`, { credentials: 'include' });
       if (!res.ok) return [];
-      return res.json();
+      const data = await res.json() as MembersResponse;
+      return data.members ?? [];
     },
     enabled: !!orgId,
   });
@@ -181,17 +196,33 @@ export default function TeamPage() {
 
       <GlassPanel>
         <h2 className="text-lg font-semibold text-white mb-4">Members</h2>
-        <div className="space-y-2">
-          {Array.isArray(members) && members.map((member: { id: string; name: string; email: string; role: string }) => (
-            <div key={member.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-              <div>
-                <p className="text-sm text-white">{member.name}</p>
-                <p className="text-xs text-gray-400">{member.email}</p>
+        {members.length === 0 ? (
+          <p className="text-sm text-gray-500 py-4 text-center">No team members yet</p>
+        ) : (
+          <div className="space-y-3">
+            {members.map((member) => (
+              <div key={member.id} className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
+                <div className="w-9 h-9 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-semibold text-violet-300">
+                    {(member.name || member.email).slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white truncate">{member.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{member.email}</p>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className="text-xs text-gray-500 hidden sm:block">
+                    Joined {new Date(member.createdAt).toLocaleDateString()}
+                  </span>
+                  <StatusBadge variant={member.role === 'admin' ? 'info' : 'neutral'}>
+                    {member.role}
+                  </StatusBadge>
+                </div>
               </div>
-              <StatusBadge>{member.role}</StatusBadge>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </GlassPanel>
 
       {pendingInvitations.length > 0 && (

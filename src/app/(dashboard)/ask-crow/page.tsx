@@ -33,36 +33,35 @@ async function fetchSessionMessages(sessionId: string): Promise<ApiMessage[]> {
 
 async function createChatSession(
   organizationId: string,
-  userId: string,
-  title: string
+  userId: string
 ): Promise<string> {
   const response = await fetch(`${API_GATEWAY_URL}/api/v1/chat/sessions`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ organizationId, userId, title }),
+    body: JSON.stringify({ organizationId, userId }),
   });
   if (!response.ok) throw new Error('Failed to create chat session');
-  const data = await response.json() as { session: { id: string; title: string } };
-  return data.session.id;
+  const data = await response.json() as { sessionId: string };
+  return data.sessionId;
 }
 
 async function sendChatMessage(
   sessionId: string,
   content: string
-): Promise<{ userMessage: ApiMessage; assistantMessage: ApiMessage }> {
+): Promise<ApiMessage> {
   const response = await fetch(
     `${API_GATEWAY_URL}/api/v1/chat/sessions/${sessionId}/messages`,
     {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, role: 'user' }),
+      body: JSON.stringify({ content }),
     }
   );
   if (!response.ok) throw new Error('Failed to send message');
-  const data = await response.json() as { message: ApiMessage; assistantMessage: ApiMessage };
-  return { userMessage: data.message, assistantMessage: data.assistantMessage };
+  const data = await response.json() as { message: ApiMessage };
+  return data.message;
 }
 
 function apiMessagesToUiMessages(apiMessages: ApiMessage[]): Message[] {
@@ -91,14 +90,12 @@ export default function AskCrowPage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-  // Fetch messages when a session is active
   const { data: sessionMessages } = useQuery({
     queryKey: ['ask-crow-messages', activeSessionId],
     queryFn: () => fetchSessionMessages(activeSessionId!),
     enabled: !!activeSessionId,
   });
 
-  // Sync fetched messages into local state (after session switch)
   useEffect(() => {
     if (!sessionMessages || sessionMessages.length === 0) return;
     setMessages(apiMessagesToUiMessages(sessionMessages));
@@ -112,26 +109,25 @@ export default function AskCrowPage() {
   }, []);
 
   const createSessionMutation = useMutation({
-    mutationFn: ({ title }: { title: string }) => {
+    mutationFn: () => {
       if (!organizationId || !userId) throw new Error('User not loaded');
-      return createChatSession(organizationId, userId, title);
+      return createChatSession(organizationId, userId);
     },
   });
 
   const sendMessageMutation = useMutation({
     mutationFn: ({ sessionId, content }: { sessionId: string; content: string }) =>
       sendChatMessage(sessionId, content),
-    onSuccess: (result, variables) => {
-      // Replace optimistic assistant placeholder with real response
+    onSuccess: (assistantMessage, variables) => {
       const assistantMsg: Message = {
-        id: result.assistantMessage.id,
+        id: assistantMessage.id,
         role: 'assistant',
-        content: result.assistantMessage.content,
+        content: assistantMessage.content,
       };
-      setMessages((prev) => {
-        // Remove the temporary generating placeholder and append real response
-        return [...prev.filter((m) => m.id !== 'generating-placeholder'), assistantMsg];
-      });
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== 'generating-placeholder'),
+        assistantMsg,
+      ]);
       setIsGenerating(false);
       void queryClient.invalidateQueries({ queryKey: ['ask-crow-messages', variables.sessionId] });
     },
@@ -149,7 +145,7 @@ export default function AskCrowPage() {
 
       let sessionId: string;
       try {
-        sessionId = await createSessionMutation.mutateAsync({ title: query });
+        sessionId = await createSessionMutation.mutateAsync();
       } catch {
         setIsTransitioning(false);
         return;
