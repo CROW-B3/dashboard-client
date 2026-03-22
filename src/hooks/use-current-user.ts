@@ -18,25 +18,7 @@ interface UserRecord {
   permissions: Record<string, unknown>;
 }
 
-async function fetchOrgByAuthId(authOrgId: string): Promise<{ id: string; name: string; betterAuthOrgId: string } | null> {
-  const res = await fetch(
-    `${API_GATEWAY_URL}/api/v1/organizations/by-auth-id/${authOrgId}`,
-    { credentials: 'include' }
-  );
-  if (!res.ok) return null;
-  return res.json() as Promise<{ id: string; name: string; betterAuthOrgId: string }>;
-}
-
-async function fetchOrgByInternalId(internalId: string): Promise<{ id: string; name: string; betterAuthOrgId: string } | null> {
-  const res = await fetch(
-    `${API_GATEWAY_URL}/api/v1/organizations/${internalId}`,
-    { credentials: 'include' }
-  );
-  if (!res.ok) return null;
-  return res.json() as Promise<{ id: string; name: string; betterAuthOrgId: string }>;
-}
-
-async function fetchWithTimeout(url: string, timeoutMs = 3000): Promise<Response> {
+async function fetchWithTimeout(url: string, timeoutMs = 2000): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -46,7 +28,15 @@ async function fetchWithTimeout(url: string, timeoutMs = 3000): Promise<Response
   }
 }
 
-async function fetchOrgSafe(
+async function fetchUser(userId: string): Promise<UserRecord> {
+  const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/by-auth-id/${userId}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to fetch user');
+  return res.json();
+}
+
+async function fetchOrg(
   activeOrgId: string | undefined,
   internalOrgId: string | undefined
 ): Promise<{ id: string; name: string; betterAuthOrgId: string } | null> {
@@ -67,17 +57,15 @@ async function fetchUserWithOrgContext(
   userId: string,
   activeOrgId: string | undefined
 ): Promise<UserRecord> {
-  const userRes = await fetch(`${API_GATEWAY_URL}/api/v1/users/by-auth-id/${userId}`, {
-    credentials: 'include',
-  });
-  if (!userRes.ok) throw new Error('Failed to fetch user');
-  const user: UserRecord = await userRes.json();
-
+  const user = await fetchUser(userId);
   if (activeOrgId) user.betterAuthOrgId = activeOrgId;
 
-  const org = await fetchOrgSafe(activeOrgId, user.organizationId);
-  if (org) return { ...user, orgUuid: org.id, orgName: org.name, betterAuthOrgId: org.betterAuthOrgId };
+  const org = await Promise.race([
+    fetchOrg(activeOrgId, user.organizationId),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+  ]);
 
+  if (org) return { ...user, orgUuid: org.id, orgName: org.name, betterAuthOrgId: org.betterAuthOrgId };
   return user;
 }
 

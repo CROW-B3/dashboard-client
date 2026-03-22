@@ -1,7 +1,7 @@
 'use client';
 
 import { Header, MetricsCard } from '@b3-crow/ui-kit';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import {
   DataSourceStatus,
@@ -183,12 +183,13 @@ export default function DashboardPage() {
   const orgName = user?.orgName || 'My Organization';
   const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
 
-  const totalInteractions = summaryLoading ? '...' : String(summary?.total ?? 0);
-  const totalPatterns = patternsLoading ? '...' : String(patternsData?.total ?? 0);
+  const dataNotReady = !orgId || summaryLoading;
+  const totalInteractions = dataNotReady ? '...' : String(summary?.total ?? 0);
+  const totalPatterns = !orgId || patternsLoading ? '...' : String(patternsData?.total ?? 0);
 
   const neutralDelta = { change: '—', changeType: 'neutral' as const };
-  const totalDelta = summaryLoading ? neutralDelta : formatDelta(summary?.total ?? 0, previousSummary?.total ?? 0);
-  const patternsDelta = patternsLoading ? neutralDelta : formatDelta(patternsData?.total ?? 0, previousPatternsData?.total ?? 0);
+  const totalDelta = dataNotReady ? neutralDelta : formatDelta(summary?.total ?? 0, previousSummary?.total ?? 0);
+  const patternsDelta = (!orgId || patternsLoading) ? neutralDelta : formatDelta(patternsData?.total ?? 0, previousPatternsData?.total ?? 0);
 
   const webActive = (summary?.web ?? 0) > 0;
   const cctvActive = (summary?.cctv ?? 0) > 0;
