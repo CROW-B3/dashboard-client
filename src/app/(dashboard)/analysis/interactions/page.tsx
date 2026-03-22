@@ -3,7 +3,7 @@
 import type { InteractionData, InteractionDetail } from '@/components/interactions';
 import { Header, TipCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   InteractionDetailPanel,
   InteractionsFilterBar,
@@ -80,9 +80,15 @@ function buildDetailFromApiInteraction(
   try {
     const parsed = typeof api.data === 'string' ? JSON.parse(api.data) : api.data;
     if (parsed && typeof parsed === 'object') {
+      const isNonEmpty = (v: unknown): boolean => {
+        if (v === null || v === undefined) return false;
+        if (Array.isArray(v)) return v.length > 0;
+        if (typeof v === 'object') return Object.keys(v as Record<string, unknown>).length > 0;
+        if (typeof v === 'string') return v.length > 0;
+        return true;
+      };
       rawDataItems = Object.entries(parsed)
-        .filter(([key]) => !['confidence', 'score', 'tags', 'labels'].includes(key))
-        .slice(0, 6)
+        .filter(([key, value]) => !['confidence', 'score', 'tags', 'labels'].includes(key) && isNonEmpty(value))
         .map(([label, value]) => ({
           label,
           value: typeof value === 'object' ? JSON.stringify(value) : String(value),
@@ -106,12 +112,24 @@ export default function InteractionsPage() {
   const [selectedInteraction, setSelectedInteraction] = useState<InteractionDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [page] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sourceType, setSourceType] = useState('all');
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQuery]);
 
   const { data, isLoading } = useQuery<InteractionsApiResponse>({
     enabled: !!orgId,
-    queryKey: ['analysis-interactions', orgId, page],
+    queryKey: ['analysis-interactions', orgId, page, debouncedSearch, sourceType],
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+      if (debouncedSearch) params.set('q', debouncedSearch);
+      if (sourceType && sourceType !== 'all') params.set('sourceType', sourceType);
       const res = await fetch(
         `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?${params}`,
         { credentials: 'include' },
@@ -127,7 +145,8 @@ export default function InteractionsPage() {
   const apiInteractionMap = new Map(apiInteractions.map((i) => [i.id, i]));
 
   const handleDateRangeChange = useCallback((v: string) => void v, []);
-  const handleSourceChange = useCallback((v: string) => void v, []);
+  const handleSourceChange = useCallback((v: string) => setSourceType(v), []);
+  const handleSearch = useCallback((q: string) => setSearchQuery(q), []);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -149,7 +168,7 @@ export default function InteractionsPage() {
 
           <div className="mb-6">
             <InteractionsFilterBar
-              onSearch={() => {}}
+              onSearch={handleSearch}
               onDateRangeChange={handleDateRangeChange}
               onSourceChange={handleSourceChange}
             />

@@ -199,21 +199,173 @@ function EvidenceIcon({ type }: { type: EvidenceItem['type'] }) {
   );
 }
 
+interface AgentFinding {
+  observation?: string;
+  evidence?: string;
+  significance?: string;
+  [key: string]: unknown;
+}
+
+interface AgentEntry {
+  agentName?: string;
+  findings?: AgentFinding[];
+  [key: string]: unknown;
+}
+
+function isNonEmpty(v: unknown): boolean {
+  if (v === null || v === undefined) return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === 'object') return Object.keys(v).length > 0;
+  if (typeof v === 'string') return v.length > 0;
+  return true;
+}
+
+function tryParseAgentFindings(value: string): AgentEntry[] | null {
+  try {
+    const parsed = JSON.parse(value);
+    if (
+      Array.isArray(parsed) &&
+      parsed.length > 0 &&
+      parsed.some((e: Record<string, unknown>) => e.agentName || e.findings)
+    ) {
+      return parsed as AgentEntry[];
+    }
+  } catch { /* not parseable */ }
+  return null;
+}
+
+function tryParseJson(value: string): unknown | null {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function AgentFindingsDisplay({ agents }: { agents: AgentEntry[] }) {
+  return (
+    <div className="space-y-4">
+      {agents.map((agent, i) => (
+        <div key={i}>
+          {agent.agentName && (
+            <div
+              className="text-xs font-semibold uppercase tracking-wide mb-2 px-2 py-1 rounded-md inline-block"
+              style={{ color: '#93C5FD', background: 'rgba(59, 130, 246, 0.1)' }}
+            >
+              {agent.agentName.replace(/-/g, ' ')}
+            </div>
+          )}
+          {agent.findings && agent.findings.length > 0 && (
+            <div className="space-y-2">
+              {agent.findings.map((finding, j) => (
+                <div
+                  key={j}
+                  className="p-3 rounded-lg"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                  }}
+                >
+                  {finding.observation && (
+                    <p className="text-sm mb-1.5" style={{ color: '#E5E7EB' }}>
+                      {finding.observation}
+                    </p>
+                  )}
+                  {finding.evidence && (
+                    <p className="text-xs mb-1" style={{ color: '#9CA3AF' }}>
+                      <span className="font-medium" style={{ color: '#6B7280' }}>Evidence: </span>
+                      {finding.evidence}
+                    </p>
+                  )}
+                  {finding.significance && (
+                    <p className="text-xs" style={{ color: '#9CA3AF' }}>
+                      <span className="font-medium" style={{ color: '#6B7280' }}>Significance: </span>
+                      {finding.significance}
+                    </p>
+                  )}
+                  {Object.entries(finding)
+                    .filter(([k, v]) => !['observation', 'evidence', 'significance'].includes(k) && isNonEmpty(v))
+                    .map(([k, v]) => (
+                      <p key={k} className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                        <span className="font-medium" style={{ color: '#6B7280' }}>{k}: </span>
+                        {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                      </p>
+                    ))}
+                </div>
+              ))}
+            </div>
+          )}
+          {Object.entries(agent)
+            .filter(([k, v]) => !['agentName', 'findings'].includes(k) && isNonEmpty(v))
+            .map(([k, v]) => (
+              <div
+                key={k}
+                className="flex items-center justify-between py-2 border-b last:border-0"
+                style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+              >
+                <span className="text-xs" style={{ color: '#6B7280' }}>{k}</span>
+                <span className="text-sm font-medium" style={{ color: '#D1D5DB' }}>
+                  {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                </span>
+              </div>
+            ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SourceDataSection({ sourceData }: { sourceData: SourceDataItem[] }) {
+  const agentItem = sourceData.find((item) => tryParseAgentFindings(item.value));
+  const agents = agentItem ? tryParseAgentFindings(agentItem.value) : null;
+
+  const remainingItems = sourceData.filter((item) => {
+    if (item === agentItem) return false;
+    const parsed = tryParseJson(item.value);
+    if (Array.isArray(parsed) && parsed.length === 0) return false;
+    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length === 0) return false;
+    if (item.value === '[]' || item.value === '{}') return false;
+    return true;
+  });
+
   return (
     <Section title="Source Data" icon={<FileText size={14} />}>
-      <div className="space-y-2">
-        {sourceData.map((item, idx) => (
-          <div
-            key={idx}
-            className="flex items-center justify-between py-2 border-b last:border-0"
-            style={{ borderColor: 'rgba(255,255,255,0.05)' }}
-          >
-            <span className="text-xs" style={{ color: '#6B7280' }}>{item.label}</span>
-            <span className="text-sm font-medium" style={{ color: '#D1D5DB' }}>{item.value}</span>
-          </div>
-        ))}
-      </div>
+      {agents && <AgentFindingsDisplay agents={agents} />}
+      {remainingItems.length > 0 && (
+        <div className={cn(agents ? 'mt-4' : '', 'space-y-2')}>
+          {remainingItems.map((item, idx) => {
+            const parsed = tryParseJson(item.value);
+            const isStructured = parsed && typeof parsed === 'object';
+
+            return isStructured ? (
+              <div key={idx}>
+                <span className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>
+                  {item.label}
+                </span>
+                <pre
+                  className="text-xs p-3 rounded-lg overflow-x-auto"
+                  style={{
+                    color: '#D1D5DB',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                  }}
+                >
+                  {JSON.stringify(parsed, null, 2)}
+                </pre>
+              </div>
+            ) : (
+              <div
+                key={idx}
+                className="flex items-center justify-between py-2 border-b last:border-0"
+                style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+              >
+                <span className="text-xs" style={{ color: '#6B7280' }}>{item.label}</span>
+                <span className="text-sm font-medium" style={{ color: '#D1D5DB' }}>{item.value}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </Section>
   );
 }

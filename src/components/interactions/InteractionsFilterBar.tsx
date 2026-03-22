@@ -35,6 +35,11 @@ export function InteractionsFilterBar({
     onSearch?.(searchValue);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value);
+    onSearch?.(e.target.value);
+  };
+
   return (
     <div
       className={cn(
@@ -81,7 +86,7 @@ export function InteractionsFilterBar({
               type="text"
               placeholder="Search interactions..."
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={handleSearchChange}
               className="flex-1 h-full px-2.5 bg-transparent text-sm text-gray-200 placeholder:text-gray-500 focus:outline-none"
             />
           </div>
