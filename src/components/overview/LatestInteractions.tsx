@@ -125,7 +125,7 @@ function mapApiInteractionToInteraction(i: ApiInteraction): Interaction {
     title,
     icon: sourceTypeToIcon(i.sourceType),
     location: i.sourceType,
-    time: new Date(i.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    time: new Date(i.timestamp > 1e12 ? i.timestamp : i.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   };
 }
 

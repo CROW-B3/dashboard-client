@@ -35,7 +35,7 @@ interface RelatedPattern {
 
 function formatTimestamp(ts: number): string {
   if (!ts) return '';
-  return new Date(ts * 1000).toLocaleString();
+  return new Date(ts > 1e12 ? ts : ts * 1000).toLocaleString();
 }
 
 
