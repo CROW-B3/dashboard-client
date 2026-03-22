@@ -3,7 +3,8 @@
 import type { InteractionData, InteractionDetail } from '@/components/interactions';
 import { Header, TipCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   InteractionDetailPanel,
   InteractionsFilterBar,
@@ -69,6 +70,29 @@ function mapApiInteractionToData(api: ApiInteraction): InteractionData {
   };
 }
 
+function downloadCsv(filename: string, rows: InteractionData[]): void {
+  const headers = ['ID', 'Source', 'Title', 'Subtitle', 'Store/Site', 'Timestamp', 'Confidence', 'Tags'];
+  const csvRows = [
+    headers.join(','),
+    ...rows.map((r) =>
+      [r.id, r.source, `"${r.title}"`, `"${r.subtitle}"`, r.storeSite, r.timestamp, r.confidence, `"${(r.tags ?? []).join(';')}"`].join(',')
+    ),
+  ];
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function saveFilterView(key: string, filters: Record<string, string>): void {
+  const existing = JSON.parse(localStorage.getItem('crow-saved-views') ?? '{}');
+  existing[key] = { ...filters, savedAt: new Date().toISOString() };
+  localStorage.setItem('crow-saved-views', JSON.stringify(existing));
+}
+
 function buildDetailFromApiInteraction(
   interaction: InteractionData,
   api: ApiInteraction,
@@ -86,7 +110,6 @@ function buildDetailFromApiInteraction(
         }));
     }
   } catch {
-    // ignore parse errors
   }
 
   return {
@@ -104,6 +127,7 @@ export default function InteractionsPage() {
   const [selectedInteraction, setSelectedInteraction] = useState<InteractionDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [page] = useState(1);
+  const [filterState, setFilterState] = useState<Record<string, string>>({});
 
   const { data, isLoading } = useQuery<InteractionsApiResponse>({
     enabled: !!orgId,
@@ -122,8 +146,23 @@ export default function InteractionsPage() {
   const apiInteractions = data?.interactions ?? [];
   const interactions: InteractionData[] = apiInteractions.map(mapApiInteractionToData);
 
-  // Keep a map of id → ApiInteraction for building detail panels
   const apiInteractionMap = new Map(apiInteractions.map((i) => [i.id, i]));
+
+  const handleExport = useCallback(() => {
+    if (interactions.length === 0) return;
+    downloadCsv(`interactions-${new Date().toISOString().slice(0, 10)}.csv`, interactions);
+    toast.success('Interactions exported');
+  }, [interactions]);
+
+  const handleSaveView = useCallback(() => {
+    saveFilterView('interactions', filterState);
+    toast.success('View saved');
+  }, [filterState]);
+
+  const handleDateRangeChange = useCallback((v: string) => setFilterState((s) => ({ ...s, dateRange: v })), []);
+  const handleSourceChange = useCallback((v: string) => setFilterState((s) => ({ ...s, source: v })), []);
+  const handleSiteChange = useCallback((v: string) => setFilterState((s) => ({ ...s, site: v })), []);
+  const handleSeverityChange = useCallback((v: string) => setFilterState((s) => ({ ...s, severity: v })), []);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -144,7 +183,15 @@ export default function InteractionsPage() {
           </div>
 
           <div className="mb-6">
-            <InteractionsFilterBar onExport={() => {}} onSaveView={() => {}} onSearch={() => {}} />
+            <InteractionsFilterBar
+              onExport={handleExport}
+              onSaveView={handleSaveView}
+              onSearch={() => {}}
+              onDateRangeChange={handleDateRangeChange}
+              onSourceChange={handleSourceChange}
+              onSiteChange={handleSiteChange}
+              onSeverityChange={handleSeverityChange}
+            />
           </div>
 
           {isLoading ? (

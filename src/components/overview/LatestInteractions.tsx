@@ -56,31 +56,20 @@ function getInteractionIconComponent(
   return iconMapping[iconType as keyof typeof iconMapping];
 }
 
-function getDefaultLatestInteractions(): Interaction[] {
-  return [
-    {
-      id: '1',
-      title: 'Inventory Discrepancy',
-      icon: 'store',
-      location: 'Store NY-04',
-      time: '14 mins ago',
-      isHighlighted: true,
-    },
-    {
-      id: '2',
-      title: 'Social Negative Spike',
-      icon: 'globe',
-      location: 'Global / Twitter',
-      time: '42 mins ago',
-    },
-    {
-      id: '3',
-      title: 'Queue Wait Time > 15m',
-      icon: 'video',
-      location: 'Store LDN-02',
-      time: '1 hr ago',
-    },
-  ];
+function EmptyInteractionsState() {
+  return (
+    <div className="py-8 flex flex-col items-center gap-3 text-center">
+      <p className="text-sm text-gray-400">
+        No interactions yet — connect your first data source
+      </p>
+      <Link
+        href="/integrations"
+        className="text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors"
+      >
+        Go to Integrations
+      </Link>
+    </div>
+  );
 }
 
 interface LatestInteractionsWithOrgProps extends LatestInteractionsProps {
@@ -106,14 +95,10 @@ export function LatestInteractions({
     staleTime: 60 * 1000,
   });
 
-  let interactions: Interaction[];
-  if (interactionsProp) {
-    interactions = interactionsProp;
-  } else if (orgId && data && !isError) {
-    interactions = data.interactions.map(mapApiInteractionToInteraction);
-  } else {
-    interactions = getDefaultLatestInteractions();
-  }
+  const interactions: Interaction[] = interactionsProp
+    ?? (orgId && data && !isError ? data.interactions.map(mapApiInteractionToInteraction) : []);
+
+  const isEmpty = interactions.length === 0;
 
   return (
     <GlassPanel variant="heavy" className="overflow-hidden">
@@ -123,15 +108,19 @@ export function LatestInteractions({
         viewAllText="View all interactions"
         LinkComponent={Link}
       />
-      <div className="p-3 sm:p-4 space-y-1">
-        {interactions.map((interaction) => (
-          <InteractionItem
-            key={interaction.id}
-            interaction={interaction}
-            onClick={() => onInteractionClick?.(interaction)}
-          />
-        ))}
-      </div>
+      {isEmpty ? (
+        <EmptyInteractionsState />
+      ) : (
+        <div className="p-3 sm:p-4 space-y-1">
+          {interactions.map((interaction) => (
+            <InteractionItem
+              key={interaction.id}
+              interaction={interaction}
+              onClick={() => onInteractionClick?.(interaction)}
+            />
+          ))}
+        </div>
+      )}
     </GlassPanel>
   );
 }

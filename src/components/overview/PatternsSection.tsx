@@ -38,27 +38,20 @@ function mapApiPatternToPattern(p: ApiPattern, index: number): Pattern {
   };
 }
 
-function getDefaultPatterns(): Pattern[] {
-  return [
-    {
-      id: '1',
-      title: 'Checkout Drop-off Spike',
-      description: 'Unusual abandonment rate detected at step 3 payment gateway.',
-      severity: 'high',
-    },
-    {
-      id: '2',
-      title: 'Store A24 Traffic Anomalies',
-      description: 'Foot traffic mismatch with POS transactions during peak hours.',
-      severity: 'medium',
-    },
-    {
-      id: '3',
-      title: 'Positive Sentiment Surge',
-      description: 'Brand mentions increasing following the weekend campaign.',
-      severity: 'low',
-    },
-  ];
+function EmptyPatternsState() {
+  return (
+    <div className="py-8 flex flex-col items-center gap-3 text-center">
+      <p className="text-sm text-gray-400">
+        No patterns detected yet — connect your first data source
+      </p>
+      <Link
+        href="/integrations"
+        className="text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors"
+      >
+        Go to Integrations
+      </Link>
+    </div>
+  );
 }
 
 function getSeverityBadgeStyles(severity: string): React.CSSProperties {
@@ -93,14 +86,10 @@ export function PatternsSection({
     staleTime: 60 * 1000,
   });
 
-  let patterns: Pattern[];
-  if (patternsProp) {
-    patterns = patternsProp;
-  } else if (orgId && data && !isError) {
-    patterns = data.patterns.map(mapApiPatternToPattern);
-  } else {
-    patterns = getDefaultPatterns();
-  }
+  const patterns: Pattern[] = patternsProp
+    ?? (orgId && data && !isError ? data.patterns.map(mapApiPatternToPattern) : []);
+
+  const isEmpty = patterns.length === 0;
 
   return (
     <GlassPanel variant="heavy" className="overflow-hidden">
@@ -110,15 +99,19 @@ export function PatternsSection({
         viewAllText="View all patterns"
         LinkComponent={Link}
       />
-      <div className="p-3 sm:p-4 space-y-1">
-        {patterns.map((pattern) => (
-          <PatternItem
-            key={pattern.id}
-            pattern={pattern}
-            onClick={() => onPatternClick?.(pattern)}
-          />
-        ))}
-      </div>
+      {isEmpty ? (
+        <EmptyPatternsState />
+      ) : (
+        <div className="p-3 sm:p-4 space-y-1">
+          {patterns.map((pattern) => (
+            <PatternItem
+              key={pattern.id}
+              pattern={pattern}
+              onClick={() => onPatternClick?.(pattern)}
+            />
+          ))}
+        </div>
+      )}
     </GlassPanel>
   );
 }

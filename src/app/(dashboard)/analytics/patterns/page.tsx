@@ -9,6 +9,7 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
 const PERIOD_OPTIONS = [
+  { value: '1h', label: '1 Hour' },
   { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
   { value: 'monthly', label: 'Monthly' },
