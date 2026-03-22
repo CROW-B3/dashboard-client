@@ -18,6 +18,7 @@ interface ApiPattern {
   id: string;
   type: string;
   confidence: number | null;
+  data: string;
   detectedAt: number;
   createdAt: number;
 }
@@ -27,15 +28,53 @@ interface PatternsApiResponse {
   total: number;
 }
 
-function mapApiPatternToPattern(p: ApiPattern, index: number): Pattern {
-  const severities: Array<'high' | 'medium' | 'low'> = ['high', 'medium', 'low'];
-  const severity = severities[index % severities.length] ?? 'low';
+function extractPatternTitle(type: string, data: string): string {
+  try {
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+    if (parsed?.insights && typeof parsed.insights === 'string') {
+      let clean = parsed.insights
+        .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '')
+        .replace(/\borganization\s*/gi, '')
+        .replace(/\bUsers?\s+within\s*/gi, 'Users ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+      if (/^[a-z]/.test(clean)) clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+      const firstSentence = clean.split(/[.!]\s/)[0]?.trim();
+      if (firstSentence && firstSentence.length > 10) {
+        return firstSentence.length > 80 ? firstSentence.slice(0, 77) + '...' : firstSentence;
+      }
+    }
+  } catch {}
+  const label = type.charAt(0).toUpperCase() + type.slice(1).replace(/[_-]/g, ' ');
+  return `${label} Pattern Detected`;
+}
+
+function toSeverity(confidence: number | null): 'high' | 'medium' | 'low' {
+  if (confidence == null) return 'medium';
+  if (confidence >= 0.85) return 'high';
+  if (confidence >= 0.6) return 'medium';
+  return 'low';
+}
+
+function mapApiPatternToPattern(p: ApiPattern): Pattern {
+  const ts = new Date(p.detectedAt > 1e12 ? p.detectedAt : p.detectedAt * 1000);
+  const ago = formatTimeAgo(ts.getTime());
   return {
     id: p.id,
-    title: p.type || `Pattern ${p.id}`,
-    description: `Detected at ${new Date(p.detectedAt > 1e12 ? p.detectedAt : p.detectedAt * 1000).toLocaleString()}${p.confidence != null ? ` — confidence: ${(p.confidence * 100).toFixed(0)}%` : ''}`,
-    severity,
+    title: extractPatternTitle(p.type, p.data),
+    description: `${ago}${p.confidence != null ? ` — ${(p.confidence * 100).toFixed(0)}% confidence` : ''}`,
+    severity: toSeverity(p.confidence),
   };
+}
+
+function formatTimeAgo(epochMs: number): string {
+  const diff = Date.now() - epochMs;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function EmptyPatternsState() {
