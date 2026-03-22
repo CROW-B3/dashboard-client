@@ -64,6 +64,7 @@ export default function TeamPage() {
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
   const orgId = user?.organizationId;
+  const betterAuthOrgId = user?.betterAuthOrgId;
   const [emails, setEmails] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -103,11 +104,14 @@ export default function TeamPage() {
   }, []);
 
   const { data: members = [] } = useQuery<OrgMember[]>({
-    queryKey: ['members', orgId],
+    queryKey: ['members', orgId, betterAuthOrgId],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/auth/organization/list-members`, { credentials: 'include' });
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/auth/organization/get-full-organization`,
+        { credentials: 'include' },
+      );
       if (!res.ok) return [];
-      const data = await res.json() as BetterAuthMembersResponse;
+      const data = await res.json() as { members?: BetterAuthMember[] };
       return (data.members ?? []).map((m) => ({
         id: m.id,
         name: m.user.name,
@@ -117,7 +121,7 @@ export default function TeamPage() {
         profilePictureUrl: m.user.image,
       }));
     },
-    enabled: !!orgId,
+    enabled: !!orgId && !!betterAuthOrgId,
   });
 
   const { data: invitationsData } = useQuery<{ invitations: InvitationItem[] }>({
