@@ -9,6 +9,25 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
+interface BetterAuthMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+  };
+}
+
+interface BetterAuthMembersResponse {
+  members: BetterAuthMember[];
+  total: number;
+}
+
 interface OrgMember {
   id: string;
   name: string;
@@ -16,11 +35,6 @@ interface OrgMember {
   role: string;
   createdAt: string;
   profilePictureUrl: string | null;
-}
-
-interface MembersResponse {
-  members: OrgMember[];
-  total: number;
 }
 
 interface InvitationItem { id: string; email: string; role: string; status: string }
@@ -91,10 +105,17 @@ export default function TeamPage() {
   const { data: members = [] } = useQuery<OrgMember[]>({
     queryKey: ['members', orgId],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/members`, { credentials: 'include' });
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/auth/organization/list-members`, { credentials: 'include' });
       if (!res.ok) return [];
-      const data = await res.json() as MembersResponse;
-      return data.members ?? [];
+      const data = await res.json() as BetterAuthMembersResponse;
+      return (data.members ?? []).map((m) => ({
+        id: m.id,
+        name: m.user.name,
+        email: m.user.email,
+        role: m.role,
+        createdAt: m.createdAt,
+        profilePictureUrl: m.user.image,
+      }));
     },
     enabled: !!orgId,
   });
