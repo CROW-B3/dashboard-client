@@ -41,8 +41,8 @@ function parseInteractionData(raw: string | undefined): ParsedInteractionData {
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     return {
-      url: parsed?.url ?? parsed?.pageUrl ?? undefined,
-      eventCount: parsed?.eventCount ?? parsed?.event_count ?? parsed?.events?.length ?? undefined,
+      url: parsed?.url ?? parsed?.pageUrl ?? parsed?.initialUrl ?? undefined,
+      eventCount: parsed?.eventCount ?? parsed?.event_count ?? parsed?.totalEvents ?? parsed?.events?.length ?? undefined,
       browser: parsed?.browser ?? parsed?.browserName ?? undefined,
       device: parsed?.device ?? parsed?.deviceType ?? undefined,
     };

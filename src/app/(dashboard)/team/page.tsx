@@ -121,7 +121,7 @@ export default function TeamPage() {
         profilePictureUrl: m.user.image,
       }));
     },
-    enabled: !!orgId && !!betterAuthOrgId,
+    enabled: !!orgId,
   });
 
   const { data: invitationsData } = useQuery<{ invitations: InvitationItem[] }>({

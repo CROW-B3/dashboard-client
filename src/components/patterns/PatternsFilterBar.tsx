@@ -24,7 +24,6 @@ export interface PatternsFilterBarProps {
   onSourceChange?: (source: SourceFilter) => void;
   onTimeChange?: (value: string) => void;
   onSortChange?: (value: string) => void;
-  onExport?: () => void;
   className?: string;
 }
 
@@ -54,7 +53,6 @@ export function PatternsFilterBar({
   onSourceChange,
   onTimeChange,
   onSortChange,
-  onExport,
   className,
 }: PatternsFilterBarProps) {
   return (
@@ -133,18 +131,6 @@ export function PatternsFilterBar({
             {...(onSortChange && { onChange: onSortChange })}
           />
         </div>
-        <button
-          type="button"
-          onClick={onExport}
-          className="h-[30px] px-3.5 flex items-center justify-center rounded-lg text-xs font-medium transition-colors hover:bg-white/5"
-          style={{
-            color: '#D1D5DB',
-            outline: '1px rgba(255, 255, 255, 0.10) solid',
-            outlineOffset: '-1px',
-          }}
-        >
-          Export
-        </button>
       </div>
     </div>
   );

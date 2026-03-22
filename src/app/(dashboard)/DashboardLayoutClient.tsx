@@ -47,8 +47,8 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
     href: '/team',
   },
   {
-    icon: 'inventory_2',
-    label: 'Catalog',
+    icon: 'shopping_bag',
+    label: 'Products',
     href: '/catalog',
   },
   {
