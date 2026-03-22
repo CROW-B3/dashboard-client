@@ -124,8 +124,6 @@ export default function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [showAddSource, setShowAddSource] = useState(false);
-  const [newSourceUrl, setNewSourceUrl] = useState('');
   const queryClient = useQueryClient();
 
   const { data: productsData, isLoading } = useQuery<{ products: Product[]; total: number }>({
@@ -174,27 +172,6 @@ export default function CatalogPage() {
     enabled: !!selectedProduct?.id,
   });
 
-  const startCrawlMutation = useMutation({
-    mutationFn: async (sourceUrl: string) => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ sourceType: 'url', sourceValue: sourceUrl, organizationId: orgId }),
-      });
-      if (!res.ok) throw new Error('Failed to start crawl');
-    },
-    onSuccess: () => {
-      toast.success('Crawl started');
-      setNewSourceUrl('');
-      setShowAddSource(false);
-      setTimeout(() => {
-        void queryClient.invalidateQueries({ queryKey: ['products', orgId] });
-      }, 5000);
-    },
-    onError: () => toast.error('Failed to start crawl'),
-  });
-
   const rescrapeMutation = useMutation({
     mutationFn: async (sourceUrl: string) => {
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/crawler-jobs`, {
@@ -214,11 +191,6 @@ export default function CatalogPage() {
     onError: () => toast.error('Failed to start re-scrape'),
   });
 
-  const handleStartCrawl = () => {
-    if (!newSourceUrl.trim() || !orgId) return;
-    startCrawlMutation.mutate(newSourceUrl.trim());
-  };
-
   const handleRescrape = () => {
     if (!selectedProduct || !orgId) return;
     const sourceUrl = selectedProduct.metadata?.sourceUrl ?? selectedProduct.images?.[0];
@@ -234,38 +206,10 @@ export default function CatalogPage() {
       <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Product Catalog</h1>
-          <p className="text-gray-400 text-sm mt-1">Browse and search your products</p>
-        </div>
-        <button
-          onClick={() => setShowAddSource((v) => !v)}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          {showAddSource ? 'Cancel' : 'Scrape New Source'}
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-white">Product Catalog</h1>
+        <p className="text-gray-400 text-sm mt-1">Browse and search your products</p>
       </div>
-
-      {showAddSource && (
-        <div className="flex gap-3 items-center p-4 bg-white/[0.04] border border-white/10 rounded-xl">
-          <input
-            type="url"
-            placeholder="https://example.com/products"
-            value={newSourceUrl}
-            onChange={(e) => setNewSourceUrl(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleStartCrawl(); }}
-            className="flex-1 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500"
-          />
-          <button
-            onClick={handleStartCrawl}
-            disabled={startCrawlMutation.isPending || !newSourceUrl.trim()}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-          >
-            {startCrawlMutation.isPending ? 'Starting...' : 'Start Crawl'}
-          </button>
-        </div>
-      )}
 
       <SearchInput
         placeholder="Search products semantically..."
@@ -280,7 +224,7 @@ export default function CatalogPage() {
           {(!productsData?.products || productsData.products.length === 0) ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <p className="text-gray-400 text-sm mb-2">No products found</p>
-              <p className="text-gray-500 text-xs">Use the &quot;Scrape New Source&quot; button above to crawl a website and extract products</p>
+              <p className="text-gray-500 text-xs">Products will appear here once they have been collected from your sources</p>
             </div>
           ) : null}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
