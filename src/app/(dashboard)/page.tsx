@@ -3,7 +3,6 @@
 import { Header, MetricsCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AskCrowCTA,
   DataSourceStatus,
   LatestInteractions,
   PatternsSection,
@@ -220,12 +219,14 @@ export default function DashboardPage() {
               value={totalInteractions}
               change={totalDelta.change}
               changeType={totalDelta.changeType}
+              chartData={[summary?.web ?? 0, summary?.cctv ?? 0, summary?.social ?? 0, summary?.total ?? 0]}
             />
             <MetricsCard
               title="Patterns"
               value={totalPatterns}
               change={patternsDelta.change}
               changeType={patternsDelta.changeType === 'negative' ? 'negative' : 'info'}
+              chartData={[patternsData?.total ?? 0, previousPatternsData?.total ?? 0]}
             />
           </div>
 
@@ -261,9 +262,6 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="mb-6 sm:mb-8">
-            <AskCrowCTA />
-          </div>
         </div>
       </div>
     </>

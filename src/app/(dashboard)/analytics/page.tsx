@@ -17,7 +17,7 @@ interface InteractionSummary {
 
 export default function AnalyticsPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const { data: permissions } = usePermissions(user?.id);
 
   const { data: summary, isLoading } = useQuery<InteractionSummary>({

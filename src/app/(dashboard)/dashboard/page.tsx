@@ -179,7 +179,7 @@ function SourceBreakdownItem({ label, count, total }: { label: string; count: nu
 export default function DashboardPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
 
   const { data: summaryData, isLoading: summaryLoading } = useQuery<InteractionSummary>({

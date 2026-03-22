@@ -35,7 +35,7 @@ function useDebounced(value: string, delayMs: number): string {
 export default function TeamPage() {
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const [emails, setEmails] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);

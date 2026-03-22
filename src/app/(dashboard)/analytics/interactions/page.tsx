@@ -42,7 +42,7 @@ function parseInteractionData(interaction: Interaction): { confidence?: number; 
 
 export default function AnalyticsInteractionsPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const [sourceType, setSourceType] = useState('');
   const [page, setPage] = useState(1);
 
