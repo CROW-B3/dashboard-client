@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import type { Message } from '@/components/ask-crow/types';
 import { Header } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -73,6 +75,8 @@ function apiMessagesToUiMessages(apiMessages: ApiMessage[]): Message[] {
 }
 
 export default function AskCrowPage() {
+  const router = useRouter();
+
   const { setActiveSession, refreshSessions, updateSessionTitle } = useChatHistory();
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
@@ -211,6 +215,7 @@ export default function AskCrowPage() {
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')}
       />
 
       <main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 relative overflow-hidden">

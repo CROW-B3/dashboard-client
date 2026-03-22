@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { ApiKeyInput, GlassPanel, Header, SegmentedControl } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, Plus, Trash2, Upload } from 'lucide-react';
@@ -41,6 +43,8 @@ interface BillingData {
 
 
 export default function DashboardSettingsPage() {
+  const router = useRouter();
+
   const { data: currentUser } = useCurrentUser();
   const { toggle } = useMobileSidebar();
   const { data: permissions } = usePermissions(currentUser?.id);
@@ -163,7 +167,8 @@ export default function DashboardSettingsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(currentUser?.name || currentUser?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(currentUser?.name || currentUser?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')} />
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
       <div>

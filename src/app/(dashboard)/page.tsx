@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { Header, MetricsCard } from '@b3-crow/ui-kit';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
@@ -94,6 +96,8 @@ function resolveDataSourceStatus(
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
@@ -210,6 +214,7 @@ export default function DashboardPage() {
         showNotification={false}
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')}
       />
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">

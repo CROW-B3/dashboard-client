@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import type { InteractionData, InteractionDetail } from '@/components/interactions';
 import { Header, TipCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
@@ -165,6 +167,8 @@ function buildDetailFromApiInteraction(
 }
 
 export default function InteractionsPage() {
+  const router = useRouter();
+
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
@@ -210,7 +214,8 @@ export default function InteractionsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')} />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
