@@ -17,6 +17,10 @@ export default function cloudflareLoader({
                 return src;
         }
 
+        if (src.endsWith(".webp") || src.endsWith(".svg") || src.endsWith(".ico")) {
+                return src;
+        }
+
         const params = [
                 `width=${width}`,
                 `quality=${quality || 85}`,
