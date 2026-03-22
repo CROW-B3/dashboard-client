@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { GlassPanel, Header, StatusBadge, StatusIndicator } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Brain, Building2, Copy, Radio, RefreshCw, Users } from 'lucide-react';
@@ -106,6 +108,8 @@ function DataSourceRow({ label, count }: { label: string; count: number }) {
 }
 
 export default function OrganizationPage() {
+  const router = useRouter();
+
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
@@ -195,6 +199,7 @@ export default function OrganizationPage() {
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')}
       />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">

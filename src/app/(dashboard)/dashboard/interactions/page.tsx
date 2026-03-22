@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { Header } from '@b3-crow/ui-kit';
 import { Suspense } from 'react';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
@@ -17,6 +19,8 @@ function SkeletonRows() {
 }
 
 export default function InteractionsPage() {
+  const router = useRouter();
+
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
@@ -28,6 +32,7 @@ export default function InteractionsPage() {
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')}
       />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-[120px] py-6 sm:py-8">

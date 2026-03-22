@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { GlassPanel, Header, MetricsCard, SectionHeader, SourceIcon, StatusIndicator } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, BarChart3, MessageSquare, Settings, Zap } from 'lucide-react';
@@ -177,6 +179,8 @@ function SourceBreakdownItem({ label, count, total }: { label: string; count: nu
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
@@ -240,6 +244,7 @@ export default function DashboardPage() {
         userInitials={userInitials}
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')}
       />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
