@@ -132,14 +132,25 @@ export default function OrganizationPage() {
     enabled: !!orgId,
   });
 
+  const betterAuthOrgId = user?.betterAuthOrgId;
+
   const { data: members } = useQuery<Member[]>({
-    queryKey: ['members', orgId],
+    queryKey: ['members', orgId, betterAuthOrgId],
     queryFn: async () => {
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${orgId}/members`, { credentials: 'include' });
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/auth/organization/get-full-organization`,
+        { credentials: 'include' },
+      );
       if (!res.ok) return [];
-      return res.json();
+      const data = await res.json() as { members?: Array<{ id: string; role: string; user: { id: string; name: string; email: string; image: string | null } }> };
+      return (data.members ?? []).map((m) => ({
+        id: m.id,
+        name: m.user.name,
+        email: m.user.email,
+        role: m.role,
+      }));
     },
-    enabled: !!orgId,
+    enabled: !!orgId && !!betterAuthOrgId,
   });
 
   const { data: interactionSummary } = useQuery<InteractionSummary>({
