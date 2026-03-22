@@ -1,6 +1,6 @@
 'use client';
 
-import { ApiKeyInput, GlassPanel, SegmentedControl } from '@b3-crow/ui-kit';
+import { ApiKeyInput, GlassPanel, Header, SegmentedControl } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, ExternalLink, Plus, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { isAdmin, usePermissions, useUser } from '@/hooks/use-permissions';
 import { buildProfilePictureUrl } from '@/lib/api';
@@ -70,6 +71,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 
 export default function DashboardSettingsPage() {
   const { data: currentUser } = useCurrentUser();
+  const { toggle } = useMobileSidebar();
   const { data: permissions } = usePermissions(currentUser?.id);
   const { data: user } = useUser(currentUser?.id);
   const orgId = currentUser?.organizationId;
@@ -225,7 +227,10 @@ export default function DashboardSettingsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col min-h-screen">
+      <Header userInitials={(currentUser?.name || currentUser?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
         <p className="text-gray-400 text-sm mt-1">Manage your account and preferences</p>
@@ -240,7 +245,7 @@ export default function DashboardSettingsPage() {
       {activeTab === 'profile' && (
         <GlassPanel>
           <h2 className="text-lg font-semibold text-white mb-4">Profile</h2>
-          <div className="space-y-4">
+          <div className="max-w-lg space-y-4">
             <div className="flex items-center gap-4">
               {user?.profilePictureUrl && currentUser?.id ? (
                 <img src={`${buildProfilePictureUrl(currentUser.id)}?v=${avatarVersion}`} alt="Profile" className="w-16 h-16 rounded-full object-cover" />
@@ -432,6 +437,8 @@ export default function DashboardSettingsPage() {
           </div>
         </GlassPanel>
       )}
+        </div>
+      </main>
     </div>
   );
 }

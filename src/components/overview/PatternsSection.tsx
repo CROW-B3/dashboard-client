@@ -92,7 +92,7 @@ export function PatternsSection({
   const isEmpty = patterns.length === 0;
 
   return (
-    <GlassPanel variant="heavy" className="overflow-hidden">
+    <GlassPanel variant="heavy" className="overflow-hidden h-full">
       <SectionHeader
         title="Top Patterns"
         viewAllHref="/analysis/patterns"

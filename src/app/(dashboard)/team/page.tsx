@@ -1,9 +1,10 @@
 'use client';
 
-import { EmailTagInput, GlassPanel, StatusBadge } from '@b3-crow/ui-kit';
+import { EmailTagInput, GlassPanel, Header, StatusBadge } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -33,6 +34,7 @@ function useDebounced(value: string, delayMs: number): string {
 
 export default function TeamPage() {
   const { data: user } = useCurrentUser();
+  const { toggle } = useMobileSidebar();
   const orgId = user?.orgUuid;
   const [emails, setEmails] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState('');
@@ -130,7 +132,10 @@ export default function TeamPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col min-h-screen">
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Team</h1>
         <p className="text-gray-400 text-sm mt-1">Manage team members and invitations</p>
@@ -205,6 +210,8 @@ export default function TeamPage() {
           </div>
         </GlassPanel>
       )}
+        </div>
+      </main>
     </div>
   );
 }

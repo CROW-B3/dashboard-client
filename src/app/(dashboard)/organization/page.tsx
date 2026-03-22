@@ -1,8 +1,8 @@
 'use client';
 
-import { GlassPanel, Header, IconBadge, StatusBadge, StatusIndicator } from '@b3-crow/ui-kit';
+import { GlassPanel, Header, StatusBadge, StatusIndicator } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Copy, RefreshCw, Users } from 'lucide-react';
+import { AlertTriangle, Brain, Building2, Copy, Radio, RefreshCw, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -187,7 +187,7 @@ export default function OrganizationPage() {
         logoSrc="/favicon.webp"
       />
 
-      <main className="flex-1 px-4 sm:px-6 lg:px-12 xl:px-[120px] py-6 sm:py-8">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
           <div className="relative mb-6 sm:mb-8">
             <h1 className="mb-1 text-xl sm:text-2xl font-bold leading-7 sm:leading-8 text-white">
@@ -202,7 +202,7 @@ export default function OrganizationPage() {
             <GlassPanel variant="heavy" className="lg:col-span-2">
               <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <IconBadge icon="corporate_fare" variant="violet" />
+                  <Building2 className="h-5 w-5 text-violet-400" />
                   <h2 className="text-lg font-semibold text-white">Organization Details</h2>
                 </div>
                 <div className="space-y-0">
@@ -250,7 +250,7 @@ export default function OrganizationPage() {
               <div className="p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <IconBadge icon="psychology" variant="violet" />
+                    <Brain className="h-5 w-5 text-violet-400" />
                     <h2 className="text-lg font-semibold text-white">AI Context</h2>
                   </div>
                   <button
@@ -292,7 +292,7 @@ export default function OrganizationPage() {
             <GlassPanel variant="heavy">
               <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <IconBadge icon="sensors" variant="emerald" />
+                  <Radio className="h-5 w-5 text-emerald-400" />
                   <h2 className="text-lg font-semibold text-white">Data Sources</h2>
                 </div>
                 <div className="space-y-1">

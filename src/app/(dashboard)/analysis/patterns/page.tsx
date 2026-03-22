@@ -4,6 +4,7 @@ import type { PatternData, PatternDetail } from '@/components/patterns';
 import type { SourceFilter } from '@/components/patterns/PatternsFilterBar';
 import { Header, PatternCard, TipCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
+import { Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { PatternDetailPanel, PatternsFilterBar } from '@/components/patterns';
@@ -70,6 +71,18 @@ function formatRelativeTime(timestamp: number): string {
   return `${days} day${days !== 1 ? 's' : ''} ago`;
 }
 
+function generatePatternTitle(parsed: ReturnType<typeof parsePatternData>, apiType: string): string {
+  if (parsed.title) return parsed.title;
+  const description = parsed.description ?? '';
+  if (description.length > 10) {
+    const firstSentence = description.split(/[.!?]/)[0]?.trim() ?? '';
+    if (firstSentence.length > 10 && firstSentence.length < 80) return firstSentence;
+    if (firstSentence.length >= 80) return `${firstSentence.slice(0, 77)}...`;
+  }
+  const typeLabel = apiType.charAt(0).toUpperCase() + apiType.slice(1).replace(/[_-]/g, ' ');
+  return `${typeLabel} Pattern Detected`;
+}
+
 function mapApiPatternToData(api: ApiPattern): PatternData {
   const parsed = parsePatternData(api.data);
   const validSources = ['web', 'cctv', 'social'] as const;
@@ -79,7 +92,7 @@ function mapApiPatternToData(api: ApiPattern): PatternData {
 
   return {
     id: api.id,
-    title: parsed.title ?? api.type,
+    title: generatePatternTitle(parsed, api.type),
     severity: parsed.severity ?? 'medium',
     affectedStores: parsed.affectedStores ?? api.type,
     lastSeen: formatRelativeTime(api.detectedAt ?? api.createdAt ?? 0),
@@ -143,6 +156,7 @@ export default function PatternsPage() {
   const [selectedPattern, setSelectedPattern] = useState<PatternDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data, isLoading } = useQuery<PatternsApiResponse>({
     enabled: !!orgId,
@@ -164,10 +178,19 @@ export default function PatternsPage() {
 
   const apiPatternMap = new Map(apiPatterns.map((p) => [p.id, p]));
 
-  const filteredPatterns = useMemo(
-    () => (sourceFilter === 'all' ? allPatterns : allPatterns.filter((p) => p.source === sourceFilter)),
-    [allPatterns, sourceFilter],
-  );
+  const filteredPatterns = useMemo(() => {
+    const sourceFiltered = sourceFilter === 'all' ? allPatterns : allPatterns.filter((p) => p.source === sourceFilter);
+    if (!searchQuery.trim()) return sourceFiltered;
+    const query = searchQuery.toLowerCase();
+    return sourceFiltered.filter((p) => {
+      if (p.title.toLowerCase().includes(query)) return true;
+      const api = apiPatternMap.get(p.id);
+      if (!api) return false;
+      const parsed = parsePatternData(api.data);
+      const summary = parsed.description ?? '';
+      return summary.toLowerCase().includes(query);
+    });
+  }, [allPatterns, sourceFilter, searchQuery, apiPatternMap]);
 
   const handleExport = useCallback(() => {
     if (filteredPatterns.length === 0) return;
@@ -179,8 +202,8 @@ export default function PatternsPage() {
     <div className="flex flex-col min-h-screen">
       <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
 
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-[120px] py-6 sm:py-8">
-        <div className="max-w-[1640px] mx-auto">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto">
           <div className="relative mb-6 sm:mb-8">
             <h1 className="mb-1 text-[30px] font-bold leading-9 text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
               Patterns
@@ -193,20 +216,42 @@ export default function PatternsPage() {
             </p>
           </div>
 
-          <div className="mb-6">
-            <PatternsFilterBar
-              activeSource={sourceFilter}
-              onSourceChange={setSourceFilter}
-              onExport={handleExport}
-              timeOptions={[
-                { label: '1 Hour', value: '1h' },
-                { label: 'Today', value: 'today' },
-                { label: 'Yesterday', value: 'yesterday' },
-                { label: 'Last 24h', value: '24h' },
-                { label: 'Last 7d', value: '7d' },
-                { label: 'Last 30d', value: '30d' },
-              ]}
-            />
+          <div className="mb-6 flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <PatternsFilterBar
+                activeSource={sourceFilter}
+                onSourceChange={setSourceFilter}
+                onExport={handleExport}
+                timeOptions={[
+                  { label: '1 Hour', value: '1h' },
+                  { label: 'Today', value: 'today' },
+                  { label: 'Yesterday', value: 'yesterday' },
+                  { label: 'Last 24h', value: '24h' },
+                  { label: 'Last 7d', value: '7d' },
+                  { label: 'Last 30d', value: '30d' },
+                ]}
+              />
+            </div>
+            <div
+              className="w-full sm:w-[256px] h-[52px] flex items-center rounded-xl overflow-hidden shrink-0"
+              style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                outline: '1px rgba(255, 255, 255, 0.06) solid',
+                outlineOffset: '-1px',
+                backdropFilter: 'blur(6px)',
+              }}
+            >
+              <div className="pl-3 flex items-center justify-center">
+                <Search size={14} color="#6B7280" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search patterns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 h-full px-2.5 bg-transparent text-sm text-gray-200 placeholder:text-gray-500 focus:outline-none"
+              />
+            </div>
           </div>
 
           {isLoading ? (
@@ -222,8 +267,8 @@ export default function PatternsPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {filteredPatterns.map((pattern) => (
+                <div key={pattern.id} className="[&_.pt-4>button:nth-child(2)]:hidden [&_.pt-4>button:nth-child(4)]:hidden">
                 <PatternCard
-                  key={pattern.id}
                   id={pattern.id}
                   title={pattern.title}
                   severity={pattern.severity}
@@ -237,9 +282,8 @@ export default function PatternsPage() {
                     );
                     setIsPanelOpen(true);
                   }}
-                  onViewEvidence={() => {}}
-                  onCreateAlert={() => {}}
                 />
+              </div>
               ))}
             </div>
           )}

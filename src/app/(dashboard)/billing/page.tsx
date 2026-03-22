@@ -1,6 +1,6 @@
 'use client';
 
-import { GlassPanel, MetricsCard, PlanCard } from '@b3-crow/ui-kit';
+import { GlassPanel, Header, MetricsCard, PlanCard } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, CreditCard, Download, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -157,6 +158,7 @@ function InvoiceStatusBadge({ status }: { status: string | null }) {
 
 export default function BillingPage() {
   const { data: user } = useCurrentUser();
+  const { toggle } = useMobileSidebar();
   const orgId = user?.orgUuid;
   const queryClient = useQueryClient();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -293,7 +295,10 @@ export default function BillingPage() {
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col min-h-screen">
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
+        <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Billing</h1>
         <p className="text-gray-400 text-sm mt-1">Manage your subscription and usage</p>
@@ -602,6 +607,8 @@ export default function BillingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+      </main>
     </div>
   );
 }

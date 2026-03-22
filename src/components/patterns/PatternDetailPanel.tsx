@@ -12,7 +12,6 @@ import {
 } from '@b3-crow/ui-kit';
 import {
   Activity,
-  Bell,
   Clock,
   ExternalLink,
   FileText,
@@ -271,16 +270,6 @@ function MetricsSection({ metrics }: { metrics: MetricItem[] }) {
 function ActionsSection() {
   return (
     <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-      <button
-        type="button"
-        className="flex-1 h-10 flex items-center justify-center gap-2 rounded-lg transition-colors hover:bg-white/5"
-        style={{
-          border: '1px solid rgba(255, 255, 255, 0.10)',
-        }}
-      >
-        <Bell size={16} color="#9CA3AF" />
-        <span className="text-sm font-medium" style={{ color: '#D1D5DB' }}>Create Alert</span>
-      </button>
       <button
         type="button"
         className="flex-1 h-10 flex items-center justify-center gap-2 rounded-lg transition-colors"

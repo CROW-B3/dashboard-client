@@ -6,7 +6,6 @@ import {
   cn,
   DEFAULT_SEVERITY_OPTIONS,
   DEFAULT_SORT_OPTIONS,
-  DEFAULT_STORE_OPTIONS,
   DEFAULT_TIME_OPTIONS,
   FilterDropdown,
 } from '@b3-crow/ui-kit';
@@ -15,13 +14,11 @@ export type SourceFilter = 'all' | 'web' | 'cctv' | 'social';
 
 export interface PatternsFilterBarProps {
   severityOptions?: FilterOption[];
-  storeOptions?: FilterOption[];
   timeOptions?: FilterOption[];
   sortOptions?: FilterOption[];
   activeSource?: SourceFilter;
   onSeverityChange?: (value: string) => void;
   onSourceChange?: (source: SourceFilter) => void;
-  onStoreChange?: (value: string) => void;
   onTimeChange?: (value: string) => void;
   onSortChange?: (value: string) => void;
   onExport?: () => void;
@@ -44,13 +41,11 @@ function getPatternSourceFilters(): SourceFilterOption[] {
 
 export function PatternsFilterBar({
   severityOptions = DEFAULT_SEVERITY_OPTIONS,
-  storeOptions = DEFAULT_STORE_OPTIONS,
   timeOptions = DEFAULT_TIME_OPTIONS,
   sortOptions = DEFAULT_SORT_OPTIONS,
   activeSource = 'all',
   onSeverityChange,
   onSourceChange,
-  onStoreChange,
   onTimeChange,
   onSortChange,
   onExport,
@@ -108,14 +103,6 @@ export function PatternsFilterBar({
             {filter.label}
           </button>
         ))}
-      </div>
-
-      <div className="shrink-0 hidden sm:block">
-        <FilterDropdown
-          label="Store: All"
-          options={storeOptions}
-          {...(onStoreChange && { onChange: onStoreChange })}
-        />
       </div>
 
       <div className="shrink-0 hidden sm:block">
