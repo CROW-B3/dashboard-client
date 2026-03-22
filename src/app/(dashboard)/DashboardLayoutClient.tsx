@@ -76,8 +76,11 @@ function usePrefetchDashboardData(orgId: string | undefined) {
 
     prefetch(['interaction-summary', orgId], `${base}/interactions/organization/${orgId}/summary`);
     prefetch(['patterns-overview', orgId], `${base}/patterns/organization/${orgId}?limit=5`);
+    prefetch(['patterns-count', orgId], `${base}/patterns/organization/${orgId}?limit=1`);
     prefetch(['analysis-interactions', orgId, 1, '', 'all'], `${base}/interactions/organization/${orgId}?limit=20`);
-    prefetch(['products', orgId], `${base}/products/organization/${orgId}`);
+    prefetch(['products', orgId, 1, ''], `${base}/products/organization/${orgId}?page=1&limit=24`);
+    prefetch(['members', orgId], `${base}/auth/organization/get-full-organization`);
+    prefetch(['billing-plans'], `${base}/billing/plans`);
   }, [orgId, queryClient]);
 }
 
