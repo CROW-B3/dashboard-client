@@ -53,6 +53,11 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
     href: '/catalog',
   },
   {
+    icon: 'integrations',
+    label: 'Integrations',
+    href: '/integrations',
+  },
+  {
     icon: 'credit_card',
     label: 'Billing',
     href: '/billing',
