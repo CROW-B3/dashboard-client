@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { isAdmin, usePermissions, useUser } from '@/hooks/use-permissions';
+import { buildProfilePictureUrl } from '@/lib/api';
 import { apiKey } from '@/lib/auth-client';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -79,6 +80,7 @@ export default function DashboardSettingsPage() {
   const [name, setName] = useState('');
   const [keyName, setKeyName] = useState('');
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
+  const [avatarVersion, setAvatarVersion] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: apiKeys } = useQuery({
@@ -138,7 +140,7 @@ export default function DashboardSettingsPage() {
       if (!currentUser?.id) throw new Error('No user');
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/${currentUser.id}/avatar`, {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/${currentUser.id}/profile-picture`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -147,6 +149,7 @@ export default function DashboardSettingsPage() {
     },
     onSuccess: () => {
       toast.success('Profile picture updated');
+      setAvatarVersion((v) => v + 1);
       void queryClient.invalidateQueries({ queryKey: ['current-user'] });
       void queryClient.invalidateQueries({ queryKey: ['user'] });
     },
@@ -239,8 +242,8 @@ export default function DashboardSettingsPage() {
           <h2 className="text-lg font-semibold text-white mb-4">Profile</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              {user?.profilePictureUrl ? (
-                <img src={user.profilePictureUrl} alt="Profile" className="w-16 h-16 rounded-full object-cover" />
+              {user?.profilePictureUrl && currentUser?.id ? (
+                <img src={`${buildProfilePictureUrl(currentUser.id)}?v=${avatarVersion}`} alt="Profile" className="w-16 h-16 rounded-full object-cover" />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-violet-600/30 border border-violet-500/30 flex items-center justify-center text-violet-300 font-semibold text-lg">
                   {(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}

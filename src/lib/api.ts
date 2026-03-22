@@ -47,4 +47,7 @@ export const api = {
   delete: (path: string) => apiFetch(path, { method: 'DELETE' }),
 };
 
+export const buildProfilePictureUrl = (userId: string): string =>
+  `${API_GATEWAY_URL}/api/v1/users/${userId}/profile-picture`;
+
 export { clearTokenCache, getAuthToken };
