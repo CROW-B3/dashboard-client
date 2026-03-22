@@ -207,7 +207,7 @@ export default function CatalogPage() {
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Product Catalog</h1>
+        <h1 className="text-2xl font-bold text-white">Products</h1>
         <p className="text-gray-400 text-sm mt-1">Browse and search your products</p>
       </div>
 
