@@ -102,7 +102,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     logoSrc: '/favicon.webp',
     userName: user?.name || user?.email || 'User',
     userEmail: user?.email || '',
-    userAvatar: userAvatarUrl,
+    ...(userAvatarUrl ? { userAvatar: userAvatarUrl } : {}),
     onLogout: handleLogout,
     chatHistory,
     activeChatId: activeSessionId,

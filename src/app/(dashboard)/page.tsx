@@ -106,7 +106,7 @@ function resolveDataSourceStatus(
 export default function DashboardPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
 
   const { data: summary, isLoading: summaryLoading } = useQuery<InteractionSummary>({
     queryKey: ['interaction-summary', orgId],
