@@ -80,7 +80,7 @@ export default function AskCrowPage() {
   const queryClient = useQueryClient();
   const attachMenuRef = useRef<HTMLDivElement>(null);
 
-  const organizationId = user?.orgUuid;
+  const organizationId = user?.organizationId;
   const userId = user?.betterAuthUserId;
 
   const [chatStarted, setChatStarted] = useState(false);

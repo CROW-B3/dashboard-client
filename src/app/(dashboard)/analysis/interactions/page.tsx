@@ -101,7 +101,7 @@ function buildDetailFromApiInteraction(
 export default function InteractionsPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
 
   const [selectedInteraction, setSelectedInteraction] = useState<InteractionDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);

@@ -108,7 +108,7 @@ function DataSourceRow({ label, count }: { label: string; count: number }) {
 export default function OrganizationPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const queryClient = useQueryClient();
   const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
 

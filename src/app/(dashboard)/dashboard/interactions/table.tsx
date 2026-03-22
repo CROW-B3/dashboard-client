@@ -69,7 +69,7 @@ function parseInteractionData(interaction: Interaction): { confidence?: number; 
 
 export function InteractionsTable() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const searchParams = useSearchParams();
   const router = useRouter();
 
