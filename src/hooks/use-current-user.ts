@@ -7,6 +7,7 @@ interface UserRecord {
   id: string;
   betterAuthUserId: string;
   organizationId?: string;
+  betterAuthOrgId?: string;
   orgUuid?: string;
   orgName?: string;
   name: string;
@@ -16,17 +17,25 @@ interface UserRecord {
   permissions: Record<string, unknown>;
 }
 
-async function fetchUserWithOrgUuid(userId: string): Promise<UserRecord> {
+async function fetchUserWithOrgContext(
+  userId: string,
+  activeOrgId: string | undefined
+): Promise<UserRecord> {
   const userRes = await fetch(`${API_GATEWAY_URL}/api/v1/users/by-auth-id/${userId}`, {
     credentials: 'include',
   });
   if (!userRes.ok) throw new Error('Failed to fetch user');
   const user: UserRecord = await userRes.json();
 
-  if (!user.organizationId) return user;
+  if (activeOrgId) {
+    user.betterAuthOrgId = activeOrgId;
+  }
+
+  const orgLookupId = activeOrgId || user.organizationId;
+  if (!orgLookupId) return user;
 
   const orgRes = await fetch(
-    `${API_GATEWAY_URL}/api/v1/organizations/by-auth-id/${user.organizationId}`,
+    `${API_GATEWAY_URL}/api/v1/organizations/by-auth-id/${orgLookupId}`,
     { credentials: 'include' }
   );
   if (!orgRes.ok) return user;
@@ -37,10 +46,11 @@ async function fetchUserWithOrgUuid(userId: string): Promise<UserRecord> {
 export function useCurrentUser() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
+  const activeOrgId = (session as any)?.session?.activeOrganizationId as string | undefined;
 
   return useQuery({
-    queryKey: ['current-user', userId],
-    queryFn: () => fetchUserWithOrgUuid(userId!),
+    queryKey: ['current-user', userId, activeOrgId],
+    queryFn: () => fetchUserWithOrgContext(userId!, activeOrgId),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
   });

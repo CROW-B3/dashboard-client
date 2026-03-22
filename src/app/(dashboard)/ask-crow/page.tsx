@@ -207,7 +207,7 @@ export default function AskCrowPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header
-        userInitials="SJ"
+        userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}
         showNotification
         minimal
         onMenuClick={toggle}
