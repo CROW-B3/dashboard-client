@@ -108,7 +108,7 @@ const demoSessions: ChatSession[] = [
 ];
 
 export function ChatHistoryProvider({ children }: { children: ReactNode }) {
-  const [sessions, setSessions] = useState<ChatSession[]>(demoSessions);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
 

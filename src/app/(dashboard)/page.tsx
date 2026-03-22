@@ -106,7 +106,7 @@ function resolveDataSourceStatus(
 export default function DashboardPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
 
   const { data: summary, isLoading: summaryLoading } = useQuery<InteractionSummary>({
     queryKey: ['interaction-summary', orgId],
@@ -214,35 +214,22 @@ export default function DashboardPage() {
         <div className="max-w-[1400px] mx-auto">
           {createPageHeaderElement(summary)}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <MetricsCard
-              title="Total Interactions"
+              title="Interactions"
               value={totalInteractions}
               change={totalDelta.change}
               changeType={totalDelta.changeType}
             />
             <MetricsCard
-              title="Total Patterns"
+              title="Patterns"
               value={totalPatterns}
               change={patternsDelta.change}
               changeType={patternsDelta.changeType === 'negative' ? 'negative' : 'info'}
             />
-            <MetricsCard
-              title="Friction Signals"
-              value={frictionSignals}
-              change={frictionDelta.change}
-              changeType={frictionDelta.changeType === 'positive' ? 'negative' : 'positive'}
-              chartColor="rose"
-            />
-            <MetricsCard
-              title="Conversion Signals"
-              value={conversionSignals}
-              change={conversionDelta.change}
-              changeType={conversionDelta.changeType}
-            />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <PatternsSection {...(orgId && { orgId })} />
             <LatestInteractions {...(orgId && { orgId })} />
           </div>

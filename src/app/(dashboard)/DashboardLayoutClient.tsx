@@ -4,6 +4,7 @@ import type { NavItem } from '@b3-crow/ui-kit';
 import { MobileSidebar, Sidebar } from '@b3-crow/ui-kit';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
 import { LenisProvider } from '@/components/LenisProvider';
 import { ChatHistoryProvider, useChatHistory } from '@/contexts/ChatHistoryContext';
 import { MobileSidebarProvider, useMobileSidebar } from '@/contexts/MobileSidebarContext';
@@ -55,23 +56,11 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
     label: 'Billing',
     href: '/billing',
   },
-  {
-    icon: 'settings',
-    label: 'Settings',
-    href: '/dashboard/settings',
-  },
 ];
 
 const DashboardBackground = dynamic(
   () => import('@b3-crow/ui-kit').then((mod) => mod.DashboardBackground)
 );
-
-function buildChatHistoryItemsFromSessions(sessions: ReturnType<typeof useChatHistory>['sessions']) {
-  return sessions.map((session) => ({
-    id: session.id,
-    title: session.title,
-  }));
-}
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -82,27 +71,32 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { isOpen: isMobileSidebarOpen, close: closeMobileSidebar } = useMobileSidebar();
   const { isCollapsed, toggle: toggleCollapse } = useSidebarCollapse();
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await signOut();
     const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || 'https://dev.auth.crowai.dev';
     window.location.href = `${authUrl}/login`;
-  };
-  const handleNavigate = (href: string) => router.push(href);
+  }, []);
 
-  const chatHistory = buildChatHistoryItemsFromSessions(sessions);
+  const handleNavigate = useCallback((href: string) => router.push(href), [router]);
 
-  const userAvatarUrl = user?.profilePictureUrl && user?.id
-    ? buildProfilePictureUrl(user.id)
-    : undefined;
+  const chatHistory = useMemo(
+    () => sessions.map((session) => ({ id: session.id, title: session.title })),
+    [sessions]
+  );
 
-  const sidebarProps = {
+  const userAvatarUrl = useMemo(
+    () => (user?.profilePictureUrl && user?.id ? buildProfilePictureUrl(user.id) : undefined),
+    [user?.profilePictureUrl, user?.id]
+  );
+
+  const sidebarProps = useMemo(() => ({
     navItems: DEFAULT_NAV_ITEMS,
     activeHref: pathname ?? '/',
     onNavigate: handleNavigate,
     logoSrc: '/favicon.webp',
     userName: user?.name || user?.email || 'User',
     userEmail: user?.email || '',
-    userAvatar: userAvatarUrl,
+    ...(userAvatarUrl ? { userAvatar: userAvatarUrl } : {}),
     onLogout: handleLogout,
     chatHistory,
     activeChatId: activeSessionId,
@@ -113,7 +107,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     onChatDelete: deleteSession,
     isCollapsed,
     onToggleCollapse: toggleCollapse,
-  };
+  }), [
+    pathname, handleNavigate, user?.name, user?.email, userAvatarUrl,
+    handleLogout, chatHistory, activeSessionId, isExpanded,
+    setActiveSession, toggleExpanded, updateSessionTitle, deleteSession,
+    isCollapsed, toggleCollapse,
+  ]);
 
   return (
     <div className="h-screen flex overflow-hidden relative">

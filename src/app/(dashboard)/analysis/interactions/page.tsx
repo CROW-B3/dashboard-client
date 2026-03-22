@@ -54,7 +54,8 @@ function toConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' {
 function mapApiInteractionToData(api: ApiInteraction): InteractionData {
   const parsed = parseInteractionData(api.data);
   const confidence = api.confidence ?? parsed.confidence ?? 0;
-  const tags = api.tags ?? parsed.tags ?? [];
+  const rawTags = api.tags ?? parsed.tags ?? [];
+  const tags = Array.isArray(rawTags) ? rawTags : (typeof rawTags === 'string' ? (() => { try { return JSON.parse(rawTags); } catch { return []; } })() : []);
   const sourceType = api.sourceType as 'web' | 'cctv' | 'social';
 
   return {
@@ -166,7 +167,7 @@ export default function InteractionsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials="SJ" showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-[120px] py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
