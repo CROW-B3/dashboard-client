@@ -20,12 +20,91 @@ interface ApiInteraction {
   sourceType: string;
   sessionId: string | null;
   summary: string | null;
+  data?: string;
   timestamp: number;
 }
 
 interface InteractionsApiResponse {
   interactions: ApiInteraction[];
   total: number;
+}
+
+interface ParsedInteractionData {
+  url?: string;
+  eventCount?: number;
+  browser?: string;
+  device?: string;
+}
+
+function parseInteractionData(raw: string | undefined): ParsedInteractionData {
+  if (!raw) return {};
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return {
+      url: parsed?.url ?? parsed?.pageUrl ?? undefined,
+      eventCount: parsed?.eventCount ?? parsed?.event_count ?? parsed?.events?.length ?? undefined,
+      browser: parsed?.browser ?? parsed?.browserName ?? undefined,
+      device: parsed?.device ?? parsed?.deviceType ?? undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function extractShortTitle(summary: string): string {
+  const levelMatch = summary.match(/^L[12]\s*\|\s*(.+)/);
+  if (levelMatch) {
+    let body = levelMatch[1];
+    body = body.replace(/\s*\[[^\]]*:[0-9.]+\]/g, '').trim();
+    const sentenceEnd = body.search(/[.!?](\s|$)/);
+    const sentence = sentenceEnd !== -1 ? body.slice(0, sentenceEnd + 1).trim() : body.trim();
+    const cleaned = sentence.replace(/^The user\s+/i, '').trim();
+    const title = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    return title.length > 60 ? title.slice(0, 57).trimEnd() + '...' : title;
+  }
+
+  const webSessionMatch = summary.match(/Web session on ([^|]+)\|[^|]*\|\s*(\d+)\s*events/i);
+  if (webSessionMatch) {
+    const rawUrl = webSessionMatch[1].trim();
+    const count = webSessionMatch[2];
+    let siteName = rawUrl;
+    try {
+      const u = new URL(rawUrl);
+      siteName = u.hostname.replace(/^www\./, '');
+    } catch {
+    }
+    return `${siteName} session \u2022 ${count} events`;
+  }
+
+  const firstSentenceEnd = summary.search(/[.!?](\s|$)/);
+  const firstSentence = firstSentenceEnd !== -1 ? summary.slice(0, firstSentenceEnd + 1).trim() : summary.trim();
+  return firstSentence.length > 60 ? firstSentence.slice(0, 57).trimEnd() + '...' : firstSentence;
+}
+
+function deriveInteractionTitle(
+  summary: string | null,
+  url: string | undefined,
+  eventCount: number | undefined,
+  browser: string | undefined,
+  device: string | undefined,
+): string {
+  if (summary) return extractShortTitle(summary);
+
+  const parts: string[] = [];
+  if (url) {
+    try {
+      const u = new URL(url);
+      parts.push(`${u.hostname.replace(/^www\./, '')} session`);
+    } catch {
+      parts.push('Web session');
+    }
+  } else {
+    parts.push('Web session');
+  }
+  if (eventCount !== undefined) parts.push(`${eventCount} events`);
+  const deviceBrowser = [device, browser].filter(Boolean).join('/');
+  if (deviceBrowser) parts.push(deviceBrowser);
+  return parts.join(' \u2022 ');
 }
 
 function sourceTypeToIcon(sourceType: string): Interaction['icon'] {
@@ -39,10 +118,11 @@ function sourceTypeToIcon(sourceType: string): Interaction['icon'] {
 }
 
 function mapApiInteractionToInteraction(i: ApiInteraction): Interaction {
-  const label = i.summary || i.sessionId || i.id;
+  const parsed = parseInteractionData(i.data);
+  const title = deriveInteractionTitle(i.summary, parsed.url, parsed.eventCount, parsed.browser, parsed.device);
   return {
     id: i.id,
-    title: label,
+    title,
     icon: sourceTypeToIcon(i.sourceType),
     location: i.sourceType,
     time: new Date(i.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),

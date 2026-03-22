@@ -17,6 +17,9 @@ export interface PatternsFilterBarProps {
   timeOptions?: FilterOption[];
   sortOptions?: FilterOption[];
   activeSource?: SourceFilter;
+  timeValue?: string;
+  severityValue?: string;
+  sortValue?: string;
   onSeverityChange?: (value: string) => void;
   onSourceChange?: (source: SourceFilter) => void;
   onTimeChange?: (value: string) => void;
@@ -44,6 +47,9 @@ export function PatternsFilterBar({
   timeOptions = DEFAULT_TIME_OPTIONS,
   sortOptions = DEFAULT_SORT_OPTIONS,
   activeSource = 'all',
+  timeValue,
+  severityValue,
+  sortValue,
   onSeverityChange,
   onSourceChange,
   onTimeChange,
@@ -54,7 +60,7 @@ export function PatternsFilterBar({
   return (
     <div
       className={cn(
-        'relative z-50 w-full min-h-[52px] flex items-center gap-2 px-[9px] py-2 rounded-xl',
+        'relative z-50 w-full flex flex-wrap items-center gap-2 px-[9px] py-2 rounded-xl',
         className
       )}
       style={{
@@ -62,12 +68,14 @@ export function PatternsFilterBar({
         outline: '1px rgba(255, 255, 255, 0.06) solid',
         outlineOffset: '-1px',
         backdropFilter: 'blur(6px)',
+        minHeight: '52px',
       }}
     >
       <div className="pr-3 border-r border-white/5 shrink-0">
         <FilterDropdown
           label="Severity: All"
           options={severityOptions}
+          {...(severityValue !== undefined ? { value: severityValue } : {})}
           {...(onSeverityChange && { onChange: onSeverityChange })}
         />
       </div>
@@ -105,21 +113,23 @@ export function PatternsFilterBar({
         ))}
       </div>
 
-      <div className="shrink-0 hidden sm:block">
+      <div className="shrink-0">
         <FilterDropdown
-          label="Time: 7d"
+          label="Time"
           options={timeOptions}
+          {...(timeValue !== undefined ? { value: timeValue } : {})}
           {...(onTimeChange && { onChange: onTimeChange })}
         />
       </div>
 
-      <div className="flex-1 min-w-2" />
+      <div className="flex-1 min-w-[8px]" />
 
       <div className="flex items-center gap-2 pl-2 border-l border-white/5 shrink-0">
         <div className="hidden lg:block">
           <FilterDropdown
             label="Sort: Most recent"
             options={sortOptions}
+            {...(sortValue !== undefined ? { value: sortValue } : {})}
             {...(onSortChange && { onChange: onSortChange })}
           />
         </div>

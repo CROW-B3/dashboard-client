@@ -32,12 +32,15 @@ interface InteractionsApiResponse {
   total: number;
 }
 
-function parseInteractionData(raw: string): { confidence?: number; url?: string } {
+function parseInteractionData(raw: string): { confidence?: number; url?: string; eventCount?: number; browser?: string; device?: string } {
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     return {
       confidence: parsed?.confidence ?? parsed?.score ?? undefined,
       url: parsed?.url ?? parsed?.pageUrl ?? undefined,
+      eventCount: parsed?.eventCount ?? parsed?.event_count ?? parsed?.events?.length ?? undefined,
+      browser: parsed?.browser ?? parsed?.browserName ?? undefined,
+      device: parsed?.device ?? parsed?.deviceType ?? undefined,
     };
   } catch {
     return {};
@@ -50,10 +53,60 @@ function toConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' {
   return 'low';
 }
 
-function deriveTitle(summary: string | null, url: string | undefined): string {
-  if (summary) return summary;
-  if (url) return `Web session on ${url}`;
-  return 'Untitled interaction';
+function extractShortTitle(summary: string): string {
+  const levelMatch = summary.match(/^L[12]\s*\|\s*(.+)/);
+  if (levelMatch) {
+    let body = levelMatch[1];
+    body = body.replace(/\s*\[[^\]]*:[0-9.]+\]/g, '').trim();
+    const sentenceEnd = body.search(/[.!?](\s|$)/);
+    const sentence = sentenceEnd !== -1 ? body.slice(0, sentenceEnd + 1).trim() : body.trim();
+    const cleaned = sentence.replace(/^The user\s+/i, '').trim();
+    const title = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    return title.length > 60 ? title.slice(0, 57).trimEnd() + '...' : title;
+  }
+
+  const webSessionMatch = summary.match(/Web session on ([^|]+)\|[^|]*\|\s*(\d+)\s*events/i);
+  if (webSessionMatch) {
+    const rawUrl = webSessionMatch[1].trim();
+    const count = webSessionMatch[2];
+    let siteName = rawUrl;
+    try {
+      const u = new URL(rawUrl);
+      siteName = u.hostname.replace(/^www\./, '');
+    } catch {
+    }
+    return `${siteName} session \u2022 ${count} events`;
+  }
+
+  const firstSentenceEnd = summary.search(/[.!?](\s|$)/);
+  const firstSentence = firstSentenceEnd !== -1 ? summary.slice(0, firstSentenceEnd + 1).trim() : summary.trim();
+  return firstSentence.length > 60 ? firstSentence.slice(0, 57).trimEnd() + '...' : firstSentence;
+}
+
+function deriveTitle(
+  summary: string | null,
+  url: string | undefined,
+  eventCount: number | undefined,
+  browser: string | undefined,
+  device: string | undefined,
+): string {
+  if (summary) return extractShortTitle(summary);
+
+  const parts: string[] = [];
+  if (url) {
+    try {
+      const u = new URL(url);
+      parts.push(`${u.hostname.replace(/^www\./, '')} session`);
+    } catch {
+      parts.push('Web session');
+    }
+  } else {
+    parts.push('Web session');
+  }
+  if (eventCount !== undefined) parts.push(`${eventCount} events`);
+  const deviceBrowser = [device, browser].filter(Boolean).join('/');
+  if (deviceBrowser) parts.push(deviceBrowser);
+  return parts.join(' \u2022 ');
 }
 
 function mapApiInteractionToData(api: ApiInteraction): InteractionData {
@@ -64,7 +117,7 @@ function mapApiInteractionToData(api: ApiInteraction): InteractionData {
   return {
     id: api.id,
     source: (['web', 'cctv', 'social'] as const).includes(sourceType) ? sourceType : 'web',
-    title: deriveTitle(api.summary, parsed.url),
+    title: deriveTitle(api.summary, parsed.url, parsed.eventCount, parsed.browser, parsed.device),
     subtitle: api.sessionId ? `Session ID: ${api.sessionId}` : api.id,
     timestamp: api.timestamp ? new Date(api.timestamp).toLocaleString() : '',
     confidence,
@@ -87,8 +140,15 @@ function buildDetailFromApiInteraction(
         if (typeof v === 'string') return v.length > 0;
         return true;
       };
+      const hiddenKeys = new Set([
+        'confidence', 'score', 'tags', 'labels',
+        'synthesis', 'redTeamReview', 'processingTimeMs',
+        'journeyNarrative', 'exitContext', 'layer', 'userJourney',
+        'url', 'pageUrl', 'eventCount', 'event_count',
+        'events', 'browser', 'browserName', 'device', 'deviceType',
+      ]);
       rawDataItems = Object.entries(parsed)
-        .filter(([key, value]) => !['confidence', 'score', 'tags', 'labels'].includes(key) && isNonEmpty(value))
+        .filter(([key, value]) => !hiddenKeys.has(key) && isNonEmpty(value))
         .map(([label, value]) => ({
           label,
           value: typeof value === 'object' ? JSON.stringify(value) : String(value),
@@ -150,7 +210,7 @@ export default function InteractionsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">

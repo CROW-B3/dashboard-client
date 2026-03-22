@@ -189,10 +189,9 @@ export default function OrganizationPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header
+      <Header showNotification={false}
         orgName={org?.name || user?.orgName || 'Organization'}
         userInitials={userInitials}
-        showNotification
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"

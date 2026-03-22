@@ -136,14 +136,24 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ChatHistoryProviderWithUser({ children }: { children: React.ReactNode }) {
+  const { data: user } = useCurrentUser();
+  const organizationId = user?.organizationId;
+  return (
+    <ChatHistoryProvider organizationId={organizationId}>
+      {children}
+    </ChatHistoryProvider>
+  );
+}
+
 export function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
   return (
-    <ChatHistoryProvider>
-      <MobileSidebarProvider>
-        <SidebarCollapseProvider>
+    <MobileSidebarProvider>
+      <SidebarCollapseProvider>
+        <ChatHistoryProviderWithUser>
           <DashboardContent>{children}</DashboardContent>
-        </SidebarCollapseProvider>
-      </MobileSidebarProvider>
-    </ChatHistoryProvider>
+        </ChatHistoryProviderWithUser>
+      </SidebarCollapseProvider>
+    </MobileSidebarProvider>
   );
 }
