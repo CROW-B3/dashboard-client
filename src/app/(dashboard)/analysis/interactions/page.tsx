@@ -54,7 +54,8 @@ function toConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' {
 function mapApiInteractionToData(api: ApiInteraction): InteractionData {
   const parsed = parseInteractionData(api.data);
   const confidence = api.confidence ?? parsed.confidence ?? 0;
-  const tags = api.tags ?? parsed.tags ?? [];
+  const rawTags = api.tags ?? parsed.tags ?? [];
+  const tags = Array.isArray(rawTags) ? rawTags : (typeof rawTags === 'string' ? (() => { try { return JSON.parse(rawTags); } catch { return []; } })() : []);
   const sourceType = api.sourceType as 'web' | 'cctv' | 'social';
 
   return {

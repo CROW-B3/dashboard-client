@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, use, useEffect, useState } from 'react';
+import React, { createContext, use, useCallback, useEffect, useMemo, useState } from 'react';
 
 interface SidebarCollapseContextType {
   isCollapsed: boolean;
@@ -43,12 +43,17 @@ useEffect(() => {
     }
   }, [isCollapsed, isMounted]);
 
-  const toggle = () => setIsCollapsed((prev) => !prev);
-  const collapse = () => setIsCollapsed(true);
-  const expand = () => setIsCollapsed(false);
+  const toggle = useCallback(() => setIsCollapsed((prev) => !prev), []);
+  const collapse = useCallback(() => setIsCollapsed(true), []);
+  const expand = useCallback(() => setIsCollapsed(false), []);
 
-return (
-    <SidebarCollapseContext value={{ isCollapsed, toggle, collapse, expand }}>
+  const value = useMemo(
+    () => ({ isCollapsed, toggle, collapse, expand }),
+    [isCollapsed, toggle, collapse, expand]
+  );
+
+  return (
+    <SidebarCollapseContext value={value}>
       {children}
     </SidebarCollapseContext>
   );

@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { useSession } from '@/lib/auth-client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
+import { organization, useSession } from '@/lib/auth-client';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
@@ -17,6 +18,24 @@ interface UserRecord {
   permissions: Record<string, unknown>;
 }
 
+async function fetchOrgByAuthId(authOrgId: string): Promise<{ id: string; name: string; betterAuthOrgId: string } | null> {
+  const res = await fetch(
+    `${API_GATEWAY_URL}/api/v1/organizations/by-auth-id/${authOrgId}`,
+    { credentials: 'include' }
+  );
+  if (!res.ok) return null;
+  return res.json() as Promise<{ id: string; name: string; betterAuthOrgId: string }>;
+}
+
+async function fetchOrgByInternalId(internalId: string): Promise<{ id: string; name: string; betterAuthOrgId: string } | null> {
+  const res = await fetch(
+    `${API_GATEWAY_URL}/api/v1/organizations/${internalId}`,
+    { credentials: 'include' }
+  );
+  if (!res.ok) return null;
+  return res.json() as Promise<{ id: string; name: string; betterAuthOrgId: string }>;
+}
+
 async function fetchUserWithOrgContext(
   userId: string,
   activeOrgId: string | undefined
@@ -29,29 +48,42 @@ async function fetchUserWithOrgContext(
 
   if (activeOrgId) {
     user.betterAuthOrgId = activeOrgId;
+    const org = await fetchOrgByAuthId(activeOrgId);
+    if (org) return { ...user, orgUuid: org.id, orgName: org.name };
   }
 
-  const orgLookupId = activeOrgId || user.organizationId;
-  if (!orgLookupId) return user;
+  if (user.organizationId) {
+    const org = await fetchOrgByInternalId(user.organizationId);
+    if (org) return { ...user, orgUuid: org.id, orgName: org.name, betterAuthOrgId: org.betterAuthOrgId };
+  }
 
-  const orgRes = await fetch(
-    `${API_GATEWAY_URL}/api/v1/organizations/by-auth-id/${orgLookupId}`,
-    { credentials: 'include' }
-  );
-  if (!orgRes.ok) return user;
-  const org = await orgRes.json() as { id: string; name: string };
-  return { ...user, orgUuid: org.id, orgName: org.name };
+  return user;
 }
 
 export function useCurrentUser() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const userId = session?.user?.id;
   const activeOrgId = (session as any)?.session?.activeOrganizationId as string | undefined;
+  const autoSetAttempted = useRef(false);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['current-user', userId, activeOrgId],
     queryFn: () => fetchUserWithOrgContext(userId!, activeOrgId),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (autoSetAttempted.current) return;
+    if (activeOrgId) return;
+    if (!query.data?.betterAuthOrgId) return;
+
+    autoSetAttempted.current = true;
+    organization.setActive({ organizationId: query.data.betterAuthOrgId }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['current-user'] });
+    }).catch(() => {});
+  }, [activeOrgId, query.data?.betterAuthOrgId, queryClient]);
+
+  return query;
 }
