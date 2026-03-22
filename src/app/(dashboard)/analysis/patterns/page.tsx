@@ -34,6 +34,7 @@ function parsePatternData(raw: string): {
   affectedStores?: string;
   source?: 'web' | 'cctv' | 'social';
   description?: string;
+  insights?: string;
   recommendations?: string[];
 } {
   try {
@@ -44,6 +45,7 @@ function parsePatternData(raw: string): {
       affectedStores: parsed?.affectedStores ?? parsed?.locations ?? undefined,
       source: parsed?.source ?? parsed?.sourceType ?? undefined,
       description: parsed?.description ?? parsed?.summary ?? undefined,
+      insights: parsed?.insights ?? undefined,
       recommendations: parsed?.recommendations ?? undefined,
     };
   } catch {
@@ -70,14 +72,30 @@ function formatRelativeTime(timestamp: number): string {
   return `${days} day${days !== 1 ? 's' : ''} ago`;
 }
 
+function extractFirstSentence(text: string): string | null {
+  const cleaned = text
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '')
+    .replace(/\borganization\s*/gi, '')
+    .replace(/\bUsers?\s+within\s*/gi, 'Users ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  const capitalized = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  const sentence = capitalized.split(/[.!]\s/)[0]?.trim();
+  if (sentence && sentence.length > 10) {
+    return sentence.length > 80 ? sentence.slice(0, 77) + '...' : sentence;
+  }
+  return null;
+}
+
 function generatePatternTitle(parsed: ReturnType<typeof parsePatternData>, apiType: string): string {
   if (parsed.title) return parsed.title;
-  const description = parsed.description ?? '';
-  if (description.length > 10) {
-    const firstSentence = description.split(/[.!?]/)[0]?.trim() ?? '';
-    if (firstSentence.length > 10 && firstSentence.length < 80) return firstSentence;
-    if (firstSentence.length >= 80) return `${firstSentence.slice(0, 77)}...`;
+
+  const textSources = [parsed.description, parsed.insights].filter(Boolean) as string[];
+  for (const text of textSources) {
+    const sentence = extractFirstSentence(text);
+    if (sentence) return sentence;
   }
+
   const typeLabel = apiType.charAt(0).toUpperCase() + apiType.slice(1).replace(/[_-]/g, ' ');
   return `${typeLabel} Pattern Detected`;
 }
