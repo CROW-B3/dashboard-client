@@ -27,10 +27,10 @@ interface TableColumn {
 
 function getInteractionsTableColumns(): TableColumn[] {
   return [
-    { label: 'Source', width: 'w-[92px]' },
-    { label: 'Summary', width: 'flex-1' },
-    { label: 'Timestamp', width: 'w-[100px]' },
-    { label: 'Confidence', width: 'w-[100px]' },
+    { label: 'Source', width: 'w-[72px]' },
+    { label: 'Summary', width: 'flex-1 min-w-0' },
+    { label: 'Timestamp', width: 'w-[140px] shrink-0' },
+    { label: 'Confidence', width: 'w-[90px] shrink-0' },
   ];
 }
 
@@ -173,13 +173,13 @@ function InteractionRow({ interaction, onClick, showBorder }: InteractionRowProp
         borderColor: showBorder ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
       }}
     >
-      <div className="w-[92px]">
+      <div className="w-[72px] shrink-0">
         <SourceIcon source={interaction.source} />
       </div>
 
-      <div className="flex-1 pr-4">
+      <div className="flex-1 min-w-0 pr-4">
         <p
-          className="text-sm font-medium mb-1 truncate"
+          className="text-sm font-medium mb-0.5 truncate"
           style={{ color: '#E5E7EB', lineHeight: '20px' }}
         >
           {interaction.title}
@@ -192,18 +192,18 @@ function InteractionRow({ interaction, onClick, showBorder }: InteractionRowProp
         </p>
       </div>
 
-      <div className="w-[100px]">
+      <div className="w-[140px] shrink-0">
         <span
-          className="text-sm"
-          style={{ color: '#9CA3AF', lineHeight: '20px' }}
+          className="text-xs whitespace-nowrap"
+          style={{ color: '#9CA3AF' }}
         >
           {interaction.timestamp}
         </span>
       </div>
 
-      <div className="w-[100px]">
+      <div className="w-[90px] shrink-0">
         <span
-          className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium"
+          className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
           style={{
             color: confidenceStyle.color,
             background: confidenceStyle.bg,

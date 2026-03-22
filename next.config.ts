@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
                                 port: "",
                                 pathname: "/**",
                         },
+                        {
+                                protocol: "https",
+                                hostname: "rogue.crowai.dev",
+                                port: "",
+                                pathname: "/**",
+                        },
                 ],
         },
 };

@@ -156,6 +156,13 @@ function InvoiceStatusBadge({ status }: { status: string | null }) {
   );
 }
 
+interface InteractionSummary {
+  web: number;
+  cctv: number;
+  social: number;
+  total: number;
+}
+
 export default function BillingPage() {
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
@@ -166,6 +173,16 @@ export default function BillingPage() {
   const { data: subscription, isLoading: subscriptionLoading } = useQuery<SubscriptionData | null>({
     queryKey: ['subscription', orgId],
     queryFn: fetchJson<SubscriptionData>(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}`),
+    enabled: !!orgId,
+  });
+
+  const { data: interactionSummary } = useQuery<InteractionSummary>({
+    queryKey: ['interactions-summary', orgId],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary`, { credentials: 'include' });
+      if (!res.ok) return { web: 0, cctv: 0, social: 0, total: 0 };
+      return res.json();
+    },
     enabled: !!orgId,
   });
 
@@ -427,10 +444,10 @@ export default function BillingPage() {
             <div>
               <h2 className="text-lg font-semibold text-white mb-4">Usage</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <MetricsCard title="Total Interactions" value="0" change="" changeType="neutral" />
-                <MetricsCard title="Web Interactions" value="0" change="" changeType="info" />
-                <MetricsCard title="CCTV Interactions" value="0" change="" changeType="info" />
-                <MetricsCard title="Social Interactions" value="0" change="" changeType="info" />
+                <MetricsCard title="Total Interactions" value={String(interactionSummary?.total ?? 0)} change="" changeType="neutral" />
+                <MetricsCard title="Web Interactions" value={String(interactionSummary?.web ?? 0)} change="" changeType="info" />
+                <MetricsCard title="CCTV Interactions" value={String(interactionSummary?.cctv ?? 0)} change="" changeType="info" />
+                <MetricsCard title="Social Interactions" value={String(interactionSummary?.social ?? 0)} change="" changeType="info" />
               </div>
             </div>
           )}
