@@ -18,6 +18,104 @@ interface Product {
   metadata: { inStock?: boolean; sourceUrl?: string } | null;
 }
 
+interface RelatedInteraction {
+  id: string;
+  sourceType: string;
+  summary: string | null;
+  timestamp: number;
+}
+
+interface RelatedPattern {
+  id: string;
+  type: string;
+  confidence: number | null;
+  detectedAt: number;
+}
+
+function formatTimestamp(ts: number): string {
+  if (!ts) return '';
+  return new Date(ts * 1000).toLocaleString();
+}
+
+
+function RelatedInteractionsSection({ productId }: { productId: string }) {
+  const { data: user } = useCurrentUser();
+  const orgId = user?.orgUuid;
+
+  const { data, isLoading } = useQuery<{ interactions: RelatedInteraction[]; total: number }>({
+    queryKey: ['product-interactions', orgId, productId],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?productId=${productId}&limit=5`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { interactions: [], total: 0 };
+      return res.json();
+    },
+    enabled: !!orgId && !!productId,
+  });
+
+  if (isLoading) return <div className="text-xs text-gray-500">Loading interactions...</div>;
+  if (!data?.interactions?.length) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+        Related Interactions ({data.total})
+      </p>
+      {data.interactions.map((interaction) => (
+        <div key={interaction.id} className="border border-white/10 rounded-lg p-3 space-y-1">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-violet-400 font-medium">{interaction.sourceType}</p>
+            <p className="text-[10px] text-gray-500">{formatTimestamp(interaction.timestamp)}</p>
+          </div>
+          <p className="text-sm text-gray-300">{interaction.summary || interaction.id}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RelatedPatternsSection({ productId }: { productId: string }) {
+  const { data: user } = useCurrentUser();
+  const orgId = user?.orgUuid;
+
+  const { data, isLoading } = useQuery<{ patterns: RelatedPattern[]; total: number }>({
+    queryKey: ['product-patterns', orgId, productId],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?productId=${productId}&limit=5`,
+        { credentials: 'include' },
+      );
+      if (!res.ok) return { patterns: [], total: 0 };
+      return res.json();
+    },
+    enabled: !!orgId && !!productId,
+  });
+
+  if (isLoading) return <div className="text-xs text-gray-500">Loading patterns...</div>;
+  if (!data?.patterns?.length) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+        Related Patterns ({data.total})
+      </p>
+      {data.patterns.map((pattern) => (
+        <div key={pattern.id} className="border border-white/10 rounded-lg p-3 space-y-1">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-violet-400 font-medium">{pattern.type}</p>
+            {pattern.confidence != null && (
+              <p className="text-[10px] text-gray-500">{(pattern.confidence * 100).toFixed(0)}% confidence</p>
+            )}
+          </div>
+          <p className="text-xs text-gray-400">{formatTimestamp(pattern.detectedAt)}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CatalogPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.orgUuid;
@@ -174,6 +272,12 @@ export default function CatalogPage() {
         <div className="text-gray-400">Loading products...</div>
       ) : (
         <>
+          {(!productsData?.products || productsData.products.length === 0) ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-gray-400 text-sm mb-2">No products found</p>
+              <p className="text-gray-500 text-xs">Use the &quot;Scrape New Source&quot; button above to crawl a website and extract products</p>
+            </div>
+          ) : null}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {productsData?.products?.map((product: Product) => (
               <div
@@ -244,6 +348,8 @@ export default function CatalogPage() {
                 ))}
               </div>
             )}
+            <RelatedInteractionsSection productId={selectedProduct.id} />
+            <RelatedPatternsSection productId={selectedProduct.id} />
           </div>
         </SidePanel>
       )}

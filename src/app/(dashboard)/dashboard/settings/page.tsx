@@ -38,12 +38,34 @@ interface BillingData {
   billingPeriod?: string;
 }
 
-interface NotificationPreference {
-  id: string;
+interface UserPreferences {
+  emailPatternAlerts: boolean;
+  emailBillingNotices: boolean;
+  emailTeamInvites: boolean;
+  emailWeeklyDigest: boolean;
+}
+
+type PreferenceKey = keyof UserPreferences;
+
+interface NotificationItem {
+  key: PreferenceKey;
   label: string;
   description: string;
-  enabled: boolean;
 }
+
+const NOTIFICATION_ITEMS: NotificationItem[] = [
+  { key: 'emailPatternAlerts', label: 'Pattern Alerts', description: 'Receive alerts when new patterns are identified' },
+  { key: 'emailBillingNotices', label: 'Billing Updates', description: 'Notifications about subscription and billing changes' },
+  { key: 'emailTeamInvites', label: 'Team Invites', description: 'Updates when team members join or change roles' },
+  { key: 'emailWeeklyDigest', label: 'Weekly Digest', description: 'Receive a weekly summary of activity' },
+];
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  emailPatternAlerts: true,
+  emailBillingNotices: true,
+  emailTeamInvites: true,
+  emailWeeklyDigest: true,
+};
 
 export default function DashboardSettingsPage() {
   const { data: currentUser } = useCurrentUser();
@@ -59,13 +81,6 @@ export default function DashboardSettingsPage() {
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([
-    { id: 'new-interactions', label: 'New Interactions', description: 'Get notified when new interactions are detected', enabled: true },
-    { id: 'pattern-alerts', label: 'Pattern Alerts', description: 'Receive alerts when new patterns are identified', enabled: true },
-    { id: 'billing-updates', label: 'Billing Updates', description: 'Notifications about subscription and billing changes', enabled: false },
-    { id: 'team-activity', label: 'Team Activity', description: 'Updates when team members join or change roles', enabled: false },
-  ]);
-
   const { data: apiKeys } = useQuery({
     queryKey: ['api-keys'],
     queryFn: async () => {
@@ -73,6 +88,18 @@ export default function DashboardSettingsPage() {
       return (res.data as ApiKeyRecord[]) || [];
     },
     enabled: activeTab === 'api-keys' && !!permissions?.apiKeyManagement,
+  });
+
+  const { data: preferences } = useQuery<UserPreferences>({
+    queryKey: ['user-preferences', currentUser?.id],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/${currentUser!.id}/preferences`, {
+        credentials: 'include',
+      });
+      if (!res.ok) return DEFAULT_PREFERENCES;
+      return res.json();
+    },
+    enabled: activeTab === 'notifications' && !!currentUser?.id,
   });
 
   const { data: billing, isLoading: billingLoading } = useQuery<BillingData | null>({
@@ -164,13 +191,28 @@ export default function DashboardSettingsPage() {
     if (file) uploadAvatarMutation.mutate(file);
   };
 
-  const handleToggleNotification = (notificationId: string) => {
-    setNotificationPreferences((prev) =>
-      prev.map((pref) =>
-        pref.id === notificationId ? { ...pref, enabled: !pref.enabled } : pref
-      )
-    );
-    toast.success('Notification preference updated');
+  const updatePreferenceMutation = useMutation({
+    mutationFn: async (update: Partial<UserPreferences>) => {
+      if (!currentUser?.id) throw new Error('No user');
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/${currentUser.id}/preferences`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(update),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      return res.json() as Promise<UserPreferences>;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['user-preferences', currentUser?.id], data);
+      toast.success('Notification preference updated');
+    },
+    onError: () => toast.error('Failed to update preference'),
+  });
+
+  const handleToggleNotification = (key: PreferenceKey) => {
+    const current = preferences ?? DEFAULT_PREFERENCES;
+    updatePreferenceMutation.mutate({ [key]: !current[key] });
   };
 
   const visibleTabs = TABS.filter((tab) => {
@@ -358,28 +400,32 @@ export default function DashboardSettingsPage() {
         <GlassPanel>
           <h2 className="text-lg font-semibold text-white mb-4">Notification Preferences</h2>
           <div className="space-y-3">
-            {notificationPreferences.map((pref) => (
-              <div
-                key={pref.id}
-                className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <Bell className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-white">{pref.label}</p>
-                    <p className="text-xs text-gray-400">{pref.description}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleToggleNotification(pref.id)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pref.enabled ? 'bg-violet-600' : 'bg-white/20'}`}
+            {NOTIFICATION_ITEMS.map((item) => {
+              const enabled = (preferences ?? DEFAULT_PREFERENCES)[item.key];
+              return (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
                 >
-                  <span
-                    className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${pref.enabled ? 'translate-x-6' : 'translate-x-1'}`}
-                  />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3">
+                    <Bell className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-white">{item.label}</p>
+                      <p className="text-xs text-gray-400">{item.description}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleToggleNotification(item.key)}
+                    disabled={updatePreferenceMutation.isPending}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-violet-600' : 'bg-white/20'}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </GlassPanel>
       )}
