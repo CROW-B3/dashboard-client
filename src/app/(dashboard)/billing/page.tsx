@@ -1,8 +1,9 @@
 'use client';
-
 import { GlassPanel, Header, MetricsCard, PlanCard } from '@b3-crow/ui-kit';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, CreditCard, Download, ExternalLink } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -164,6 +165,7 @@ interface InteractionSummary {
 }
 
 export default function BillingPage() {
+  const router = useRouter();
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
   const orgId = user?.organizationId;
@@ -298,7 +300,49 @@ export default function BillingPage() {
     onError: () => toast.error('Failed to open billing portal'),
   });
 
-  const plans = plansData?.plans ?? [];
+  const FALLBACK_PLANS: Plan[] = [
+    {
+      id: 'web',
+      name: 'Web',
+      price: 60,
+      features: [
+        '1M interactions/mo',
+        '1M patterns/mo',
+        'SDK tracking',
+        'Funnels & drop-off',
+        'Session evidence',
+        'Event API',
+      ],
+    },
+    {
+      id: 'cctv',
+      name: 'CCTV',
+      price: 60,
+      features: [
+        '1M interactions/mo',
+        '1M patterns/mo',
+        'Sites & camera groups',
+        'Agent ingest',
+        'Footfall & queues',
+        'Heatmaps',
+      ],
+    },
+    {
+      id: 'social',
+      name: 'Social',
+      price: 60,
+      features: [
+        '1M interactions/mo',
+        '1M patterns/mo',
+        'Keyword tracking',
+        'Sentiment & spikes',
+        'Source selection',
+        'Regional filters',
+      ],
+    },
+  ];
+
+  const plans = (plansData?.plans && plansData.plans.length > 0) ? plansData.plans : FALLBACK_PLANS;
   const invoices = invoicesData?.invoices ?? [];
   const paymentMethods = paymentMethodsData?.paymentMethods ?? [];
   const primaryCard = paymentMethods.find(pm => pm.card !== null);
@@ -313,7 +357,8 @@ export default function BillingPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" 
+        onAvatarClick={() => router.push('/dashboard/settings')}/>
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
