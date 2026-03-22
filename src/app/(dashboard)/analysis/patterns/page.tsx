@@ -5,8 +5,7 @@ import type { SourceFilter } from '@/components/patterns/PatternsFilterBar';
 import { Header, PatternCard, TipCard } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
+import { useMemo, useState } from 'react';
 import { PatternDetailPanel, PatternsFilterBar } from '@/components/patterns';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -105,22 +104,6 @@ function mapApiPatternToData(api: ApiPattern): PatternData {
   };
 }
 
-function downloadPatternsCsv(filename: string, rows: PatternData[]): void {
-  const headers = ['ID', 'Title', 'Severity', 'Affected Stores', 'Last Seen', 'Confidence'];
-  const csvRows = [
-    headers.join(','),
-    ...rows.map((r) =>
-      [r.id, `"${r.title}"`, r.severity, `"${r.affectedStores}"`, r.lastSeen, r.confidence].join(',')
-    ),
-  ];
-  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 function buildDetailFromApiPattern(
   pattern: PatternData,
@@ -197,11 +180,6 @@ export default function PatternsPage() {
     });
   }, [allPatterns, sourceFilter, searchQuery, apiPatternMap]);
 
-  const handleExport = useCallback(() => {
-    if (filteredPatterns.length === 0) return;
-    downloadPatternsCsv(`patterns-${new Date().toISOString().slice(0, 10)}.csv`, filteredPatterns);
-    toast.success('Patterns exported');
-  }, [filteredPatterns]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -228,7 +206,6 @@ export default function PatternsPage() {
                 onSourceChange={setSourceFilter}
                 timeValue={timeFilter}
                 onTimeChange={setTimeFilter}
-                onExport={handleExport}
                 timeOptions={[
                   { label: '1 Hour', value: '1h' },
                   { label: 'Today', value: 'today' },

@@ -57,7 +57,7 @@ export function InteractionDetailPanel({
     >
       <div className="p-6 space-y-6">
         <HeaderSection interaction={interaction} />
-        <ConfidenceSection interaction={interaction} confidenceStyle={confidenceStyle} />
+        {interaction.confidence > 0 && <ConfidenceSection interaction={interaction} confidenceStyle={confidenceStyle} />}
         {interaction.description && <DescriptionSection description={interaction.description} />}
         {interaction.evidence && interaction.evidence.length > 0 && (
           <EvidenceSection evidence={interaction.evidence} />

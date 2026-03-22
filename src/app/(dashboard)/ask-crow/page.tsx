@@ -73,7 +73,7 @@ function apiMessagesToUiMessages(apiMessages: ApiMessage[]): Message[] {
 }
 
 export default function AskCrowPage() {
-  const { setActiveSession, refreshSessions } = useChatHistory();
+  const { setActiveSession, refreshSessions, updateSessionTitle } = useChatHistory();
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
@@ -153,6 +153,8 @@ export default function AskCrowPage() {
 
       setActiveSessionId(sessionId);
       setActiveSession(sessionId);
+      const chatTitle = query.trim().length > 40 ? query.trim().slice(0, 37) + '...' : query.trim();
+      updateSessionTitle(sessionId, chatTitle);
       refreshSessions();
 
       setTimeout(() => {
@@ -164,7 +166,7 @@ export default function AskCrowPage() {
         sendMessageMutation.mutate({ sessionId, content: query });
       }, ANIMATION_DURATIONS.START_CHAT);
     },
-    [organizationId, userId, createSessionMutation, sendMessageMutation, setActiveSession, refreshSessions]
+    [organizationId, userId, createSessionMutation, sendMessageMutation, setActiveSession, updateSessionTitle, refreshSessions]
   );
 
   const handleFollowUpMessage = useCallback(
