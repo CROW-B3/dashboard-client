@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import type { ConnectionOptionStatus } from '@b3-crow/ui-kit';
 import { CodeBlock, ConnectionOption, GlassPanel, Header } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
@@ -21,6 +23,8 @@ interface ApiKeyRecord {
 }
 
 export default function IntegrationsPage() {
+  const router = useRouter();
+
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
   const orgId = user?.organizationId;
@@ -109,7 +113,8 @@ crow-cctv analyze --file /path/to/video.mp4`;
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" />
+      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+        onAvatarClick={() => router.push('/dashboard/settings')} />
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
