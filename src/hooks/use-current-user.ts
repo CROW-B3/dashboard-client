@@ -18,14 +18,10 @@ interface UserRecord {
   permissions: Record<string, unknown>;
 }
 
-async function fetchWithTimeout(url: string, timeoutMs = 2000): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { credentials: 'include', signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
+interface OrgRecord {
+  id: string;
+  name: string;
+  betterAuthOrgId: string;
 }
 
 async function fetchUser(userId: string): Promise<UserRecord> {
@@ -39,34 +35,18 @@ async function fetchUser(userId: string): Promise<UserRecord> {
 async function fetchOrg(
   activeOrgId: string | undefined,
   internalOrgId: string | undefined
-): Promise<{ id: string; name: string; betterAuthOrgId: string } | null> {
+): Promise<OrgRecord | null> {
   try {
     if (activeOrgId) {
-      const res = await fetchWithTimeout(`${API_GATEWAY_URL}/api/v1/organizations/by-auth-id/${activeOrgId}`);
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/by-auth-id/${activeOrgId}`, { credentials: 'include' });
       if (res.ok) return res.json();
     }
     if (internalOrgId) {
-      const res = await fetchWithTimeout(`${API_GATEWAY_URL}/api/v1/organizations/${internalOrgId}`);
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/organizations/${internalOrgId}`, { credentials: 'include' });
       if (res.ok) return res.json();
     }
   } catch {}
   return null;
-}
-
-async function fetchUserWithOrgContext(
-  userId: string,
-  activeOrgId: string | undefined
-): Promise<UserRecord> {
-  const user = await fetchUser(userId);
-  if (activeOrgId) user.betterAuthOrgId = activeOrgId;
-
-  const org = await Promise.race([
-    fetchOrg(activeOrgId, user.organizationId),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
-  ]);
-
-  if (org) return { ...user, orgUuid: org.id, orgName: org.name, betterAuthOrgId: org.betterAuthOrgId };
-  return user;
 }
 
 export function useCurrentUser() {
@@ -76,24 +56,49 @@ export function useCurrentUser() {
   const activeOrgId = (session as any)?.session?.activeOrganizationId as string | undefined;
   const autoSetAttempted = useRef(false);
 
-  const query = useQuery({
-    queryKey: ['current-user', userId, activeOrgId],
-    queryFn: () => fetchUserWithOrgContext(userId!, activeOrgId),
+  const userQuery = useQuery({
+    queryKey: ['current-user-base', userId],
+    queryFn: () => fetchUser(userId!),
     enabled: !!userId,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
 
+  const internalOrgId = userQuery.data?.organizationId;
+
+  const orgQuery = useQuery({
+    queryKey: ['current-org', activeOrgId, internalOrgId],
+    queryFn: () => fetchOrg(activeOrgId, internalOrgId),
+    enabled: !!(activeOrgId || internalOrgId),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  const mergedData: UserRecord | undefined = userQuery.data
+    ? {
+        ...userQuery.data,
+        ...(activeOrgId ? { betterAuthOrgId: activeOrgId } : {}),
+        ...(orgQuery.data ? { orgUuid: orgQuery.data.id, orgName: orgQuery.data.name, betterAuthOrgId: orgQuery.data.betterAuthOrgId } : {}),
+      }
+    : undefined;
+
   useEffect(() => {
     if (autoSetAttempted.current) return;
     if (activeOrgId) return;
-    if (!query.data?.betterAuthOrgId) return;
+    const resolvedBetterAuthOrgId = orgQuery.data?.betterAuthOrgId || userQuery.data?.betterAuthOrgId;
+    if (!resolvedBetterAuthOrgId) return;
 
     autoSetAttempted.current = true;
-    organization.setActive({ organizationId: query.data.betterAuthOrgId }).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['current-user'] });
+    organization.setActive({ organizationId: resolvedBetterAuthOrgId }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['current-user-base'] });
+      queryClient.invalidateQueries({ queryKey: ['current-org'] });
     }).catch(() => {});
-  }, [activeOrgId, query.data?.betterAuthOrgId, queryClient]);
+  }, [activeOrgId, orgQuery.data?.betterAuthOrgId, userQuery.data?.betterAuthOrgId, queryClient]);
 
-  return query;
+  return {
+    data: mergedData,
+    isLoading: userQuery.isLoading,
+    isError: userQuery.isError,
+    error: userQuery.error,
+  };
 }
