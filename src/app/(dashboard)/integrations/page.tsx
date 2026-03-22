@@ -23,7 +23,7 @@ interface ApiKeyRecord {
 export default function IntegrationsPage() {
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const [expandedSection, setExpandedSection] = useState<IntegrationSection>(null);
 
   const { data: interactionSummary } = useQuery<{ web: number; cctv: number; social: number; total: number }>({

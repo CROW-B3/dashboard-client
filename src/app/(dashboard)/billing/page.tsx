@@ -159,7 +159,7 @@ function InvoiceStatusBadge({ status }: { status: string | null }) {
 export default function BillingPage() {
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const queryClient = useQueryClient();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 

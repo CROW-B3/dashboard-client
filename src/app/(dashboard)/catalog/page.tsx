@@ -41,7 +41,7 @@ function formatTimestamp(ts: number): string {
 
 function RelatedInteractionsSection({ productId }: { productId: string }) {
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
 
   const { data, isLoading } = useQuery<{ interactions: RelatedInteraction[]; total: number }>({
     queryKey: ['product-interactions', orgId, productId],
@@ -79,7 +79,7 @@ function RelatedInteractionsSection({ productId }: { productId: string }) {
 
 function RelatedPatternsSection({ productId }: { productId: string }) {
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
 
   const { data, isLoading } = useQuery<{ patterns: RelatedPattern[]; total: number }>({
     queryKey: ['product-patterns', orgId, productId],
@@ -120,7 +120,7 @@ function RelatedPatternsSection({ productId }: { productId: string }) {
 export default function CatalogPage() {
   const { data: user } = useCurrentUser();
   const { toggle } = useMobileSidebar();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);

@@ -75,7 +75,7 @@ export default function DashboardSettingsPage() {
   const { data: permissions } = usePermissions(currentUser?.id);
   const { data: user } = useUser(currentUser?.id);
   const orgId = currentUser?.organizationId;
-  const orgUuid = currentUser?.orgUuid;
+  const orgUuid = currentUser?.organizationId;
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState('profile');

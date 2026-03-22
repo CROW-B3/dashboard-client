@@ -287,7 +287,7 @@ function EmptyChatState() {
 
 export default function ChatPage() {
   const { data: user } = useCurrentUser();
-  const organizationId = user?.orgUuid;
+  const organizationId = user?.organizationId;
   const queryClient = useQueryClient();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');

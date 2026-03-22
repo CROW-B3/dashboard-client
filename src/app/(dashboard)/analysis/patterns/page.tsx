@@ -151,7 +151,7 @@ function buildDetailFromApiPattern(
 export default function PatternsPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
 
   const [selectedPattern, setSelectedPattern] = useState<PatternDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);

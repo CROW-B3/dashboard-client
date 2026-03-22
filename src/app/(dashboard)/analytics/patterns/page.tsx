@@ -45,7 +45,7 @@ function isPatternResultResponse(data: PatternsApiResponse): data is { results: 
 
 export default function AnalyticsPatternsPage() {
   const { data: user } = useCurrentUser();
-  const orgId = user?.orgUuid;
+  const orgId = user?.organizationId;
   const [period, setPeriod] = useState('weekly');
   const [expandedPatternId, setExpandedPatternId] = useState<string | null>(null);
 
