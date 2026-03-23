@@ -3,9 +3,11 @@
 import { EmailTagInput, GlassPanel, Header, StatusBadge } from '@b3-crow/ui-kit';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { TeamFilterBar } from '@/components/team/TeamFilterBar';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
@@ -72,16 +74,30 @@ function getInitials(name: string, email: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
+function getRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+  return `${Math.floor(diffDays / 365)} years ago`;
+}
+
 function MemberAvatar({ name, email }: { name: string; email: string }) {
   return (
     <div
-      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
       style={{
-        background: 'rgba(76, 29, 149, 0.35)',
-        boxShadow: '0px 0px 0px 1px rgba(139, 92, 246, 0.25)',
+        background: 'rgba(76, 29, 149, 0.40)',
+        boxShadow: '0px 0px 0px 1px rgba(255, 255, 255, 0.10)',
       }}
     >
-      <span className="text-xs font-semibold text-violet-200">
+      <span className="text-xs font-semibold text-white">
         {getInitials(name, email)}
       </span>
     </div>
@@ -91,14 +107,43 @@ function MemberAvatar({ name, email }: { name: string; email: string }) {
 function InvitedAvatar() {
   return (
     <div
-      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border border-dashed border-white/10"
-      style={{ background: 'rgba(255,255,255,0.02)' }}
+      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+      style={{ outline: '1px #4B5563 solid', outlineOffset: '-1px' }}
     >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
+      <User size={16} color="#6B7280" />
     </div>
+  );
+}
+
+function ActiveStatusBadge() {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
+      style={{
+        background: 'rgba(16, 185, 129, 0.10)',
+        outline: '1px rgba(16, 185, 129, 0.20) solid',
+        outlineOffset: '-1px',
+      }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#34D399' }} />
+      <span style={{ color: '#34D399' }}>Active</span>
+    </span>
+  );
+}
+
+function InvitedStatusBadge() {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
+      style={{
+        background: 'rgba(107, 114, 128, 0.10)',
+        outline: '1px rgba(107, 114, 128, 0.20) solid',
+        outlineOffset: '-1px',
+      }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#6B7280' }} />
+      <span style={{ color: '#9CA3AF' }}>Invited</span>
+    </span>
   );
 }
 
@@ -129,10 +174,14 @@ export default function TeamPage() {
   const orgId = user?.organizationId;
   const betterAuthOrgId = user?.betterAuthOrgId;
 
+  const [showInviteSection, setShowInviteSection] = useState(false);
   const [emails, setEmails] = useState<string[]>([]);
   const [inviteRole, setInviteRole] = useState<string>('member');
   const [searchInput, setSearchInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const debouncedSearch = useDebounced(searchInput, 300);
@@ -235,6 +284,7 @@ export default function TeamPage() {
     onSuccess: (_, { emailList }) => {
       toast.success(`Invited ${emailList.length} member(s)`);
       setEmails([]);
+      setShowInviteSection(false);
       void queryClient.invalidateQueries({ queryKey: ['members', orgId] });
       void queryClient.invalidateQueries({ queryKey: ['invitations', orgId] });
     },
@@ -318,9 +368,7 @@ export default function TeamPage() {
 
   const handleRemoveMember = (memberId: string) => {
     if (!confirmRemove[memberId]) {
-      // First click: enter confirmation state
       setConfirmRemove((prev) => ({ ...prev, [memberId]: true }));
-      // Auto-cancel after 4 seconds if no second click
       setTimeout(() => {
         setConfirmRemove((prev) => {
           const next = { ...prev };
@@ -330,9 +378,34 @@ export default function TeamPage() {
       }, 4000);
       return;
     }
-    // Second click: execute removal
     removeMemberMutation.mutate(memberId);
   };
+
+  // ---- Filtering ----
+
+  const filteredMembers = members.filter((m) => {
+    const search = memberSearch.toLowerCase();
+    const matchesSearch =
+      !search ||
+      m.name.toLowerCase().includes(search) ||
+      m.email.toLowerCase().includes(search);
+    const matchesRole =
+      roleFilter === 'all' || m.role.toLowerCase() === roleFilter.toLowerCase();
+    // Active members: status filter "active" or "all"
+    const matchesStatus = statusFilter === 'all' || statusFilter === 'active';
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const filteredInvitations = pendingInvitations.filter((inv) => {
+    const search = memberSearch.toLowerCase();
+    const matchesSearch = !search || inv.email.toLowerCase().includes(search);
+    const matchesRole =
+      roleFilter === 'all' || inv.role.toLowerCase() === roleFilter.toLowerCase();
+    const matchesStatus = statusFilter === 'all' || statusFilter === 'invited';
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const totalCount = filteredMembers.length + filteredInvitations.length;
 
   // ---- Render ----
 
@@ -350,110 +423,157 @@ export default function TeamPage() {
         <div className="max-w-[1400px] mx-auto space-y-6">
 
           {/* Page heading */}
-          <div>
-            <h1 className="text-2xl font-bold text-white">Team</h1>
-            <p className="text-gray-400 text-sm mt-1">Manage team members and access levels</p>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Team</h1>
+              <p className="text-gray-400 text-sm mt-1">Manage users and permissions in your workspace</p>
+            </div>
+            <button
+              onClick={() => setShowInviteSection((v) => !v)}
+              className="h-9 px-4 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap self-start sm:self-auto"
+            >
+              Invite members
+            </button>
           </div>
 
-          {/* ---- Invite section ---- */}
-          <GlassPanel className="p-6">
-            <h2 className="text-base font-semibold text-white mb-0.5">Invite Members</h2>
-            <p className="text-xs text-gray-500 mb-4">Add people to your organization by email address</p>
-
-            <div className="space-y-3">
-              <div className="relative" ref={suggestionsRef}>
-                <EmailTagInput
-                  emails={emails}
-                  onEmailsChange={setEmails}
-                  onInputChange={handleInputChange}
-                >
-                  {showSuggestions && filteredSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto bg-zinc-900 border border-white/10 rounded-xl shadow-lg">
-                      {filteredSuggestions.map((s) => (
-                        <button
-                          key={s.email}
-                          type="button"
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => handleSelectSuggestion(s.email)}
-                          className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors"
-                        >
-                          <p className="text-sm text-white">{s.name}</p>
-                          <p className="text-xs text-gray-400">{s.email}</p>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </EmailTagInput>
-              </div>
-
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* Role selector for invitation */}
-                <div className="flex items-center gap-2">
-                  <label htmlFor="invite-role" className="text-xs text-gray-400 whitespace-nowrap">
-                    Invite as
-                  </label>
-                  <select
-                    id="invite-role"
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    className="h-8 px-2.5 pr-7 rounded-lg text-xs text-white bg-white/[0.04] border border-white/10 focus:outline-none focus:border-violet-500/50 appearance-none cursor-pointer"
-                    style={{
-                      backgroundImage: CHEVRON_SVG,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 8px center',
-                    }}
-                  >
-                    {INVITE_ROLE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-zinc-900">
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+          {/* ---- Invite section (collapsible) ---- */}
+          {showInviteSection && (
+            <GlassPanel className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-base font-semibold text-white">Invite Members</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Add people to your organization by email address</p>
                 </div>
-
                 <button
-                  onClick={handleInvite}
-                  disabled={!emails.length || inviteMutation.isPending}
-                  className="h-8 px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowInviteSection(false)}
+                  className="text-gray-500 hover:text-gray-300 transition-colors text-sm"
+                  aria-label="Close invite section"
                 >
-                  {inviteMutation.isPending ? 'Sending...' : 'Send Invitations'}
+                  ✕
                 </button>
               </div>
-            </div>
-          </GlassPanel>
 
-          {/* ---- Members section ---- */}
-          <GlassPanel className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-base font-semibold text-white">Members</h2>
-                {members.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {members.length} member{members.length !== 1 ? 's' : ''}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {membersLoading ? (
-              <div className="py-8 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full border-2 border-violet-500/30 border-t-violet-400 animate-spin" />
-              </div>
-            ) : members.length === 0 ? (
-              <p className="text-sm text-gray-500 py-6 text-center">No team members yet</p>
-            ) : (
-              <>
-                {/* Table header — desktop only */}
-                <div className="hidden md:grid md:grid-cols-[1fr_1fr_160px_130px_80px] gap-4 px-3 pb-2.5 mb-1 border-b border-white/[0.05]">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Member</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Email</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Role</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Joined</span>
-                  <span className="sr-only">Actions</span>
+              <div className="space-y-3">
+                <div className="relative" ref={suggestionsRef}>
+                  <EmailTagInput
+                    emails={emails}
+                    onEmailsChange={setEmails}
+                    onInputChange={handleInputChange}
+                  >
+                    {showSuggestions && filteredSuggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto bg-zinc-900 border border-white/10 rounded-xl shadow-lg">
+                        {filteredSuggestions.map((s) => (
+                          <button
+                            key={s.email}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleSelectSuggestion(s.email)}
+                            className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors"
+                          >
+                            <p className="text-sm text-white">{s.name}</p>
+                            <p className="text-xs text-gray-400">{s.email}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </EmailTagInput>
                 </div>
 
-                <div className="divide-y divide-white/[0.04]">
-                  {members.map((member) => {
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="invite-role" className="text-xs text-gray-400 whitespace-nowrap">
+                      Invite as
+                    </label>
+                    <select
+                      id="invite-role"
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      className="h-8 px-2.5 pr-7 rounded-lg text-xs text-white bg-white/[0.04] border border-white/10 focus:outline-none focus:border-violet-500/50 appearance-none cursor-pointer"
+                      style={{
+                        backgroundImage: CHEVRON_SVG,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 8px center',
+                      }}
+                    >
+                      {INVITE_ROLE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value} className="bg-zinc-900">
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={handleInvite}
+                    disabled={!emails.length || inviteMutation.isPending}
+                    className="h-8 px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {inviteMutation.isPending ? 'Sending...' : 'Send Invitations'}
+                  </button>
+                </div>
+              </div>
+            </GlassPanel>
+          )}
+
+          {/* ---- Members table ---- */}
+          <GlassPanel className="overflow-hidden">
+            {/* Filter bar */}
+            <div className="px-6 py-4 border-b border-white/[0.06]">
+              <TeamFilterBar
+                onSearch={setMemberSearch}
+                onRoleChange={setRoleFilter}
+                onStatusChange={setStatusFilter}
+                roleOptions={[
+                  { label: 'Role: All', value: 'all' },
+                  { label: 'Owner', value: 'owner' },
+                  { label: 'Admin', value: 'admin' },
+                  { label: 'Member', value: 'member' },
+                  { label: 'Viewer', value: 'viewer' },
+                ]}
+              />
+            </div>
+
+            {/* Table */}
+            {membersLoading ? (
+              <div className="py-12 flex items-center justify-center">
+                <div className="w-5 h-5 rounded-full border-2 border-violet-500/30 border-t-violet-400 animate-spin" />
+              </div>
+            ) : totalCount === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm text-gray-500">No members found</p>
+              </div>
+            ) : (
+              <>
+                {/* Desktop table */}
+                <div className="hidden md:block">
+                  {/* Table header */}
+                  <div
+                    className="h-[40px] flex items-center px-6 border-b"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderColor: 'rgba(255, 255, 255, 0.05)',
+                    }}
+                  >
+                    <div className="flex-[2] min-w-0 text-[10px] font-semibold uppercase tracking-[0.6px]" style={{ color: '#9CA3AF' }}>
+                      Member
+                    </div>
+                    <div className="flex-[2] min-w-0 text-[10px] font-semibold uppercase tracking-[0.6px]" style={{ color: '#9CA3AF' }}>
+                      Email
+                    </div>
+                    <div className="w-[120px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.6px]" style={{ color: '#9CA3AF' }}>
+                      Role
+                    </div>
+                    <div className="w-[110px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.6px]" style={{ color: '#9CA3AF' }}>
+                      Status
+                    </div>
+                    <div className="w-[130px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.6px]" style={{ color: '#9CA3AF' }}>
+                      Last Active
+                    </div>
+                    <div className="w-[80px] shrink-0" />
+                  </div>
+
+                  {/* Active members */}
+                  {filteredMembers.map((member) => {
                     const isOwner = member.role === 'owner';
                     const displayRole = pendingRoles[member.id] ?? member.role;
                     const isPendingRole = !!pendingRoles[member.id];
@@ -463,28 +583,27 @@ export default function TeamPage() {
                     return (
                       <div
                         key={member.id}
-                        className="flex flex-col md:grid md:grid-cols-[1fr_1fr_160px_130px_80px] md:gap-4 md:items-center py-3.5 px-3 rounded-lg hover:bg-white/[0.015] transition-colors group"
+                        className="h-[57px] flex items-center px-6 border-t transition-colors hover:bg-white/[0.02] group"
+                        style={{ borderColor: 'rgba(255, 255, 255, 0.05)' }}
                       >
-                        {/* Avatar + name */}
-                        <div className="flex items-center gap-3 min-w-0">
+                        {/* Member */}
+                        <div className="flex-[2] min-w-0 flex items-center gap-3">
                           <MemberAvatar name={member.name} email={member.email} />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-white truncate leading-tight">
-                              {member.name}
-                              {isCurrentUser && (
-                                <span className="ml-1.5 text-[10px] text-gray-500 font-normal">(you)</span>
-                              )}
-                            </p>
-                            {/* email visible only on mobile under name */}
-                            <p className="text-xs text-gray-500 truncate md:hidden mt-0.5">{member.email}</p>
-                          </div>
+                          <span className="text-sm font-medium text-white truncate">
+                            {member.name}
+                            {isCurrentUser && (
+                              <span className="ml-1.5 text-[10px] text-gray-500 font-normal">(you)</span>
+                            )}
+                          </span>
                         </div>
 
-                        {/* Email — desktop only */}
-                        <p className="hidden md:block text-sm text-gray-400 truncate">{member.email}</p>
+                        {/* Email */}
+                        <div className="flex-[2] min-w-0">
+                          <span className="text-sm text-gray-400 truncate block">{member.email}</span>
+                        </div>
 
-                        {/* Role — editable dropdown for admins, badge otherwise */}
-                        <div className="mt-2 md:mt-0 ml-12 md:ml-0 flex items-center gap-2">
+                        {/* Role */}
+                        <div className="w-[120px] shrink-0">
                           {canEditThisMember ? (
                             <div className="relative inline-flex">
                               <select
@@ -517,17 +636,20 @@ export default function TeamPage() {
                           )}
                         </div>
 
-                        {/* Joined date — desktop only */}
-                        <p className="hidden md:block text-xs text-gray-500">
-                          {new Date(member.createdAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </p>
+                        {/* Status */}
+                        <div className="w-[110px] shrink-0">
+                          <ActiveStatusBadge />
+                        </div>
 
-                        {/* Remove button — desktop */}
-                        <div className="hidden md:flex items-center justify-end">
+                        {/* Last Active */}
+                        <div className="w-[130px] shrink-0">
+                          <span className="text-sm text-gray-400">
+                            {getRelativeTime(member.createdAt)}
+                          </span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="w-[80px] shrink-0 flex items-center justify-end">
                           {canEditThisMember && (
                             <button
                               type="button"
@@ -543,16 +665,85 @@ export default function TeamPage() {
                             </button>
                           )}
                         </div>
+                      </div>
+                    );
+                  })}
 
-                        {/* Mobile bottom row: joined + remove */}
-                        <div className="md:hidden mt-2 ml-12 flex items-center justify-between">
-                          <span className="text-[11px] text-gray-500">
-                            Joined {new Date(member.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </span>
+                  {/* Pending invitations in table */}
+                  {filteredInvitations.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="h-[57px] flex items-center px-6 border-t transition-colors hover:bg-white/[0.02]"
+                      style={{ borderColor: 'rgba(255, 255, 255, 0.05)' }}
+                    >
+                      {/* Member */}
+                      <div className="flex-[2] min-w-0 flex items-center gap-3">
+                        <InvitedAvatar />
+                        <span className="text-sm font-medium text-gray-400 italic truncate">
+                          {inv.email}
+                        </span>
+                      </div>
+
+                      {/* Email */}
+                      <div className="flex-[2] min-w-0">
+                        <span className="text-sm text-gray-500 italic truncate block">{inv.email}</span>
+                      </div>
+
+                      {/* Role */}
+                      <div className="w-[120px] shrink-0">
+                        <StatusBadge variant={getRoleBadgeVariant(inv.role)} uppercase tracking>
+                          {inv.role}
+                        </StatusBadge>
+                      </div>
+
+                      {/* Status */}
+                      <div className="w-[110px] shrink-0">
+                        <InvitedStatusBadge />
+                      </div>
+
+                      {/* Last Active */}
+                      <div className="w-[130px] shrink-0">
+                        <span className="text-sm text-gray-600">—</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="w-[80px] shrink-0" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile cards */}
+                <div className="md:hidden divide-y divide-white/[0.05]">
+                  {filteredMembers.map((member) => {
+                    const isOwner = member.role === 'owner';
+                    const displayRole = pendingRoles[member.id] ?? member.role;
+                    const isCurrentUser = member.email === user?.email;
+                    const canEditThisMember = isAdminOrOwner && !isOwner && !isCurrentUser;
+
+                    return (
+                      <div key={member.id} className="p-4 hover:bg-white/[0.02] transition-colors">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <MemberAvatar name={member.name} email={member.email} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-white truncate">
+                                {member.name}
+                                {isCurrentUser && (
+                                  <span className="ml-1.5 text-[10px] text-gray-500 font-normal">(you)</span>
+                                )}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate mt-0.5">{member.email}</p>
+                            </div>
+                          </div>
+                          <ActiveStatusBadge />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <StatusBadge variant={getRoleBadgeVariant(displayRole)} uppercase tracking>
+                              {displayRole}
+                            </StatusBadge>
+                            <span className="text-xs text-gray-500">{getRelativeTime(member.createdAt)}</span>
+                          </div>
                           {canEditThisMember && (
                             <button
                               type="button"
@@ -571,34 +762,38 @@ export default function TeamPage() {
                       </div>
                     );
                   })}
+
+                  {filteredInvitations.map((inv) => (
+                    <div key={inv.id} className="p-4 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <InvitedAvatar />
+                          <p className="text-sm text-gray-400 italic truncate">{inv.email}</p>
+                        </div>
+                        <InvitedStatusBadge />
+                      </div>
+                      <StatusBadge variant={getRoleBadgeVariant(inv.role)} uppercase tracking>
+                        {inv.role}
+                      </StatusBadge>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
-          </GlassPanel>
 
-          {/* ---- Pending invitations ---- */}
-          {pendingInvitations.length > 0 && (
-            <GlassPanel className="p-6">
-              <h2 className="text-base font-semibold text-white mb-0.5">Pending Invitations</h2>
-              <p className="text-xs text-gray-500 mb-4">
-                {pendingInvitations.length} invitation{pendingInvitations.length !== 1 ? 's' : ''} awaiting acceptance
-              </p>
-              <div className="divide-y divide-white/[0.04]">
-                {pendingInvitations.map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-white/[0.015] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <InvitedAvatar />
-                      <div>
-                        <p className="text-sm text-gray-300">{inv.email}</p>
-                        <p className="text-xs text-gray-500 capitalize mt-0.5">{inv.role}</p>
-                      </div>
-                    </div>
-                    <StatusBadge variant="warning" uppercase tracking>pending</StatusBadge>
-                  </div>
-                ))}
+            {/* Footer count */}
+            {totalCount > 0 && (
+              <div
+                className="px-6 py-3 border-t flex items-center"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.05)' }}
+              >
+                <span className="text-xs text-gray-500">
+                  {totalCount} member{totalCount !== 1 ? 's' : ''}
+                  {pendingInvitations.length > 0 && ` (${pendingInvitations.length} pending)`}
+                </span>
               </div>
-            </GlassPanel>
-          )}
+            )}
+          </GlassPanel>
 
         </div>
       </main>
