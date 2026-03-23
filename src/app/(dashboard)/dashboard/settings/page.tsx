@@ -172,7 +172,7 @@ export default function DashboardSettingsPage() {
         <div className="max-w-[1400px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-gray-400 text-sm mt-1">Manage your account and preferences</p>
+        <p className="text-gray-400 text-sm mt-1">Manage your account, API keys, and billing</p>
       </div>
 
       <SegmentedControl
