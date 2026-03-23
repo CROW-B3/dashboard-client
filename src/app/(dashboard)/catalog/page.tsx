@@ -284,6 +284,13 @@ export default function CatalogPage() {
             <p className="text-gray-300 text-sm">{selectedProduct.description}</p>
             {selectedProduct.price && <p className="text-violet-400 font-semibold">${(selectedProduct.price / 100).toFixed(2)}</p>}
             <StatusBadge>{selectedProduct.metadata?.inStock ? 'In Stock' : 'Out of Stock'}</StatusBadge>
+            <button
+              onClick={handleRescrape}
+              disabled={rescrapeMutation.isPending}
+              className="w-full px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              {rescrapeMutation.isPending ? 'Re-scraping...' : 'Re-scrape'}
+            </button>
             {aiDescriptions?.descriptions && aiDescriptions.descriptions.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">AI Analysis</p>

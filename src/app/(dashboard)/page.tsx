@@ -15,6 +15,23 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
+const DATE_RANGES: Record<string, number> = {
+  'Today': 1, 'Yesterday': 2, 'Last 7 days': 7, 'Last 14 days': 14,
+  'Last 30 days': 30, 'This month': 30, 'Last month': 60, 'This quarter': 90,
+};
+
+function getDateRange(label: string): { from: number; to: number } {
+  const now = Date.now();
+  const days = DATE_RANGES[label] ?? 7;
+  return { from: Math.floor((now - days * 86400000) / 1000), to: Math.floor(now / 1000) };
+}
+
+function getPreviousDateRange(label: string): { from: number; to: number } {
+  const days = DATE_RANGES[label] ?? 7;
+  const now = Date.now();
+  return { from: Math.floor((now - days * 2 * 86400000) / 1000), to: Math.floor((now - days * 86400000) / 1000) };
+}
+
 interface InteractionSummary {
   web: number;
   cctv: number;
@@ -32,45 +49,10 @@ interface PatternsCountResponse {
   total: number;
 }
 
-const DATE_RANGES: Record<string, number> = {
-  'Today': 1,
-  'Yesterday': 2,
-  'Last 7 days': 7,
-  'Last 14 days': 14,
-  'Last 30 days': 30,
-  'This month': 30,
-  'Last month': 60,
-  'This quarter': 90,
-};
-
-function getDateRange(label: string): { from: number; to: number } {
-  const now = Date.now();
-  const days = DATE_RANGES[label] ?? 7;
-  return {
-    from: Math.floor((now - days * 24 * 60 * 60 * 1000) / 1000),
-    to: Math.floor(now / 1000),
-  };
-}
-
-function getPreviousDateRange(label: string): { from: number; to: number } {
-  const days = DATE_RANGES[label] ?? 7;
-  const now = Date.now();
-  return {
-    from: Math.floor((now - days * 2 * 24 * 60 * 60 * 1000) / 1000),
-    to: Math.floor((now - days * 24 * 60 * 60 * 1000) / 1000),
-  };
-}
-
-function formatDelta(current: number, previous: number): { change: string; changeType: 'positive' | 'negative' | 'neutral' } {
-  if (previous === 0 && current === 0) return { change: '0', changeType: 'neutral' };
-  if (previous === 0) return { change: `+${current}`, changeType: 'positive' };
-  const pct = ((current - previous) / previous) * 100;
-  if (pct === 0) return { change: '0%', changeType: 'neutral' };
-  const sign = pct > 0 ? '+' : '';
-  return {
-    change: `${sign}${pct.toFixed(1)}%`,
-    changeType: pct > 0 ? 'positive' : 'negative',
-  };
+interface PreviousSummary {
+  total: number;
+  web: number;
+  cctv: number;
 }
 
 function formatRelativeTimestamp(epochMs: number | undefined): string {
@@ -86,13 +68,58 @@ function formatRelativeTimestamp(epochMs: number | undefined): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function formatDelta(current: number, previous: number): { change: string; changeType: 'positive' | 'negative' | 'neutral' } {
+  if (previous === 0 && current === 0) return { change: '0', changeType: 'neutral' };
+  if (previous === 0) return { change: `+${current}`, changeType: 'positive' };
+  const pct = ((current - previous) / previous) * 100;
+  if (pct === 0) return { change: '0%', changeType: 'neutral' };
+  const sign = pct > 0 ? '+' : '';
+  return {
+    change: `${sign}${pct.toFixed(1)}%`,
+    changeType: pct > 0 ? 'positive' : 'negative',
+  };
+}
+
+function formatLastUpdated(summary: InteractionSummary | undefined): string {
+  if (!summary) return '';
+  const timestamps = summary.lastEventTimestamps;
+  if (!timestamps) return '';
+  const all = [timestamps.web, timestamps.cctv, timestamps.social].filter(Boolean) as number[];
+  if (all.length === 0) return '';
+  const latest = Math.max(...all);
+  return `Last updated ${formatRelativeTimestamp(latest)}`;
+}
+
+function createPageHeaderElement(summary: InteractionSummary | undefined) {
+  const lastUpdatedText = formatLastUpdated(summary);
+
+  return (
+    <div className="relative mb-6 sm:mb-8">
+      <h1 className="mb-1 text-xl sm:text-2xl font-bold leading-7 sm:leading-8 text-white">
+        Overview
+      </h1>
+      <p className="text-xs sm:text-sm font-normal leading-5 text-gray-400">
+        Key changes across channels — Web, CCTV, Social.
+      </p>
+      {lastUpdatedText && (
+        <p className="sm:absolute sm:right-0 sm:top-2 text-[10px] sm:text-xs font-normal leading-4 text-gray-500 mt-2 sm:mt-0">
+          {lastUpdatedText}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function resolveDataSourceStatus(
-  _name: 'Web' | 'CCTV' | 'Social',
+  name: 'Web' | 'CCTV' | 'Social',
   isActive: boolean,
   timestamp: number | undefined,
 ): { statusText: string; lastUpdate: string } {
   if (!isActive) return { statusText: 'Inactive', lastUpdate: 'No data' };
-  return { statusText: 'Connected', lastUpdate: formatRelativeTimestamp(timestamp) };
+  return {
+    statusText: 'Connected',
+    lastUpdate: formatRelativeTimestamp(timestamp),
+  };
 }
 
 export default function DashboardPage() {
@@ -111,14 +138,10 @@ export default function DashboardPage() {
   }, []);
 
   const { data: summary, isLoading: summaryLoading } = useQuery<InteractionSummary>({
-    queryKey: ['interaction-summary', orgId, range.from, range.to],
+    queryKey: ['interaction-summary', orgId],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        from: String(range.from),
-        to: String(range.to),
-      });
       const res = await fetch(
-        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary?${params}`,
+        `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary`,
         { credentials: 'include' },
       );
       if (!res.ok) throw new Error('Failed to fetch interaction summary');
@@ -128,18 +151,20 @@ export default function DashboardPage() {
     staleTime: 60 * 1000,
   });
 
-  const { data: previousSummary } = useQuery<InteractionSummary>({
-    queryKey: ['interaction-summary-previous', orgId, prevRange.from, prevRange.to],
+  const { data: previousSummary } = useQuery<PreviousSummary>({
+    queryKey: ['interaction-summary-previous', orgId],
     queryFn: async () => {
+      const weekAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      const weekAgoEnd = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const params = new URLSearchParams({
-        from: String(prevRange.from),
-        to: String(prevRange.to),
+        from: String(Math.floor(weekAgo / 1000)),
+        to: String(Math.floor(weekAgoEnd / 1000)),
       });
       const res = await fetch(
         `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/summary?${params}`,
         { credentials: 'include' },
       );
-      if (!res.ok) return { web: 0, cctv: 0, social: 0, total: 0 };
+      if (!res.ok) return { total: 0, web: 0, cctv: 0 };
       return res.json();
     },
     enabled: !!orgId,
@@ -147,15 +172,10 @@ export default function DashboardPage() {
   });
 
   const { data: patternsData, isLoading: patternsLoading } = useQuery<PatternsCountResponse>({
-    queryKey: ['patterns-count', orgId, range.from, range.to],
+    queryKey: ['patterns-count', orgId],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        from: String(range.from),
-        to: String(range.to),
-        limit: '1',
-      });
       const res = await fetch(
-        `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?${params}`,
+        `${API_GATEWAY_URL}/api/v1/patterns/organization/${orgId}?limit=1`,
         { credentials: 'include' },
       );
       if (!res.ok) throw new Error('Failed to fetch patterns count');
@@ -166,11 +186,13 @@ export default function DashboardPage() {
   });
 
   const { data: previousPatternsData } = useQuery<PatternsCountResponse>({
-    queryKey: ['patterns-count-previous', orgId, prevRange.from, prevRange.to],
+    queryKey: ['patterns-count-previous', orgId],
     queryFn: async () => {
+      const weekAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      const weekAgoEnd = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const params = new URLSearchParams({
-        from: String(prevRange.from),
-        to: String(prevRange.to),
+        from: String(Math.floor(weekAgo / 1000)),
+        to: String(Math.floor(weekAgoEnd / 1000)),
         limit: '1',
       });
       const res = await fetch(
@@ -219,14 +241,7 @@ export default function DashboardPage() {
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto">
-          <div className="relative mb-6 sm:mb-8">
-            <h1 className="mb-1 text-xl sm:text-2xl font-bold leading-7 sm:leading-8 text-white">
-              Overview
-            </h1>
-            <p className="text-xs sm:text-sm font-normal leading-5 text-gray-400">
-              Key changes across channels — Web, CCTV, Social.
-            </p>
-          </div>
+          {createPageHeaderElement(summary)}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <MetricsCard

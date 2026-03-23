@@ -157,9 +157,6 @@ export default function AskCrowPage() {
 
       setActiveSessionId(sessionId);
       setActiveSession(sessionId);
-      const chatTitle = query.trim().length > 40 ? query.trim().slice(0, 37) + '...' : query.trim();
-      updateSessionTitle(sessionId, chatTitle);
-      refreshSessions();
 
       setTimeout(() => {
         setChatStarted(true);
@@ -170,7 +167,7 @@ export default function AskCrowPage() {
         sendMessageMutation.mutate({ sessionId, content: query });
       }, ANIMATION_DURATIONS.START_CHAT);
     },
-    [organizationId, userId, createSessionMutation, sendMessageMutation, setActiveSession, updateSessionTitle, refreshSessions]
+    [organizationId, userId, createSessionMutation, sendMessageMutation, setActiveSession]
   );
 
   const handleFollowUpMessage = useCallback(
@@ -211,7 +208,7 @@ export default function AskCrowPage() {
     <div className="flex flex-col min-h-screen">
       <Header
         userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}
-        showNotification={false}
+        showNotification
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"

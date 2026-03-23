@@ -122,7 +122,7 @@ crow-cctv analyze --file /path/to/video.mp4`;
         <p className="text-gray-400 text-sm mt-1">Connect your data sources to CROW</p>
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(10, 5, 20, 0.40)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ConnectionOption
           icon={<Globe className="h-5 w-5" />}
           title="Web SDK"

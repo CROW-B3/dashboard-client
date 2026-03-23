@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
-import { Geist_Mono, Sora } from 'next/font/google';
+import type { Metadata } from "next";
+import { Geist_Mono, Sora } from "next/font/google";
 import { Providers } from '@/providers';
-import '@b3-crow/ui-kit/styles.css';
-import './globals.css';
+import "@b3-crow/ui-kit/styles.css";
+import "./globals.css";
 
 const sora = Sora({
   variable: '--font-sora',
@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CROW Client Dashboard',
-  description: 'CROW AI Dashboard - Manage your organization, catalog, analytics and team',
+	title: "CROW Dashboard",
+	description: "CROW AI Dashboard - Manage your organization, catalog, analytics and team",
 };
 
 export default function RootLayout({
@@ -25,17 +25,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" className="dark">
-      <head>
-        <link rel="icon" href="/favicon.webp" type="image/webp" />
-        <link rel="apple-touch-icon" href="/favicon.webp" />
-      </head>
-      <body
-        className={`${sora.variable} ${geistMono.variable} font-sans antialiased bg-[#030005] text-gray-100 selection:bg-violet-500/30 selection:text-violet-200`}
-      >
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en">
+			<head>
+				<link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
+			</head>
+			<body className={`${sora.variable} ${geistMono.variable} antialiased`}>
+				<Providers>{children}</Providers>
+			</body>
+		</html>
+	);
 }

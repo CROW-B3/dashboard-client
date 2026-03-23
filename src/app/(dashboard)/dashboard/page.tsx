@@ -239,9 +239,10 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header showNotification={false}
+      <Header
         orgName={user?.orgName || 'Dashboard'}
         userInitials={userInitials}
+        showNotification
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')}

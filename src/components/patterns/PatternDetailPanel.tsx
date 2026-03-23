@@ -268,7 +268,21 @@ function MetricsSection({ metrics }: { metrics: MetricItem[] }) {
 }
 
 function ActionsSection() {
-  return null;
+  return (
+    <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+      <button
+        type="button"
+        className="flex-1 h-10 flex items-center justify-center gap-2 rounded-lg transition-colors"
+        style={{
+          background: '#7C3AED',
+          boxShadow: '0px 0px 10px rgba(124, 58, 237, 0.30)',
+        }}
+      >
+        <ExternalLink size={16} color="white" />
+        <span className="text-sm font-medium text-white">View Full Report</span>
+      </button>
+    </div>
+  );
 }
 
 interface SectionProps {

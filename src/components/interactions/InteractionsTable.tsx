@@ -27,10 +27,10 @@ interface TableColumn {
 
 function getInteractionsTableColumns(): TableColumn[] {
   return [
-    { label: 'Source', width: 'w-[72px]' },
-    { label: 'Summary', width: 'flex-1 min-w-0' },
-    { label: 'Timestamp', width: 'w-[140px] shrink-0' },
-    { label: 'Confidence', width: 'w-[90px] shrink-0' },
+    { label: 'Source', width: 'w-[92px]' },
+    { label: 'Summary', width: 'flex-1' },
+    { label: 'Timestamp', width: 'w-[100px]' },
+    { label: 'Confidence', width: 'w-[100px]' },
   ];
 }
 
@@ -192,10 +192,10 @@ function InteractionRow({ interaction, onClick, showBorder }: InteractionRowProp
         </p>
       </div>
 
-      <div className="w-[140px] shrink-0">
+      <div className="w-[100px]">
         <span
-          className="text-xs whitespace-nowrap"
-          style={{ color: '#9CA3AF' }}
+          className="text-sm"
+          style={{ color: '#9CA3AF', lineHeight: '20px' }}
         >
           {interaction.timestamp}
         </span>

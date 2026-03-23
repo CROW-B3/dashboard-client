@@ -52,10 +52,6 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 
-# Yalc (local package development)
-.yalc/
-yalc.lock
-
 # environment files with secrets
 .env
 .env.local

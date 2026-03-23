@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 
 import { ApiKeyInput, GlassPanel, Header, SegmentedControl } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Plus, Trash2, Upload } from 'lucide-react';
+import { Bell, ExternalLink, Plus, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -22,6 +22,7 @@ const TABS = [
   { value: 'profile', label: 'Profile' },
   { value: 'api-keys', label: 'API Keys' },
   { value: 'billing', label: 'Billing' },
+  { value: 'notifications', label: 'Notifications' },
 ];
 
 interface ApiKeyRecord {
@@ -41,6 +42,34 @@ interface BillingData {
   billingPeriod?: string;
 }
 
+interface UserPreferences {
+  emailPatternAlerts: boolean;
+  emailBillingNotices: boolean;
+  emailTeamInvites: boolean;
+  emailWeeklyDigest: boolean;
+}
+
+type PreferenceKey = keyof UserPreferences;
+
+interface NotificationItem {
+  key: PreferenceKey;
+  label: string;
+  description: string;
+}
+
+const NOTIFICATION_ITEMS: NotificationItem[] = [
+  { key: 'emailPatternAlerts', label: 'Pattern Alerts', description: 'Receive alerts when new patterns are identified' },
+  { key: 'emailBillingNotices', label: 'Billing Updates', description: 'Notifications about subscription and billing changes' },
+  { key: 'emailTeamInvites', label: 'Team Invites', description: 'Updates when team members join or change roles' },
+  { key: 'emailWeeklyDigest', label: 'Weekly Digest', description: 'Receive a weekly summary of activity' },
+];
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  emailPatternAlerts: true,
+  emailBillingNotices: true,
+  emailTeamInvites: true,
+  emailWeeklyDigest: true,
+};
 
 export default function DashboardSettingsPage() {
   const router = useRouter();
@@ -67,6 +96,18 @@ export default function DashboardSettingsPage() {
       return (res.data as ApiKeyRecord[]) || [];
     },
     enabled: activeTab === 'api-keys',
+  });
+
+  const { data: preferences } = useQuery<UserPreferences>({
+    queryKey: ['user-preferences', currentUser?.id],
+    queryFn: async () => {
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/${currentUser!.id}/preferences`, {
+        credentials: 'include',
+      });
+      if (!res.ok) return DEFAULT_PREFERENCES;
+      return res.json();
+    },
+    enabled: activeTab === 'notifications' && !!currentUser?.id,
   });
 
   const { data: billing, isLoading: billingLoading } = useQuery<BillingData | null>({
@@ -343,6 +384,39 @@ export default function DashboardSettingsPage() {
         </GlassPanel>
       )}
 
+      {activeTab === 'notifications' && (
+        <GlassPanel>
+          <h2 className="text-lg font-semibold text-white mb-4">Notification Preferences</h2>
+          <div className="space-y-3">
+            {NOTIFICATION_ITEMS.map((item) => {
+              const enabled = (preferences ?? DEFAULT_PREFERENCES)[item.key];
+              return (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <Bell className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-white">{item.label}</p>
+                      <p className="text-xs text-gray-400">{item.description}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleToggleNotification(item.key)}
+                    disabled={updatePreferenceMutation.isPending}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-violet-600' : 'bg-white/20'}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </GlassPanel>
+      )}
         </div>
       </main>
     </div>

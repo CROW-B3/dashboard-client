@@ -8,16 +8,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
-
-interface ApiChatSession {
-  id: string;
-  organizationId: string;
-  createdAt: number;
-  title?: string;
-}
 
 export interface ChatSession {
   id: string;
@@ -30,85 +20,159 @@ interface ChatHistoryContextType {
   sessions: ChatSession[];
   activeSessionId: string | null;
   isExpanded: boolean;
+  createNewSession: (title?: string) => string;
   setActiveSession: (id: string) => void;
   updateSessionTitle: (id: string, title: string) => void;
   deleteSession: (id: string) => void;
+  addMessageToSession: (id: string, role: 'user' | 'assistant', content: string) => void;
   toggleExpanded: () => void;
-  refreshSessions: () => void;
 }
 
 const ChatHistoryContext = createContext<ChatHistoryContextType | null>(null);
 
-async function fetchChatSessions(organizationId: string): Promise<ApiChatSession[]> {
-  const response = await fetch(
-    `${API_GATEWAY_URL}/api/v1/chat/sessions/organization/${organizationId}`,
-    { credentials: 'include' }
-  );
-  if (!response.ok) return [];
-  const data = await response.json() as { sessions: ApiChatSession[] };
-  return data.sessions ?? [];
+function generateId(): string {
+  return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function formatSessionTitle(session: ApiChatSession): string {
-  if (session.title) return session.title;
-  return new Date(session.createdAt).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function extractTitleFromPrompt(prompt: string): string {
+  const words = prompt.trim().split(/\s+/).slice(0, 4);
+  const title = words.join(' ');
+  return title.length > 30 ? `${title.slice(0, 27)}...` : title || 'New Chat';
 }
 
-interface ChatHistoryProviderProps {
-  children: ReactNode;
-  organizationId?: string;
-}
+const STATIC_DATE = new Date('2024-01-01T00:00:00.000Z');
+const demoSessions: ChatSession[] = [
+  {
+    id: 'demo-1',
+    title: 'Recursive Pattern Analysis',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Analyze the recursive patterns in this dataset' },
+      { role: 'assistant', content: 'CROW has identified several recursive patterns. The primary pattern shows a 3-level recursion depth with exponential branching at each level. This indicates a hierarchical structure in your data.' }
+    ]
+  },
+  {
+    id: 'demo-2',
+    title: 'Latent Vector Alignment',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'How do we align latent vectors?' },
+      { role: 'assistant', content: 'Latent vector alignment can be achieved through several methods: orthogonal Procrustes analysis, canonical correlation analysis, or learned alignment layers. For your use case, I recommend the orthogonal Procrustes approach for its computational efficiency.' }
+    ]
+  },
+  {
+    id: 'demo-3',
+    title: 'Context Window Expansion',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'What about expanding context windows?' },
+      { role: 'assistant', content: 'Context window expansion involves several techniques: attention caching, sparse attention patterns, and sliding window mechanisms. The choice depends on your latency requirements and memory constraints.' }
+    ]
+  },
+  {
+    id: 'demo-4',
+    title: 'Prompt Inference Cycle',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Explain the prompt inference cycle' },
+      { role: 'assistant', content: 'The prompt inference cycle consists of: input tokenization, embedding generation, multi-head attention computation, feed-forward network processing, and output token generation. Each cycle refines the model\'s understanding of context.' }
+    ]
+  },
+  {
+    id: 'demo-5',
+    title: 'Semantic Layer Mapping',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'How do we map semantic layers?' },
+      { role: 'assistant', content: 'Semantic layer mapping involves creating representations of relationships between concepts. We use graph-based structures and embedding spaces to capture these relationships, enabling better semantic understanding.' }
+    ]
+  },
+  {
+    id: 'demo-6',
+    title: 'Cognitive Load Test',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Run a cognitive load test' },
+      { role: 'assistant', content: 'Cognitive load test results show optimal performance at current token counts. The system maintains 94% accuracy with 52ms average latency across all test cases. No bottlenecks detected.' }
+    ]
+  },
+  {
+    id: 'demo-7',
+    title: 'Memory Checkpoint',
+    createdAt: STATIC_DATE,
+    messages: [
+      { role: 'user', content: 'Create a memory checkpoint' },
+      { role: 'assistant', content: 'Memory checkpoint created successfully. Current state: 2.3GB allocated, 1.8GB in use. All critical parameters saved. You can resume from this point anytime.' }
+    ]
+  },
+];
 
-export function ChatHistoryProvider({ children, organizationId }: ChatHistoryProviderProps) {
-  const queryClient = useQueryClient();
+export function ChatHistoryProvider({ children }: { children: ReactNode }) {
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
-  const [titleOverrides, setTitleOverrides] = useState<Record<string, string>>({});
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
-  const queryKey = useMemo(() => ['chat-history-sessions', organizationId], [organizationId]);
-
-  const { data: apiSessions = [] } = useQuery({
-    queryKey,
-    queryFn: () => fetchChatSessions(organizationId!),
-    enabled: !!organizationId,
-    staleTime: 30 * 1000,
-  });
-
-  const sessions: ChatSession[] = useMemo(
-    () =>
-      apiSessions
-        .filter((s) => !deletedIds.has(s.id))
-        .map((s) => ({
-          id: s.id,
-          title: titleOverrides[s.id] ?? formatSessionTitle(s),
-          createdAt: new Date(s.createdAt),
-          messages: [],
-        })),
-    [apiSessions, titleOverrides, deletedIds]
-  );
-
-  const refreshSessions = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey });
-  }, [queryClient, queryKey]);
+  const createNewSession = useCallback((title?: string) => {
+    const id = generateId();
+    const newSession: ChatSession = {
+      id,
+      title: title ? extractTitleFromPrompt(title) : 'New Chat',
+      createdAt: new Date(),
+      messages: [],
+    };
+    setSessions((prev) => [newSession, ...prev]);
+    setActiveSessionId(id);
+    return id;
+  }, []);
 
   const setActiveSession = useCallback((id: string) => {
     setActiveSessionId(id);
   }, []);
 
   const updateSessionTitle = useCallback((id: string, title: string) => {
-    setTitleOverrides((prev) => ({ ...prev, [id]: title }));
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === id ? { ...session, title } : session
+      )
+    );
   }, []);
 
   const deleteSession = useCallback((id: string) => {
-    setDeletedIds((prev) => new Set([...prev, id]));
-    setActiveSessionId((prev) => (prev === id ? null : prev));
+    setSessions((prev) => {
+      const filtered = prev.filter((session) => session.id !== id);
+      return filtered;
+    });
+    setActiveSessionId((prevActiveId) =>
+      prevActiveId === id ? null : prevActiveId
+    );
   }, []);
+
+  const addMessageToSession = useCallback(
+    (id: string, role: 'user' | 'assistant', content: string) => {
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id !== id) return session;
+
+          const newMessage = { role, content };
+          const updatedSession = {
+            ...session,
+            messages: [...session.messages, newMessage],
+          };
+
+          if (
+            role === 'user' &&
+            session.messages.length === 0 &&
+            session.title === 'New Chat'
+          ) {
+            updatedSession.title = extractTitleFromPrompt(content);
+          }
+
+          return updatedSession;
+        })
+      );
+    },
+    []
+  );
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded((prev) => !prev);
@@ -119,21 +183,23 @@ export function ChatHistoryProvider({ children, organizationId }: ChatHistoryPro
       sessions,
       activeSessionId,
       isExpanded,
+      createNewSession,
       setActiveSession,
       updateSessionTitle,
       deleteSession,
+      addMessageToSession,
       toggleExpanded,
-      refreshSessions,
     }),
     [
       sessions,
       activeSessionId,
       isExpanded,
+      createNewSession,
       setActiveSession,
       updateSessionTitle,
       deleteSession,
+      addMessageToSession,
       toggleExpanded,
-      refreshSessions,
     ]
   );
 

@@ -57,7 +57,7 @@ export function InteractionDetailPanel({
     >
       <div className="p-6 space-y-6">
         <HeaderSection interaction={interaction} />
-        {interaction.confidence > 0 && <ConfidenceSection interaction={interaction} confidenceStyle={confidenceStyle} />}
+        <ConfidenceSection interaction={interaction} confidenceStyle={confidenceStyle} />
         {interaction.description && <DescriptionSection description={interaction.description} />}
         {interaction.evidence && interaction.evidence.length > 0 && (
           <EvidenceSection evidence={interaction.evidence} />
@@ -315,78 +315,6 @@ function AgentFindingsDisplay({ agents }: { agents: AgentEntry[] }) {
   );
 }
 
-interface FinalWhy {
-  why?: string;
-  confidence?: number;
-  category?: string;
-  recommendations?: string[];
-}
-
-interface DeterministicIssue {
-  type?: string;
-  severity?: string;
-  description?: string;
-  metric?: number;
-}
-
-function FinalWhysDisplay({ items }: { items: FinalWhy[] }) {
-  return (
-    <div className="space-y-2">
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className="p-3 rounded-lg"
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
-        >
-          {item.why && <p className="text-sm mb-1.5" style={{ color: '#E5E7EB' }}>{item.why}</p>}
-          <div className="flex items-center gap-3 flex-wrap">
-            {item.category && (
-              <span className="text-[10px] px-2 py-0.5 rounded-md font-medium" style={{ color: '#C084FC', background: 'rgba(192,132,252,0.1)' }}>
-                {item.category.replace(/_/g, ' ')}
-              </span>
-            )}
-            {item.confidence !== undefined && (
-              <span className="text-xs" style={{ color: '#9CA3AF' }}>
-                {Math.round(item.confidence * 100)}% confidence
-              </span>
-            )}
-          </div>
-          {item.recommendations && item.recommendations.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {item.recommendations.map((rec, j) => (
-                <p key={j} className="text-xs" style={{ color: '#6EE7B7' }}>→ {rec}</p>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DeterministicIssuesDisplay({ items }: { items: DeterministicIssue[] }) {
-  const severityColor: Record<string, string> = { critical: '#F87171', high: '#FBBF24', medium: '#60A5FA', low: '#9CA3AF' };
-  return (
-    <div className="space-y-2">
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className="flex items-start gap-3 p-2.5 rounded-lg"
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
-        >
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase shrink-0 mt-0.5"
-            style={{ color: severityColor[item.severity ?? 'medium'] ?? '#9CA3AF', background: 'rgba(255,255,255,0.05)' }}
-          >
-            {item.severity ?? 'info'}
-          </span>
-          <p className="text-sm" style={{ color: '#D1D5DB' }}>{item.description ?? item.type}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function SourceDataSection({ sourceData }: { sourceData: SourceDataItem[] }) {
   const agentItem = sourceData.find((item) => tryParseAgentFindings(item.value));
   const agents = agentItem ? tryParseAgentFindings(agentItem.value) : null;
@@ -400,45 +328,42 @@ function SourceDataSection({ sourceData }: { sourceData: SourceDataItem[] }) {
     return true;
   });
 
-  const finalWhysItem = remainingItems.find((item) => item.label === 'finalWhys');
-  const deterministicItem = remainingItems.find((item) => item.label === 'deterministicIssues');
-
-  const finalWhys = finalWhysItem ? (tryParseJson(finalWhysItem.value) as FinalWhy[] | null) : null;
-  const deterministicIssues = deterministicItem ? (tryParseJson(deterministicItem.value) as DeterministicIssue[] | null) : null;
-
-  const otherItems = remainingItems.filter((item) => item !== finalWhysItem && item !== deterministicItem);
-
   return (
     <Section title="Source Data" icon={<FileText size={14} />}>
       {agents && <AgentFindingsDisplay agents={agents} />}
-      {deterministicIssues && Array.isArray(deterministicIssues) && deterministicIssues.length > 0 && (
-        <div className={cn(agents ? 'mt-4' : '')}>
-          <span className="text-xs font-semibold uppercase tracking-wide block mb-2" style={{ color: '#FBBF24' }}>
-            Performance Issues
-          </span>
-          <DeterministicIssuesDisplay items={deterministicIssues} />
-        </div>
-      )}
-      {finalWhys && Array.isArray(finalWhys) && finalWhys.length > 0 && (
-        <div className="mt-4">
-          <span className="text-xs font-semibold uppercase tracking-wide block mb-2" style={{ color: '#C084FC' }}>
-            Key Conclusions
-          </span>
-          <FinalWhysDisplay items={finalWhys} />
-        </div>
-      )}
-      {otherItems.length > 0 && (
-        <div className={cn(agents || finalWhys || deterministicIssues ? 'mt-4' : '', 'space-y-2')}>
-          {otherItems.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between py-2 border-b last:border-0"
-              style={{ borderColor: 'rgba(255,255,255,0.05)' }}
-            >
-              <span className="text-xs" style={{ color: '#6B7280' }}>{item.label}</span>
-              <span className="text-sm font-medium truncate max-w-[60%] text-right" style={{ color: '#D1D5DB' }}>{item.value}</span>
-            </div>
-          ))}
+      {remainingItems.length > 0 && (
+        <div className={cn(agents ? 'mt-4' : '', 'space-y-2')}>
+          {remainingItems.map((item, idx) => {
+            const parsed = tryParseJson(item.value);
+            const isStructured = parsed && typeof parsed === 'object';
+
+            return isStructured ? (
+              <div key={idx}>
+                <span className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>
+                  {item.label}
+                </span>
+                <pre
+                  className="text-xs p-3 rounded-lg overflow-x-auto"
+                  style={{
+                    color: '#D1D5DB',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                  }}
+                >
+                  {JSON.stringify(parsed, null, 2)}
+                </pre>
+              </div>
+            ) : (
+              <div
+                key={idx}
+                className="flex items-center justify-between py-2 border-b last:border-0"
+                style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+              >
+                <span className="text-xs" style={{ color: '#6B7280' }}>{item.label}</span>
+                <span className="text-sm font-medium" style={{ color: '#D1D5DB' }}>{item.value}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </Section>
