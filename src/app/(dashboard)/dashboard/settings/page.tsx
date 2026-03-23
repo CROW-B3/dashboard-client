@@ -66,7 +66,7 @@ export default function DashboardSettingsPage() {
       const res = await apiKey.list();
       return (res.data as ApiKeyRecord[]) || [];
     },
-    enabled: activeTab === 'api-keys' && !!permissions?.apiKeyManagement,
+    enabled: activeTab === 'api-keys',
   });
 
   const { data: billing, isLoading: billingLoading } = useQuery<BillingData | null>({
@@ -159,9 +159,10 @@ export default function DashboardSettingsPage() {
     if (file) uploadAvatarMutation.mutate(file);
   };
 
+  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin' || isAdmin(user);
   const visibleTabs = TABS.filter((tab) => {
-    if (tab.value === 'api-keys') return permissions?.apiKeyManagement;
-    if (tab.value === 'billing') return isAdmin(user);
+    if (tab.value === 'api-keys') return permissions?.apiKeyManagement || isOwnerOrAdmin;
+    if (tab.value === 'billing') return isOwnerOrAdmin;
     return true;
   });
 
@@ -241,7 +242,7 @@ export default function DashboardSettingsPage() {
         </GlassPanel>
       )}
 
-      {activeTab === 'api-keys' && permissions?.apiKeyManagement && (
+      {activeTab === 'api-keys' && (
         <GlassPanel>
           <h2 className="text-lg font-semibold text-white mb-4">API Keys</h2>
           <div className="space-y-4">
