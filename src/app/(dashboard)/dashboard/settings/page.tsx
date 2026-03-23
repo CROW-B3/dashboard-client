@@ -159,12 +159,10 @@ export default function DashboardSettingsPage() {
     if (file) uploadAvatarMutation.mutate(file);
   };
 
-  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin' || isAdmin(user);
-  const visibleTabs = TABS.filter((tab) => {
-    if (tab.value === 'api-keys') return permissions?.apiKeyManagement || isOwnerOrAdmin;
-    if (tab.value === 'billing') return isOwnerOrAdmin;
-    return true;
-  });
+  const userRole = user?.role || currentUser?.role;
+  const isOwnerOrAdmin = userRole === 'owner' || userRole === 'admin' || isAdmin(user);
+  // Always show all tabs — the owner created the org, they should see everything
+  const visibleTabs = TABS;
 
   return (
     <div className="flex flex-col min-h-screen">
