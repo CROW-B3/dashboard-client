@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { organization, useSession } from '@/lib/auth-client';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
@@ -74,13 +74,14 @@ export function useCurrentUser() {
     gcTime: 30 * 60 * 1000,
   });
 
-  const mergedData: UserRecord | undefined = userQuery.data
-    ? {
-        ...userQuery.data,
-        ...(activeOrgId ? { betterAuthOrgId: activeOrgId } : {}),
-        ...(orgQuery.data ? { orgUuid: orgQuery.data.id, orgName: orgQuery.data.name, betterAuthOrgId: orgQuery.data.betterAuthOrgId } : {}),
-      }
-    : undefined;
+  const mergedData = useMemo<UserRecord | undefined>(() => {
+    if (!userQuery.data) return undefined;
+    return {
+      ...userQuery.data,
+      ...(activeOrgId ? { betterAuthOrgId: activeOrgId } : {}),
+      ...(orgQuery.data ? { orgUuid: orgQuery.data.id, orgName: orgQuery.data.name, betterAuthOrgId: orgQuery.data.betterAuthOrgId } : {}),
+    };
+  }, [userQuery.data, activeOrgId, orgQuery.data]);
 
   useEffect(() => {
     if (autoSetAttempted.current) return;
