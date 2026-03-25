@@ -43,6 +43,11 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    icon: 'bar_chart',
+    label: 'Analytics',
+    href: '/analytics',
+  },
+  {
     icon: 'group',
     label: 'Team',
     href: '/team',
