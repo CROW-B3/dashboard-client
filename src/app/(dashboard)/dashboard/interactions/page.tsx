@@ -29,7 +29,7 @@ export default function InteractionsPage() {
     <div className="flex flex-col min-h-screen">
       <Header
         userInitials={userInitials}
-        showNotification
+        showNotification={false}
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"

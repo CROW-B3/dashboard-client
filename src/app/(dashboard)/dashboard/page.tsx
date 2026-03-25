@@ -242,7 +242,7 @@ export default function DashboardPage() {
       <Header
         orgName={user?.orgName || 'Dashboard'}
         userInitials={userInitials}
-        showNotification
+        showNotification={false}
         onMenuClick={toggle}
         logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')}

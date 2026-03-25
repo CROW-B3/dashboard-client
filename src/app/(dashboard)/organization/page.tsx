@@ -196,7 +196,7 @@ export default function OrganizationPage() {
       <Header
         orgName={org?.name || user?.orgName || 'Organization'}
         userInitials={userInitials}
-        showNotification
+        showNotification={false}
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"

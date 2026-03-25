@@ -208,7 +208,7 @@ export default function AskCrowPage() {
     <div className="flex flex-col min-h-screen">
       <Header
         userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}
-        showNotification
+        showNotification={false}
         minimal
         onMenuClick={toggle}
         logoSrc="/favicon.webp"

@@ -48,8 +48,8 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
     href: '/team',
   },
   {
-    icon: 'inventory_2',
-    label: 'Catalog',
+    icon: 'shopping_bag',
+    label: 'Products',
     href: '/catalog',
   },
   {
@@ -165,14 +165,23 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ChatHistoryProviderWithUser({ children }: { children: React.ReactNode }) {
+  const { data: user } = useCurrentUser();
+  return (
+    <ChatHistoryProvider organizationId={user?.organizationId}>
+      {children}
+    </ChatHistoryProvider>
+  );
+}
+
 export function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
   return (
-    <ChatHistoryProvider>
+    <ChatHistoryProviderWithUser>
       <MobileSidebarProvider>
         <SidebarCollapseProvider>
           <DashboardContent>{children}</DashboardContent>
         </SidebarCollapseProvider>
       </MobileSidebarProvider>
-    </ChatHistoryProvider>
+    </ChatHistoryProviderWithUser>
   );
 }
