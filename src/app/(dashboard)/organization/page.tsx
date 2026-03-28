@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import { GlassPanel, Header, StatusBadge, StatusIndicator } from '@b3-crow/ui-kit';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Brain, Building2, Copy, Radio, RefreshCw, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -114,7 +114,7 @@ export default function OrganizationPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
   const queryClient = useQueryClient();
-  const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
+  const userInitials = user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : '';
 
   const { data: org } = useQuery<OrgData | null>({
     queryKey: ['org', orgId],
@@ -194,7 +194,7 @@ export default function OrganizationPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header
-        orgName={org?.name || user?.orgName || 'Organization'}
+        orgName={org?.name || user?.orgName || ''}
         userInitials={userInitials}
         showNotification={false}
         minimal

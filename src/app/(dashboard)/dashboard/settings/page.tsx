@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import { ApiKeyInput, GlassPanel, Header, SegmentedControl } from '@b3-crow/ui-kit';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, ExternalLink, Plus, Trash2, Upload } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -76,7 +76,7 @@ export default function DashboardSettingsPage() {
 
   const { data: currentUser } = useCurrentUser();
   const { toggle } = useMobileSidebar();
-  const { data: permissions } = usePermissions(currentUser?.id);
+  const { data: _permissions } = usePermissions(currentUser?.id);
   const { data: user } = useUser(currentUser?.id);
   const orgId = currentUser?.organizationId;
   const orgUuid = currentUser?.organizationId;
@@ -191,6 +191,28 @@ export default function DashboardSettingsPage() {
     onError: () => toast.error('Failed to revoke key'),
   });
 
+  const updatePreferenceMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: PreferenceKey; value: boolean }) => {
+      if (!currentUser?.id) throw new Error('No user');
+      const res = await fetch(`${API_GATEWAY_URL}/api/v1/users/${currentUser.id}/preferences`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (!res.ok) throw new Error('Failed to update preference');
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['user-preferences', currentUser?.id] });
+    },
+    onError: () => toast.error('Failed to update notification preference'),
+  });
+
+  const handleToggleNotification = (key: PreferenceKey) => {
+    const current = (preferences ?? DEFAULT_PREFERENCES)[key];
+    updatePreferenceMutation.mutate({ key, value: !current });
+  };
+
   const handleSaveProfile = () => saveProfileMutation.mutate();
   const handleCreateKey = () => { if (keyName && orgId) createKeyMutation.mutate(); };
   const handleRevokeKey = (keyId: string) => revokeKeyMutation.mutate(keyId);
@@ -200,14 +222,14 @@ export default function DashboardSettingsPage() {
     if (file) uploadAvatarMutation.mutate(file);
   };
 
-  const userRole = user?.role || currentUser?.role;
-  const isOwnerOrAdmin = userRole === 'owner' || userRole === 'admin' || isAdmin(user);
+  const userRole = (user?.role || currentUser?.role || '') as string;
+  const _isOwnerOrAdmin = userRole === 'owner' || userRole === 'admin' || isAdmin(user);
   // Always show all tabs — the owner created the org, they should see everything
   const visibleTabs = TABS;
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(currentUser?.name || currentUser?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+      <Header userInitials={currentUser ? (currentUser.name || currentUser.email || '').slice(0, 2).toUpperCase() : ''} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')} />
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">

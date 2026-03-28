@@ -33,16 +33,19 @@ function extractPatternTitle(type: string, data: string): string {
     const parsed = typeof data === 'string' ? JSON.parse(data) : data;
     if (parsed?.insights && typeof parsed.insights === 'string') {
       let clean = parsed.insights
+        // Strip "organization UUID" and surrounding prepositions
+        .replace(/\b(?:in|within|for|of|at)\s+(?:organization\s+)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '')
         .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '')
         .replace(/\borganization\s*/gi, '')
-        .replace(/\bUsers?\s+within\s*/gi, 'Users ')
-        .replace(/\bUsers?\s+in\s+\b/gi, 'Users ')
+        // Clean dangling prepositions left after stripping (e.g., "Users in exhibit" → "Users exhibit")
+        .replace(/\b(Users?)\s+(?:in|within|for|of|at)\s+(?=[a-z])/gi, '$1 ')
+        .replace(/\bAnalysis\s+of\s+(?=reveals?\b)/gi, 'Analysis ')
         .replace(/\s{2,}/g, ' ')
         .trim();
       if (/^[a-z]/.test(clean)) clean = clean.charAt(0).toUpperCase() + clean.slice(1);
       const sentence = clean.split(/[.!]\s/)[0]?.trim();
       if (sentence && sentence.length > 10) {
-        return sentence.length > 80 ? sentence.slice(0, 77) + '...' : sentence;
+        return sentence.length > 80 ? `${sentence.slice(0, 77)  }...` : sentence;
       }
     }
   } catch {}
@@ -123,7 +126,7 @@ export function PatternsSection({
       return res.json();
     },
     enabled: !!orgId,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const patterns: Pattern[] = patternsProp

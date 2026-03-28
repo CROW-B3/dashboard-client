@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { organization, useSession } from '@/lib/auth-client';
 
@@ -51,7 +51,6 @@ async function fetchOrg(
 
 export function useCurrentUser() {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
   const userId = session?.user?.id;
   const activeOrgId = (session as any)?.session?.activeOrganizationId as string | undefined;
   const autoSetAttempted = useRef(false);
@@ -66,10 +65,13 @@ export function useCurrentUser() {
 
   const internalOrgId = userQuery.data?.organizationId;
 
+  // Start orgQuery as soon as activeOrgId is available from session (no need to wait for userQuery).
+  // Fall back to internalOrgId from userQuery when activeOrgId is not set.
+  const orgQueryEnabled = !!(activeOrgId || internalOrgId);
   const orgQuery = useQuery({
     queryKey: ['current-org', activeOrgId, internalOrgId],
     queryFn: () => fetchOrg(activeOrgId, internalOrgId),
-    enabled: !!(activeOrgId || internalOrgId),
+    enabled: orgQueryEnabled,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -90,15 +92,17 @@ export function useCurrentUser() {
     if (!resolvedBetterAuthOrgId) return;
 
     autoSetAttempted.current = true;
-    organization.setActive({ organizationId: resolvedBetterAuthOrgId }).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['current-user-base'] });
-      queryClient.invalidateQueries({ queryKey: ['current-org'] });
-    }).catch(() => {});
-  }, [activeOrgId, orgQuery.data?.betterAuthOrgId, userQuery.data?.betterAuthOrgId, queryClient]);
+    // Set the active org in better-auth but do NOT invalidate queries.
+    // The session hook will update activeOrgId on its own, and the existing
+    // cached data is still valid — invalidating causes a full re-fetch waterfall.
+    organization.setActive({ organizationId: resolvedBetterAuthOrgId }).catch(() => {});
+  }, [activeOrgId, orgQuery.data?.betterAuthOrgId, userQuery.data?.betterAuthOrgId]);
+
+  const isLoading = userQuery.isLoading || (orgQueryEnabled && orgQuery.isLoading);
 
   return {
     data: mergedData,
-    isLoading: userQuery.isLoading,
+    isLoading,
     isError: userQuery.isError,
     error: userQuery.error,
   };

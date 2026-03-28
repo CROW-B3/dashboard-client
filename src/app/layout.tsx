@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "CROW Dashboard",
 	description: "CROW AI Dashboard - Manage your organization, catalog, analytics and team",
+	icons: {
+		icon: '/favicon.webp',
+	},
 };
 
 export default function RootLayout({

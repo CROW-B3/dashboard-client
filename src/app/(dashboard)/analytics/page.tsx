@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { GlassPanel, Header, MetricsCard, StatusBadge, SourceIcon } from '@b3-crow/ui-kit';
+import { GlassPanel, Header, MetricsCard, SourceIcon, StatusBadge } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
@@ -77,7 +77,7 @@ function buildLast7DaysSummary(
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = d.toISOString().split('T')[0] ?? '';
     days.push({ date: dateStr, web: 0, cctv: 0, social: 0, total: 0 });
   }
   return days;
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
-  const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
+  const userInitials = user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : '';
 
   const fromEpoch = getEpochDaysAgo(7);
   const toEpoch = Date.now();
@@ -413,7 +413,7 @@ export default function AnalyticsPage() {
                     </div>
 
                     {/* Summary spread across 7 days (evenly distributed) */}
-                    {timelineDays.map((day, idx) => {
+                    {timelineDays.map((day) => {
                       // Distribute totals evenly across the 7 days for display
                       const dayCount = timelineSummary
                         ? Math.round(timelineTotal / 7)
@@ -421,8 +421,6 @@ export default function AnalyticsPage() {
                       const dayWeb = timelineSummary ? Math.round((timelineSummary.web / 7)) : 0;
                       const dayCctv = timelineSummary ? Math.round((timelineSummary.cctv / 7)) : 0;
                       const daySocial = timelineSummary ? Math.round((timelineSummary.social / 7)) : 0;
-                      const maxVal = Math.max(dayWeb, dayCctv, daySocial, 1);
-
                       return (
                         <div key={day.date} className="group">
                           <div className="flex items-center gap-2 mb-1">
@@ -435,9 +433,9 @@ export default function AnalyticsPage() {
                           </div>
                           <div className="flex items-center gap-1 pl-26">
                             <div className="flex-1 space-y-0.5 ml-[calc(6rem+0.5rem)]">
-                              <TimelineBar value={dayWeb} max={maxVal} color="#60A5FA" />
-                              <TimelineBar value={dayCctv} max={maxVal} color="#F87171" />
-                              <TimelineBar value={daySocial} max={maxVal} color="#A78BFA" />
+                              <TimelineBar value={dayWeb} max={timelineMaxBar} color="#60A5FA" />
+                              <TimelineBar value={dayCctv} max={timelineMaxBar} color="#F87171" />
+                              <TimelineBar value={daySocial} max={timelineMaxBar} color="#A78BFA" />
                             </div>
                           </div>
                         </div>

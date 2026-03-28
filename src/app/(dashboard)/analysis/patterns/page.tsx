@@ -1,12 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import type { PatternData, PatternDetail } from '@/components/patterns';
+
 import type { SourceFilter } from '@/components/patterns/PatternsFilterBar';
 import { Header, PatternCard, TipCard } from '@b3-crow/ui-kit';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { PatternDetailPanel, PatternsFilterBar } from '@/components/patterns';
@@ -77,15 +77,17 @@ function formatRelativeTime(timestamp: number): string {
 
 function extractFirstSentence(text: string): string | null {
   const cleaned = text
+    .replace(/\b(?:in|within|for|of|at)\s+(?:organization\s+)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '')
     .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '')
     .replace(/\borganization\s*/gi, '')
-    .replace(/\bUsers?\s+within\s*/gi, 'Users ')
+    .replace(/\b(Users?)\s+(?:in|within|for|of|at)\s+(?=[a-z])/gi, '$1 ')
+    .replace(/\bAnalysis\s+of\s+(?=reveals?\b)/gi, 'Analysis ')
     .replace(/\s{2,}/g, ' ')
     .trim();
   const capitalized = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   const sentence = capitalized.split(/[.!]\s/)[0]?.trim();
   if (sentence && sentence.length > 10) {
-    return sentence.length > 80 ? sentence.slice(0, 77) + '...' : sentence;
+    return sentence.length > 80 ? `${sentence.slice(0, 77)  }...` : sentence;
   }
   return null;
 }
@@ -193,6 +195,8 @@ export default function PatternsPage() {
       if (!res.ok) return { patterns: [], total: 0 };
       return res.json();
     },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   const apiPatterns = data?.patterns ?? [];
@@ -222,7 +226,7 @@ export default function PatternsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+      <Header userInitials={user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : ''} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')} />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">

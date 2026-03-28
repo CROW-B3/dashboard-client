@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import { Header } from '@b3-crow/ui-kit';
+
+import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -23,7 +23,7 @@ export default function InteractionsPage() {
 
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
-  const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
+  const userInitials = user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : '';
 
   return (
     <div className="flex flex-col min-h-screen">

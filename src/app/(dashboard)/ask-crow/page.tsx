@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import type { Message } from '@/components/ask-crow/types';
+
 import { Header } from '@b3-crow/ui-kit';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatView } from '@/components/ask-crow/ChatView';
 import { ANIMATION_DURATIONS } from '@/components/ask-crow/constants';
@@ -77,7 +77,7 @@ function apiMessagesToUiMessages(apiMessages: ApiMessage[]): Message[] {
 export default function AskCrowPage() {
   const router = useRouter();
 
-  const { setActiveSession, refreshSessions, updateSessionTitle } = useChatHistory();
+  const { activeSessionId: contextActiveSessionId, setActiveSession } = useChatHistory();
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
@@ -93,6 +93,17 @@ export default function AskCrowPage() {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  // Sync with sidebar chat history clicks
+  useEffect(() => {
+    if (contextActiveSessionId && contextActiveSessionId !== activeSessionId) {
+      setActiveSessionId(contextActiveSessionId);
+      setChatStarted(true);
+      setIsTransitioning(false);
+      setIsGenerating(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only sync when context changes, not local state
+  }, [contextActiveSessionId]);
 
   const { data: sessionMessages } = useQuery({
     queryKey: ['ask-crow-messages', activeSessionId],
@@ -207,7 +218,7 @@ export default function AskCrowPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header
-        userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}
+        userInitials={user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : ''}
         showNotification={false}
         minimal
         onMenuClick={toggle}

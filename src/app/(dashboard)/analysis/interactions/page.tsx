@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import type { InteractionData, InteractionDetail } from '@/components/interactions';
+
 import { Header, TipCard } from '@b3-crow/ui-kit';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   InteractionDetailPanel,
@@ -67,7 +67,7 @@ function mapApiInteractionToData(api: ApiInteraction): InteractionData {
     id: api.id,
     source: (['web', 'cctv', 'social'] as const).includes(sourceType) ? sourceType : 'web',
     title: deriveTitle(api.summary, parsed.url),
-    subtitle: api.sessionId ? `Session ID: ${api.sessionId}` : api.id,
+    subtitle: api.sourceType ? `${api.sourceType.toLowerCase() === 'cctv' ? 'CCTV' : api.sourceType.charAt(0).toUpperCase() + api.sourceType.slice(1).toLowerCase()} channel` : 'Interaction',
     timestamp: api.timestamp ? new Date(api.timestamp).toLocaleString() : '',
     confidence,
     confidenceLevel: toConfidenceLevel(confidence),
@@ -131,8 +131,28 @@ export default function InteractionsPage() {
     enabled: !!orgId,
     queryKey: ['analysis-interactions', orgId, page, debouncedSearch, sourceType],
     queryFn: async () => {
+      if (debouncedSearch) {
+        // Use semantic search endpoint
+        const searchParams = new URLSearchParams({ q: debouncedSearch, limit: String(PAGE_SIZE) });
+        const res = await fetch(
+          `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}/search?${searchParams}`,
+          { credentials: 'include' },
+        );
+        if (!res.ok) return { interactions: [], total: 0 };
+        const searchData = await res.json() as { results: { id: string; score: number; sourceType?: string; summary?: string }[]; total: number };
+        return {
+          interactions: searchData.results.map((r) => ({
+            id: r.id,
+            sourceType: r.sourceType ?? 'web',
+            sessionId: null,
+            summary: r.summary ?? null,
+            data: JSON.stringify({ confidence: r.score }),
+            timestamp: Date.now(),
+          })),
+          total: searchData.total,
+        };
+      }
       const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
-      if (debouncedSearch) params.set('q', debouncedSearch);
       if (sourceType && sourceType !== 'all') params.set('sourceType', sourceType);
       const res = await fetch(
         `${API_GATEWAY_URL}/api/v1/interactions/organization/${orgId}?${params}`,
@@ -141,6 +161,8 @@ export default function InteractionsPage() {
       if (!res.ok) return { interactions: [], total: 0 };
       return res.json();
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   const apiInteractions = data?.interactions ?? [];
@@ -154,7 +176,7 @@ export default function InteractionsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+      <Header userInitials={user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : ''} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')} />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
@@ -167,7 +189,7 @@ export default function InteractionsPage() {
               Unified evidence feed across Web, CCTV, and Social.
             </p>
             <p className="sm:absolute sm:right-0 sm:top-2 text-xs font-medium leading-4 mt-2 sm:mt-0" style={{ color: '#6B7280', letterSpacing: '0.3px' }}>
-              {isLoading ? 'Loading...' : `${data?.total ?? 0} interactions`}
+              {isLoading ? 'Loading...' : `${data?.total ?? 0} ${(data?.total ?? 0) === 1 ? 'interaction' : 'interactions'}`}
             </p>
           </div>
 

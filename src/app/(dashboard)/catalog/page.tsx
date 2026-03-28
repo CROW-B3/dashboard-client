@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import { Header, SearchInput, SidePanel, StatusBadge } from '@b3-crow/ui-kit';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
@@ -18,7 +18,7 @@ interface Product {
   images: string[];
   price: number | null;
   category: string | null;
-  metadata: { inStock?: boolean; sourceUrl?: string } | null;
+  metadata: { inStock?: boolean; sourceUrl?: string; currency?: string } | null;
 }
 
 interface RelatedInteraction {
@@ -159,6 +159,8 @@ export default function CatalogPage() {
       }
     },
     enabled: !!orgId,
+    staleTime: 10 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: aiDescriptions } = useQuery<{ descriptions: { id: string; type: string; content: string; createdAt: string }[] }>({
@@ -207,7 +209,7 @@ export default function CatalogPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+      <Header userInitials={user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : ''} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')} />
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
@@ -258,7 +260,7 @@ export default function CatalogPage() {
                 </div>
                 <div className="p-3 space-y-1">
                   <p className="text-sm text-white font-medium line-clamp-2">{product.title}</p>
-                  {product.price && <p className="text-xs text-violet-400">${(product.price / 100).toFixed(2)}</p>}
+                  {product.price && <p className="text-xs text-violet-400">{product.metadata?.currency || 'LKR'} {(product.price / 100).toLocaleString()}</p>}
                   {product.description && <p className="text-xs text-gray-400 line-clamp-2">{product.description}</p>}
                   {product.category && <StatusBadge>{product.category}</StatusBadge>}
                 </div>
@@ -282,7 +284,7 @@ export default function CatalogPage() {
               <img src={selectedProduct.images[0]} alt={selectedProduct.title} className="w-full rounded-lg" />
             )}
             <p className="text-gray-300 text-sm">{selectedProduct.description}</p>
-            {selectedProduct.price && <p className="text-violet-400 font-semibold">${(selectedProduct.price / 100).toFixed(2)}</p>}
+            {selectedProduct.price && <p className="text-violet-400 font-semibold">{selectedProduct.metadata?.currency || 'LKR'} {(selectedProduct.price / 100).toLocaleString()}</p>}
             <StatusBadge>{selectedProduct.metadata?.inStock ? 'In Stock' : 'Out of Stock'}</StatusBadge>
             <button
               onClick={handleRescrape}

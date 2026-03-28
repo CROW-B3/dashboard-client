@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import { Header, MetricsCard } from '@b3-crow/ui-kit';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import {
   DataSourceStatus,
@@ -18,6 +18,12 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://local
 const DATE_RANGES: Record<string, number> = {
   'Today': 1, 'Yesterday': 2, 'Last 7 days': 7, 'Last 14 days': 14,
   'Last 30 days': 30, 'This month': 30, 'Last month': 60, 'This quarter': 90,
+};
+
+const VALUE_TO_LABEL: Record<string, string> = {
+  today: 'Today', yesterday: 'Yesterday', last_7_days: 'Last 7 days',
+  last_14_days: 'Last 14 days', last_30_days: 'Last 30 days',
+  this_month: 'This month', last_month: 'Last month', this_quarter: 'This quarter',
 };
 
 function getDateRange(label: string): { from: number; to: number } {
@@ -114,12 +120,14 @@ function resolveDataSourceStatus(
   name: 'Web' | 'CCTV' | 'Social',
   isActive: boolean,
   timestamp: number | undefined,
+  count?: number,
 ): { statusText: string; lastUpdate: string } {
   if (!isActive) return { statusText: 'Inactive', lastUpdate: 'No data' };
-  return {
-    statusText: 'Connected',
-    lastUpdate: formatRelativeTimestamp(timestamp),
-  };
+  if (timestamp) {
+    return { statusText: 'Connected', lastUpdate: formatRelativeTimestamp(timestamp) };
+  }
+  // No timestamp available but channel is active — show count instead
+  return { statusText: 'Connected', lastUpdate: count ? `${count} events` : 'Active' };
 }
 
 export default function DashboardPage() {
@@ -130,11 +138,11 @@ export default function DashboardPage() {
   const orgId = user?.organizationId;
   const [dateRange, setDateRange] = useState('Last 7 days');
 
-  const range = useMemo(() => getDateRange(dateRange), [dateRange]);
-  const prevRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
+  const _range = useMemo(() => getDateRange(dateRange), [dateRange]);
+  const _prevRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
 
   const handleDateRangeChange = useCallback((value: string) => {
-    setDateRange(value);
+    setDateRange(VALUE_TO_LABEL[value] || value);
   }, []);
 
   const { data: summary, isLoading: summaryLoading } = useQuery<InteractionSummary>({
@@ -148,7 +156,7 @@ export default function DashboardPage() {
       return res.json();
     },
     enabled: !!orgId,
-    staleTime: 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: previousSummary } = useQuery<PreviousSummary>({
@@ -182,7 +190,7 @@ export default function DashboardPage() {
       return res.json();
     },
     enabled: !!orgId,
-    staleTime: 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: previousPatternsData } = useQuery<PatternsCountResponse>({
@@ -206,8 +214,8 @@ export default function DashboardPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const orgName = user?.orgName || 'My Organization';
-  const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
+  const orgName = user?.orgName || '';
+  const userInitials = user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : '';
 
   const dataNotReady = !orgId || summaryLoading;
   const totalInteractions = dataNotReady ? '...' : String(summary?.total ?? 0);
@@ -222,9 +230,9 @@ export default function DashboardPage() {
   const socialActive = (summary?.social ?? 0) > 0;
 
   const timestamps = summary?.lastEventTimestamps;
-  const webStatus = resolveDataSourceStatus('Web', webActive, timestamps?.web);
-  const cctvStatus = resolveDataSourceStatus('CCTV', cctvActive, timestamps?.cctv);
-  const socialStatus = resolveDataSourceStatus('Social', socialActive, timestamps?.social);
+  const webStatus = resolveDataSourceStatus('Web', webActive, timestamps?.web, summary?.web);
+  const cctvStatus = resolveDataSourceStatus('CCTV', cctvActive, timestamps?.cctv, summary?.cctv);
+  const socialStatus = resolveDataSourceStatus('Social', socialActive, timestamps?.social, summary?.social);
 
   return (
     <>

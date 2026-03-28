@@ -1,11 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import { GlassPanel, Header, MetricsCard, SectionHeader, SourceIcon, StatusIndicator } from '@b3-crow/ui-kit';
+
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, BarChart3, MessageSquare, Settings, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
@@ -184,7 +184,7 @@ export default function DashboardPage() {
   const { toggle } = useMobileSidebar();
   const { data: user } = useCurrentUser();
   const orgId = user?.organizationId;
-  const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase();
+  const userInitials = user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : '';
 
   const { data: summaryData, isLoading: summaryLoading } = useQuery<InteractionSummary>({
     queryKey: ['dashboard-summary', orgId],
@@ -240,7 +240,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header
-        orgName={user?.orgName || 'Dashboard'}
+        orgName={user?.orgName || ''}
         userInitials={userInitials}
         showNotification={false}
         onMenuClick={toggle}

@@ -246,16 +246,16 @@ export default function TeamPage() {
   });
 
   const { data: invitationsData } = useQuery<{ invitations: InvitationItem[] }>({
-    queryKey: ['invitations', orgId],
+    queryKey: ['invitations', betterAuthOrgId],
     queryFn: async () => {
       const res = await fetch(
-        `${API_GATEWAY_URL}/api/v1/auth/team-invitations/list-invitations?organizationId=${orgId}`,
+        `${API_GATEWAY_URL}/api/v1/auth/team-invitations/list-invitations?organizationId=${betterAuthOrgId}`,
         { credentials: 'include' },
       );
       if (!res.ok) return { invitations: [] };
       return res.json() as Promise<{ invitations: InvitationItem[] }>;
     },
-    enabled: !!orgId,
+    enabled: !!betterAuthOrgId && isAdminOrOwner,
   });
 
   const pendingInvitations: InvitationItem[] =
@@ -272,7 +272,7 @@ export default function TeamPage() {
         body: JSON.stringify({
           emails: emailList,
           role,
-          organizationId: orgId,
+          organizationId: betterAuthOrgId,
           organizationName: user?.orgName ?? '',
           inviterName: user?.name ?? 'Team Admin',
           inviterId: user!.betterAuthUserId,
@@ -286,7 +286,7 @@ export default function TeamPage() {
       setEmails([]);
       setShowInviteSection(false);
       void queryClient.invalidateQueries({ queryKey: ['members', orgId] });
-      void queryClient.invalidateQueries({ queryKey: ['invitations', orgId] });
+      void queryClient.invalidateQueries({ queryKey: ['invitations', betterAuthOrgId] });
     },
     onError: () => toast.error('Failed to send invitations'),
   });
@@ -355,7 +355,7 @@ export default function TeamPage() {
   // ---- Handlers ----
 
   const handleInvite = () => {
-    if (!emails.length || !orgId || !user?.betterAuthUserId) {
+    if (!emails.length || !betterAuthOrgId || !user?.betterAuthUserId) {
       if (!user?.betterAuthUserId) toast.error('Session expired. Please refresh the page.');
       return;
     }
@@ -412,7 +412,7 @@ export default function TeamPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header
-        userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()}
+        userInitials={user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : ''}
         showNotification={false}
         minimal
         onMenuClick={toggle}
@@ -631,7 +631,7 @@ export default function TeamPage() {
                             </div>
                           ) : (
                             <StatusBadge variant={getRoleBadgeVariant(displayRole)} uppercase tracking>
-                              {displayRole}
+                              {displayRole.charAt(0).toUpperCase() + displayRole.slice(1)}
                             </StatusBadge>
                           )}
                         </div>
@@ -740,7 +740,7 @@ export default function TeamPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <StatusBadge variant={getRoleBadgeVariant(displayRole)} uppercase tracking>
-                              {displayRole}
+                              {displayRole.charAt(0).toUpperCase() + displayRole.slice(1)}
                             </StatusBadge>
                             <span className="text-xs text-gray-500">{getRelativeTime(member.createdAt)}</span>
                           </div>

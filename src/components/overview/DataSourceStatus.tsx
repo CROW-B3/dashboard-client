@@ -118,14 +118,18 @@ export function DataSourceStatus({
       </div>
 
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className="font-mono text-[10px] sm:text-xs text-gray-500">
-          {lastUpdate}
-        </span>
-        {eventCount !== undefined && (
-          <span className="font-mono text-[10px] text-gray-600">
-            {eventCount.toLocaleString()} events
+        {lastUpdate && !lastUpdate.includes('events') && lastUpdate !== 'No data' && (
+          <span className="font-mono text-[10px] sm:text-xs text-gray-500">
+            {lastUpdate}
           </span>
         )}
+        {eventCount !== undefined && eventCount > 0 ? (
+          <span className="font-mono text-[10px] text-gray-500">
+            {eventCount.toLocaleString()} events
+          </span>
+        ) : !isActive ? (
+          <span className="font-mono text-[10px] text-gray-500">No data</span>
+        ) : null}
       </div>
     </GlassPanel>
   );

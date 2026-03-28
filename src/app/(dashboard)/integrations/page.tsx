@@ -1,11 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-
 import type { ConnectionOptionStatus } from '@b3-crow/ui-kit';
+
 import { CodeBlock, ConnectionOption, GlassPanel, Header } from '@b3-crow/ui-kit';
 import { useQuery } from '@tanstack/react-query';
-import { Camera, Globe, Share2 } from 'lucide-react';
+import { Bot, Camera, Globe, Share2, Workflow } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -13,7 +13,7 @@ import { apiKey } from '@/lib/auth-client';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000';
 
-type IntegrationSection = 'web' | 'cctv' | 'social' | null;
+type IntegrationSection = 'web' | 'cctv' | 'social' | 'mcp' | 'a2a' | null;
 
 interface ApiKeyRecord {
   id: string;
@@ -111,9 +111,36 @@ crow-cctv analyze --file /path/to/video.mp4`;
   -H "Authorization: Bearer ${apiKeyPlaceholder}" \\
   -d '${socialWebhookPayload}'`;
 
+  const mcpConnectionStatus: ConnectionOptionStatus = firstApiKey ? 'connected' : 'not_started';
+  const a2aConnectionStatus: ConnectionOptionStatus = firstApiKey ? 'connected' : 'not_started';
+
+  const mcpConfigCode = `{
+  "mcpServers": {
+    "crow-analytics": {
+      "url": "https://mcp.crowai.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer ${apiKeyPlaceholder}",
+        "X-Organization-Id": "${orgId || 'YOUR_ORG_ID'}"
+      }
+    }
+  }
+}`;
+
+  const a2aExampleCode = `from a2a_client import A2AClient
+
+client = A2AClient(
+    url="https://a2a.crowai.dev/a2a",
+    api_key="${apiKeyPlaceholder}"
+)
+
+response = client.send_task({
+    "message": "What are our top performing products?",
+    "organization_id": "${orgId || 'YOUR_ORG_ID'}"
+})`;
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
+      <Header userInitials={user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : ''} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')} />
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
@@ -128,21 +155,21 @@ crow-cctv analyze --file /path/to/video.mp4`;
           title="Web SDK"
           description="Track customer interactions on your website"
           status={webConnectionStatus}
-          onClick={() => setExpandedSection(expandedSection === 'web' ? null : 'web')}
+          onClick={() => setExpandedSection(prev => prev === 'web' ? null : 'web')}
         />
         <ConnectionOption
           icon={<Camera className="h-5 w-5" />}
           title="CCTV CLI"
           description="Analyze in-store camera feeds with AI"
           status={cctvConnectionStatus}
-          onClick={() => setExpandedSection(expandedSection === 'cctv' ? null : 'cctv')}
+          onClick={() => setExpandedSection(prev => prev === 'cctv' ? null : 'cctv')}
         />
         <ConnectionOption
           icon={<Share2 className="h-5 w-5" />}
           title="Social Webhook"
           description="Receive social media interactions via webhooks"
           status={socialConnectionStatus}
-          onClick={() => setExpandedSection(expandedSection === 'social' ? null : 'social')}
+          onClick={() => setExpandedSection(prev => prev === 'social' ? null : 'social')}
         />
       </div>
 
@@ -207,6 +234,81 @@ crow-cctv analyze --file /path/to/video.mp4`;
               <p className="text-xs text-violet-300">
                 Configure your social media monitoring tool to send webhook requests to the URL above.
                 Include the Authorization header with your API key for authentication.
+              </p>
+            </div>
+          </div>
+        </GlassPanel>
+      )}
+
+      <div>
+        <h2 className="text-xl font-bold text-white">AI & Protocol Integrations</h2>
+        <p className="text-gray-400 text-sm mt-1">Connect AI assistants and agents to CROW</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ConnectionOption
+          icon={<Bot className="h-5 w-5" />}
+          title="MCP Server"
+          description="Connect AI assistants like Claude Desktop to your CROW data"
+          status={mcpConnectionStatus}
+          onClick={() => setExpandedSection(prev => prev === 'mcp' ? null : 'mcp')}
+        />
+        <ConnectionOption
+          icon={<Workflow className="h-5 w-5" />}
+          title="Agent-to-Agent"
+          description="Connect external AI agents via the A2A protocol"
+          status={a2aConnectionStatus}
+          onClick={() => setExpandedSection(prev => prev === 'a2a' ? null : 'a2a')}
+        />
+      </div>
+
+      {expandedSection === 'mcp' && (
+        <GlassPanel>
+          <h2 className="text-lg font-semibold text-white mb-4">MCP Server Setup</h2>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Claude Desktop Configuration</p>
+              <CodeBlock code={mcpConfigCode} language="json" showCopy />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Available Tools</p>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li><code className="text-violet-400 bg-white/5 px-1.5 py-0.5 rounded text-xs">crow_search_products</code> — Search product catalog</li>
+                <li><code className="text-violet-400 bg-white/5 px-1.5 py-0.5 rounded text-xs">crow_search_interactions</code> — Search customer interactions</li>
+                <li><code className="text-violet-400 bg-white/5 px-1.5 py-0.5 rounded text-xs">crow_get_interaction_summary</code> — Get channel breakdown</li>
+                <li><code className="text-violet-400 bg-white/5 px-1.5 py-0.5 rounded text-xs">crow_search_patterns</code> — Search behavioral patterns</li>
+                <li><code className="text-violet-400 bg-white/5 px-1.5 py-0.5 rounded text-xs">crow_get_product_ai_descriptions</code> — Get AI product descriptions</li>
+                <li><code className="text-violet-400 bg-white/5 px-1.5 py-0.5 rounded text-xs">crow_search_org_context</code> — Search organization knowledge base</li>
+              </ul>
+            </div>
+            <div className="rounded-lg bg-violet-500/10 border border-violet-500/20 p-3">
+              <p className="text-xs text-violet-300">
+                Add this to your Claude Desktop config file at <code className="bg-white/5 px-1 py-0.5 rounded">~/Library/Application Support/Claude/claude_desktop_config.json</code>
+              </p>
+            </div>
+          </div>
+        </GlassPanel>
+      )}
+
+      {expandedSection === 'a2a' && (
+        <GlassPanel>
+          <h2 className="text-lg font-semibold text-white mb-4">Agent-to-Agent Setup</h2>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">A2A Endpoint URL</p>
+              <CodeBlock code="https://a2a.crowai.dev/a2a/jsonrpc" language="text" showCopy />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Agent Card URL (Discovery)</p>
+              <CodeBlock code="https://a2a.crowai.dev/.well-known/agent-card.json" language="text" showCopy />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Example Python Client</p>
+              <CodeBlock code={a2aExampleCode} language="python" showCopy />
+            </div>
+            <div className="rounded-lg bg-violet-500/10 border border-violet-500/20 p-3">
+              <p className="text-xs text-violet-300">
+                The A2A protocol allows any AI agent to interact with CROW{"'"}s analytics engine. Use the Agent Card URL for automatic discovery.
               </p>
             </div>
           </div>

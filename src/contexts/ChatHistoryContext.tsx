@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createContext,
   use,
@@ -8,7 +9,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export interface ChatSession {
   id: string;
@@ -61,7 +61,7 @@ function apiSessionToChatSession(s: ApiSession): ChatSession {
 
 interface ChatHistoryProviderProps {
   children: ReactNode;
-  organizationId?: string;
+  organizationId?: string | undefined;
 }
 
 export function ChatHistoryProvider({ children, organizationId }: ChatHistoryProviderProps) {

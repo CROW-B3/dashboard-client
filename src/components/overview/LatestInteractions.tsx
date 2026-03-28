@@ -92,7 +92,7 @@ export function LatestInteractions({
       return res.json();
     },
     enabled: !!orgId,
-    staleTime: 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   const interactions: Interaction[] = interactionsProp

@@ -81,16 +81,40 @@ function usePrefetchDashboardData(orgId: string | undefined) {
     if (!orgId) return;
     const base = `${API_GATEWAY_URL}/api/v1`;
     const opts = { credentials: 'include' as const };
-    const prefetch = (key: string[], url: string) =>
-      queryClient.prefetchQuery({ queryKey: key, queryFn: () => fetch(url, opts).then(r => r.ok ? r.json() : null) });
+    const prefetch = (key: string[], url: string, staleTime?: number) =>
+      queryClient.prefetchQuery({
+        queryKey: key,
+        queryFn: () => fetch(url, opts).then(r => r.ok ? r.json() : null),
+        ...(staleTime ? { staleTime } : {}),
+      });
 
-    prefetch(['interaction-summary', orgId], `${base}/interactions/organization/${orgId}/summary`);
-    prefetch(['patterns-overview', orgId], `${base}/patterns/organization/${orgId}?limit=5`);
-    prefetch(['patterns-count', orgId], `${base}/patterns/organization/${orgId}?limit=1`);
-    prefetch(['analysis-interactions', orgId, 1, '', 'all'], `${base}/interactions/organization/${orgId}?limit=20`);
-    prefetch(['products', orgId, 1, ''], `${base}/products/organization/${orgId}?page=1&limit=24`);
-    prefetch(['members', orgId], `${base}/auth/organization/get-full-organization`);
-    prefetch(['billing-plans'], `${base}/billing/plans`);
+    // WAVE 1: Critical data for current page (immediate)
+    prefetch(['interaction-summary', orgId], `${base}/interactions/organization/${orgId}/summary`, 2 * 60 * 1000);
+    prefetch(['patterns-overview', orgId], `${base}/patterns/organization/${orgId}?limit=5`, 5 * 60 * 1000);
+    prefetch(['interactions-overview', orgId], `${base}/interactions/organization/${orgId}?limit=5`, 2 * 60 * 1000);
+    prefetch(['members', orgId], `${base}/auth/organization/get-full-organization`, 10 * 60 * 1000);
+    prefetch(['billing-plans'], `${base}/billing/plans`, 30 * 60 * 1000);
+
+    // WAVE 2: Secondary pages (after 2s delay to avoid connection storm)
+    const timer = window.setTimeout(() => {
+      prefetch(['analysis-interactions', orgId, '1', '', 'all'], `${base}/interactions/organization/${orgId}?limit=20`, 2 * 60 * 1000);
+      prefetch(['analysis-patterns', orgId, 'all'], `${base}/patterns/organization/${orgId}?page=1&limit=20`, 5 * 60 * 1000);
+      prefetch(['products', orgId, '1', ''], `${base}/products/organization/${orgId}?page=1&pageSize=24`, 10 * 60 * 1000);
+      prefetch(['subscription', orgId], `${base}/billing/subscriptions/${orgId}`, 5 * 60 * 1000);
+    }, 2000);
+
+    // WAVE 3: Filter variants (after 5s — only useful if user navigates and filters)
+    const timer2 = window.setTimeout(() => {
+      prefetch(['analysis-interactions', orgId, '1', '', 'web'], `${base}/interactions/organization/${orgId}?limit=20&sourceType=web`, 2 * 60 * 1000);
+      prefetch(['analysis-interactions', orgId, '1', '', 'cctv'], `${base}/interactions/organization/${orgId}?limit=20&sourceType=cctv`, 2 * 60 * 1000);
+      prefetch(['analysis-interactions', orgId, '1', '', 'social'], `${base}/interactions/organization/${orgId}?limit=20&sourceType=social`, 2 * 60 * 1000);
+    }, 5000);
+
+    return () => { clearTimeout(timer); clearTimeout(timer2); };
+
+    // NOTE: Do NOT prefetch chat-sessions here — ChatHistoryContext has its own
+    // queryFn that transforms the raw API response. Prefetching with raw data
+    // would overwrite the cache with an incompatible shape.
   }, [orgId, queryClient]);
 }
 
@@ -128,14 +152,19 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     activeHref: pathname ?? '/',
     onNavigate: handleNavigate,
     logoSrc: '/favicon.webp',
-    userName: user?.name || user?.email || 'User',
+    userName: user?.name || user?.email || '',
     userEmail: user?.email || '',
     ...(userAvatarUrl ? { userAvatar: userAvatarUrl } : {}),
     onLogout: handleLogout,
     chatHistory,
     activeChatId: activeSessionId,
     chatHistoryExpanded: isExpanded,
-    onChatClick: setActiveSession,
+    onChatClick: (id: string) => {
+      setActiveSession(id);
+      if (!pathname?.startsWith('/ask-crow')) {
+        handleNavigate('/ask-crow');
+      }
+    },
     onChatHistoryToggle: toggleExpanded,
     onChatRename: updateSessionTitle,
     onChatDelete: deleteSession,
@@ -145,7 +174,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     pathname, handleNavigate, user?.name, user?.email, userAvatarUrl,
     handleLogout, chatHistory, activeSessionId, isExpanded,
     setActiveSession, toggleExpanded, updateSessionTitle, deleteSession,
-    isCollapsed, toggleCollapse,
+    isCollapsed, toggleCollapse, pathname,
   ]);
 
   return (

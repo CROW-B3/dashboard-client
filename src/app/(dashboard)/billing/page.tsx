@@ -176,6 +176,7 @@ export default function BillingPage() {
     queryKey: ['subscription', orgId],
     queryFn: fetchJson<SubscriptionData>(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}`),
     enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: interactionSummary } = useQuery<InteractionSummary>({
@@ -186,6 +187,7 @@ export default function BillingPage() {
       return res.json();
     },
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: plansData } = useQuery<{ plans: Plan[] }>({
@@ -195,28 +197,34 @@ export default function BillingPage() {
       if (!res.ok) return { plans: [] };
       return res.json();
     },
+    staleTime: 30 * 60 * 1000,
   });
 
   const { data: usageData } = useQuery<UsageData | null>({
     queryKey: ['billing-usage', orgId],
     queryFn: fetchJson<UsageData>(`${API_GATEWAY_URL}/api/v1/billing/usage/${orgId}`),
     enabled: !!orgId && !!subscription,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: invoicesData } = useQuery<{ invoices: Invoice[] } | null>({
     queryKey: ['billing-invoices', orgId],
     queryFn: fetchJson<{ invoices: Invoice[] }>(`${API_GATEWAY_URL}/api/v1/billing/invoices/${orgId}`),
-    enabled: !!orgId && !!subscription,
+    enabled: !!orgId && !!subscription && !!subscription.stripeCustomerId,
+    staleTime: 10 * 60 * 1000,
   });
 
   const { data: paymentMethodsData } = useQuery<{ paymentMethods: PaymentMethod[] } | null>({
     queryKey: ['billing-payment-methods', orgId],
     queryFn: fetchJson<{ paymentMethods: PaymentMethod[] }>(`${API_GATEWAY_URL}/api/v1/billing/payment-methods/${orgId}`),
-    enabled: !!orgId && !!subscription,
+    enabled: !!orgId && !!subscription && !!subscription.stripeCustomerId,
+    staleTime: 10 * 60 * 1000,
   });
 
   const checkoutMutation = useMutation({
     mutationFn: async (_planId: string) => {
+      if (!orgId) throw new Error('Organization not found');
+
       const builderRes = await fetch(`${API_GATEWAY_URL}/api/v1/billing/billing-builders`, {
         method: 'POST',
         credentials: 'include',
@@ -247,11 +255,14 @@ export default function BillingPage() {
     onSuccess: (data) => {
       if (data?.url) window.location.href = data.url;
     },
-    onError: () => toast.error('Failed to start checkout'),
+    onError: (error: Error) => toast.error(error.message || 'Failed to start checkout'),
   });
 
   const cancelMutation = useMutation({
     mutationFn: async () => {
+      if (!subscription?.stripeSubscriptionId) {
+        throw new Error('No active Stripe subscription to cancel');
+      }
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}/cancel`, {
         method: 'POST',
         credentials: 'include',
@@ -264,11 +275,14 @@ export default function BillingPage() {
       setCancelDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['subscription', orgId] });
     },
-    onError: () => toast.error('Failed to cancel subscription'),
+    onError: (error: Error) => toast.error(error.message || 'Failed to cancel subscription'),
   });
 
   const resumeMutation = useMutation({
     mutationFn: async () => {
+      if (!subscription?.stripeSubscriptionId) {
+        throw new Error('No active Stripe subscription to resume');
+      }
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/subscriptions/${orgId}/resume`, {
         method: 'POST',
         credentials: 'include',
@@ -280,11 +294,14 @@ export default function BillingPage() {
       toast.success('Subscription resumed');
       queryClient.invalidateQueries({ queryKey: ['subscription', orgId] });
     },
-    onError: () => toast.error('Failed to resume subscription'),
+    onError: (error: Error) => toast.error(error.message || 'Failed to resume subscription'),
   });
 
   const portalMutation = useMutation({
     mutationFn: async () => {
+      if (!subscription?.stripeCustomerId) {
+        throw new Error('Set up a payment method first');
+      }
       const res = await fetch(`${API_GATEWAY_URL}/api/v1/billing/portal-session`, {
         method: 'POST',
         credentials: 'include',
@@ -297,7 +314,7 @@ export default function BillingPage() {
     onSuccess: (data) => {
       if (data?.url) window.location.href = data.url;
     },
-    onError: () => toast.error('Failed to open billing portal'),
+    onError: (error: Error) => toast.error(error.message || 'Failed to open billing portal'),
   });
 
   const FALLBACK_PLANS: Plan[] = [
@@ -357,7 +374,7 @@ export default function BillingPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header userInitials={(user?.name || user?.email || 'U').slice(0, 2).toUpperCase()} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp" 
+      <Header userInitials={user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : ''} showNotification={false} minimal onMenuClick={toggle} logoSrc="/favicon.webp"
         onAvatarClick={() => router.push('/dashboard/settings')}/>
       <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
