@@ -4,79 +4,11 @@
   "account_id": "8f0203259905d8923687286c84921e6c",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-03-01",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "assets": {
-    "binding": "ASSETS",
-    "directory": ".open-next/assets",
-  },
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
   "observability": {
-    "enabled": true,
-  },
-  "vars": {
-    "ENVIRONMENT": "prod",
-    "NEXT_PUBLIC_API_GATEWAY_URL": "https://api.crowai.dev",
-    "NEXT_PUBLIC_AUTH_URL": "https://auth.crowai.dev",
-  },
-  "d1_databases": [
-    {
-      "binding": "DB_MAIN",
-      "database_name": "crow-dashboard-client-db",
-      "database_id": "9ef93cd8-ed1b-4a94-90ef-5e231e2337b1",
-    },
-  ],
-  "r2_buckets": [
-    {
-      "binding": "R2_BUCKET",
-      "bucket_name": "crow-dashboard-client-assets",
-    },
-  ],
-  "kv_namespaces": [
-    {
-      "binding": "NEXT_INC_CACHE_KV",
-      "id": "5de59b6655254c048ac1bccde2190c4d",
-    },
-  ],
-  "placement": { "mode": "smart" },
-  "routes": [
-    { "pattern": "app.crowai.dev", "custom_domain": true }
-  ],
-  "env": {
-    "dev": {
-      "vars": {
-        "ENVIRONMENT": "dev",
-        "NEXT_PUBLIC_API_GATEWAY_URL": "https://dev.api.crowai.dev",
-        "NEXT_PUBLIC_API_URL": "https://dev.api.crowai.dev",
-        "NEXT_PUBLIC_AUTH_URL": "https://auth.crowai.dev",
-      },
-      "routes": [
-        { "pattern": "dev.app.crowai.dev", "custom_domain": true }
-      ],
-      "d1_databases": [
-        {
-          "binding": "DB_MAIN",
-          "database_name": "crow-dashboard-client-db-dev",
-          "database_id": "ecc8b6ef-ab1a-4b95-ab1b-63c19812f7b3",
-        },
-      ],
-      "r2_buckets": [
-        {
-          "binding": "R2_BUCKET",
-          "bucket_name": "crow-dashboard-client-assets-dev",
-        },
-      ],
-      "kv_namespaces": [
-        {
-          "binding": "NEXT_INC_CACHE_KV",
-          "id": "b17357bef07c48d097074bde3ef15d55",
-        },
-      ],
-    },
-    "local": {
-      "vars": {
-        "ENVIRONMENT": "local",
-        "NEXT_PUBLIC_API_GATEWAY_URL": "http://localhost:8000",
-        "NEXT_PUBLIC_AUTH_URL": "http://localhost:3000",
-      },
-    },
-  },
+    "enabled": true
+  }
 }
